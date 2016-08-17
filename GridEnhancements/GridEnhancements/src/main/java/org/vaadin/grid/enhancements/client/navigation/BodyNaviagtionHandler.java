@@ -6,7 +6,6 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Command;
-import com.vaadin.client.VConsole;
 import com.vaadin.client.WidgetUtil;
 import com.vaadin.client.widget.grid.CellReference;
 import com.vaadin.client.widget.grid.events.BodyKeyDownHandler;
@@ -16,7 +15,6 @@ public class BodyNaviagtionHandler implements BodyKeyDownHandler {
 
     @Override
     public void onKeyDown(GridKeyDownEvent event) {
-        VConsole.log("Handle key event! " + WidgetUtil.getFocusedElement());
         switch (event.getNativeKeyCode()) {
             case KeyCodes.KEY_ENTER:
                 if (isCellContainingComponent(event.getFocusedCell())) {

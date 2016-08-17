@@ -1,7 +1,6 @@
 package org.vaadin.grid.enhancements.client.navigation;
 
 import com.google.gwt.animation.client.AnimationScheduler;
-import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -29,6 +28,7 @@ public class NavigationHandler implements KeyDownHandler {
         final CellReference cellReference;
         switch (keyDownEvent.getNativeKeyCode()) {
             case KeyCodes.KEY_ENTER:
+                focusedElement.blur();
                 cellReference = grid.getCellReference(focusedElement.getParentElement());
                 int rows = grid.getDataSource().size();
                 if (cellReference.getRowIndex() + 1 < rows) {
@@ -40,6 +40,7 @@ public class NavigationHandler implements KeyDownHandler {
                 keyDownEvent.preventDefault();
                 keyDownEvent.stopPropagation();
 
+                focusedElement.blur();
                 cellReference = grid.getCellReference(focusedElement.getParentElement());
                 NavigationUtil.focusCell(grid, cellReference.getRowIndex(), cellReference.getColumnIndex());
 
@@ -48,6 +49,7 @@ public class NavigationHandler implements KeyDownHandler {
                 keyDownEvent.preventDefault();
                 keyDownEvent.stopPropagation();
 
+                focusedElement.blur();
                 cellReference = grid.getCellReference(focusedElement.getParentElement());
                 if (cellReference.getRowIndex() > 0) {
                     NavigationUtil.focusCell(grid, cellReference.getRowIndex() - 1, cellReference.getColumnIndex());
@@ -58,6 +60,7 @@ public class NavigationHandler implements KeyDownHandler {
                 keyDownEvent.preventDefault();
                 keyDownEvent.stopPropagation();
 
+                focusedElement.blur();
                 cellReference = grid.getCellReference(focusedElement.getParentElement());
                 if (cellReference.getRowIndex() + 1 < grid.getDataSource().size()) {
                     NavigationUtil.focusCell(grid, cellReference.getRowIndex() + 1, cellReference.getColumnIndex());
