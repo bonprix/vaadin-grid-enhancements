@@ -9,13 +9,16 @@ import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Grid;
+import com.vaadin.ui.Label;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.cellrenderers.editable.DateFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
 import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 
 import javax.servlet.annotation.WebServlet;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Theme("demo")
@@ -29,8 +32,12 @@ public class DemoUI extends UI {
     public static class Servlet extends VaadinServlet {
     }
 
+    private Label latestChangeLabel;
+
     @Override
     protected void init(VaadinRequest request) {
+
+        latestChangeLabel = new Label("Latest change: -none-");
 
         final Grid grid = new Grid(getDataSource());
         GridNavigationExtension.extend(grid);
@@ -38,18 +45,57 @@ public class DemoUI extends UI {
         grid.setHeightByRows(10.0);
         grid.setWidth("700px");
 
-        grid.getColumn("foo").setRenderer(new TextFieldRenderer<String>());
-        grid.getColumn("bar").setRenderer(new TextFieldRenderer<Integer>());
-        grid.getColumn("km").setRenderer(new TextFieldRenderer<Double>());
-        grid.getColumn("today").setRenderer(new DateFieldRenderer());
+        TextFieldRenderer<String> stringRenderer = new TextFieldRenderer<String>();
+        grid.getColumn("foo").setRenderer(stringRenderer);
+        grid.getColumn("foo").setExpandRatio(1);
+        stringRenderer.addItemEditListener(new EditableRenderer.ItemEditListener() {
+            @Override
+            public void itemEdited(EditableRenderer.ItemEditEvent event) {
+                latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' " + event.getNewValue());
+            }
+        });
+        TextFieldRenderer<Integer> integerRenderer = new TextFieldRenderer<Integer>();
+        grid.getColumn("bar").setRenderer(integerRenderer);
+        grid.getColumn("bar").setWidth(100);
+        integerRenderer.addItemEditListener(new EditableRenderer.ItemEditListener() {
+            @Override
+            public void itemEdited(EditableRenderer.ItemEditEvent event) {
+                latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' " + event.getNewValue());
+            }
+        });
+        TextFieldRenderer<Double> doubleRenderer = new TextFieldRenderer<Double>();
+        grid.getColumn("km").setRenderer(doubleRenderer);
+        grid.getColumn("km").setWidth(100);
+        doubleRenderer.addItemEditListener(new EditableRenderer.ItemEditListener() {
+            @Override
+            public void itemEdited(EditableRenderer.ItemEditEvent event) {
+                latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' " + event.getNewValue());
+            }
+        });
+        DateFieldRenderer dateRenderer = new DateFieldRenderer();
+        grid.getColumn("today").setRenderer(dateRenderer);
+        grid.getColumn("today").setWidth(200);
+        dateRenderer.addItemEditListener(new EditableRenderer.ItemEditListener() {
+            @Override
+            public void itemEdited(EditableRenderer.ItemEditEvent event) {
+                latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' " + new SimpleDateFormat("dd-MM-yyyy").format(event.getNewValue()));
+            }
+        });
 
         // Show it in the middle of the screen
+        VerticalLayout content = new VerticalLayout();
+        content.setStyleName("demoContentLayout");
+        content.setSizeFull();
+        setContent(content);
+
         final VerticalLayout layout = new VerticalLayout();
-        layout.setStyleName("demoContentLayout");
-        layout.setSizeFull();
+        layout.setSpacing(true);
+        layout.setSizeUndefined();
         layout.addComponent(grid);
-        layout.setComponentAlignment(grid, Alignment.MIDDLE_CENTER);
-        setContent(layout);
+        layout.addComponent(latestChangeLabel);
+
+        content.addComponent(layout);
+        content.setComponentAlignment(layout, Alignment.MIDDLE_CENTER);
 
     }
 
