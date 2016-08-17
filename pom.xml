@@ -9,7 +9,10 @@
 	<name>MyComponent Add-on Root Project</name>
 
 	<modules>
+		<!-- GridEnhancements add-on and demo -->
 		<module>GridEnhancements</module>
+		<!-- Only grid-renderers-collection add-on -->
+		<module>grid-renderers-collection-addon/grid-renderers-collection-addon</module>
 	</modules>
 
 </project>

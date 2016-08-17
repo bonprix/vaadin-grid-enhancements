@@ -96,7 +96,8 @@
 		<dependency>
 			<groupId>com.vaadin</groupId>
 			<artifactId>grid-renderers-collection-addon</artifactId>
-			<version>0.94</version>
+            <!-- Bonprix fork version marked with x.xx-b -->
+			<version>0.94-b</version>
 		</dependency>
 		
 		<!-- This can be replaced with TestNG or some other test framework supported by the surefire plugin -->
