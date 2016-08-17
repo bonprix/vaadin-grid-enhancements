@@ -3,15 +3,14 @@ package org.vaadin.grid.enhancements.client.navigation;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Command;
 import com.vaadin.client.VConsole;
 import com.vaadin.client.WidgetUtil;
-import com.vaadin.client.ui.AbstractComponentConnector;
 import com.vaadin.client.widget.grid.CellReference;
 import com.vaadin.client.widget.grid.events.BodyKeyDownHandler;
 import com.vaadin.client.widget.grid.events.GridKeyDownEvent;
-import com.vaadin.client.widgets.Grid;
 
 public class BodyNaviagtionHandler implements BodyKeyDownHandler {
 
@@ -43,26 +42,33 @@ public class BodyNaviagtionHandler implements BodyKeyDownHandler {
     }
 
     private Element extractComponentElement(CellReference cell) {
-
-        for (int i = 0; i < cell.getElement().getChildNodes().getLength(); i++) {
-            Node node = cell.getElement().getChildNodes().getItem(i);
-            if (node.getNodeName().equals("INPUT")) {
-                return cell.getElement();
-            }
+        // Only check recursively if we are looking at a table
+        if (cell.getElement().getNodeName().equals("TD")) {
+            return NavigationUtil.getInputElement(cell.getElement().getChildNodes());
         }
-
-        return ((AbstractComponentConnector) cell.getValue()).getWidget().getElement();
+        return null;
     }
 
     private boolean isCellContainingComponent(CellReference cell) {
-        VConsole.log(cell.getValue().toString() + " : " + cell.toString() + " : " + cell.getElement().getNodeName());
+        // Only check recursively if we are looking at a table
+        if (cell.getElement().getNodeName().equals("TD")) {
+            return containsInput(cell.getElement().getChildNodes());
+        }
+        return false;
+    }
 
-        for (int i = 0; i < cell.getElement().getChildNodes().getLength(); i++) {
-            Node node = cell.getElement().getChildNodes().getItem(i);
+    private boolean containsInput(NodeList<Node> nodes) {
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node node = nodes.getItem(i);
             if (node.getNodeName().equals("INPUT")) {
                 return true;
+            } else if (node.getChildNodes().getLength() > 0) {
+                if (containsInput(node.getChildNodes())) {
+                    return true;
+                }
             }
         }
-        return cell.getValue() instanceof AbstractComponentConnector;
+
+        return false;
     }
 }

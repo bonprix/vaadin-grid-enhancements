@@ -11,10 +11,12 @@ import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import org.vaadin.grid.cellrenderers.editable.DateFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
 import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 
 import javax.servlet.annotation.WebServlet;
+import java.util.Date;
 
 @Theme("demo")
 @Title("MyComponent Add-on Demo")
@@ -34,10 +36,12 @@ public class DemoUI extends UI {
         GridNavigationExtension.extend(grid);
 
         grid.setHeightByRows(10.0);
+        grid.setWidth("700px");
 
         grid.getColumn("foo").setRenderer(new TextFieldRenderer<String>());
         grid.getColumn("bar").setRenderer(new TextFieldRenderer<Integer>());
         grid.getColumn("km").setRenderer(new TextFieldRenderer<Double>());
+        grid.getColumn("today").setRenderer(new DateFieldRenderer());
 
         // Show it in the middle of the screen
         final VerticalLayout layout = new VerticalLayout();
@@ -55,6 +59,7 @@ public class DemoUI extends UI {
         container.addContainerProperty("bar", Integer.class, 0);
         // km contains double values from 0.0 to 2.0
         container.addContainerProperty("km", Double.class, 0);
+        container.addContainerProperty("today", Date.class, new Date());
 
         // Populate data
         for (int i = 0; i <= 30; ++i) {

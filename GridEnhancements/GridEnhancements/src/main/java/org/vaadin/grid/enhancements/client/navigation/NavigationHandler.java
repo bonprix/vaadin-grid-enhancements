@@ -6,7 +6,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.vaadin.client.VConsole;
 import com.vaadin.client.WidgetUtil;
 import com.vaadin.client.widget.grid.CellReference;
 import com.vaadin.client.widgets.Grid;
@@ -23,12 +22,9 @@ public class NavigationHandler implements KeyDownHandler {
     public void onKeyDown(KeyDownEvent keyDownEvent) {
 
         Element focusedElement = WidgetUtil.getFocusedElement();
-        VConsole.log("Key down! " + focusedElement.getNodeName());
         if (!focusedElement.getNodeName().equals("INPUT")) {
             return;
         }
-        VConsole.log("Handle key! " + keyDownEvent.getNativeEvent().getType() + " : " + keyDownEvent.getNativeEvent().getType().equals(BrowserEvents.KEYDOWN) +
-                " :: " + keyDownEvent.getNativeEvent().getKeyCode());
 
         final CellReference cellReference;
         switch (keyDownEvent.getNativeKeyCode()) {
