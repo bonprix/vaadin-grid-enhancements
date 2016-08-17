@@ -31,12 +31,8 @@ public class NavigationHandler implements KeyDownHandler {
             case KeyCodes.KEY_ENTER:
                 cellReference = grid.getCellReference(focusedElement.getParentElement());
                 int rows = grid.getDataSource().size();
-                int columns = grid.getVisibleColumns().size();
-                if (cellReference.getColumnIndex() + 1 < columns) {
-                    NavigationUtil.focusCell(grid, cellReference.getRowIndex(), cellReference.getColumnIndex() + 1);
-                    focusInputField();
-                } else if (cellReference.getRowIndex() + 1 < rows) {
-                    NavigationUtil.focusCell(grid, cellReference.getRowIndex() + 1, 0);
+                if (cellReference.getRowIndex() + 1 < rows) {
+                    NavigationUtil.focusCell(grid, cellReference.getRowIndex() + 1, cellReference.getColumnIndex());
                     focusInputField();
                 }
                 break;
