@@ -12,6 +12,7 @@ import com.vaadin.ui.Grid;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.renderers.Renderer;
 import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.cellrenderers.editable.DateFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
@@ -40,47 +41,35 @@ public class DemoUI extends UI {
         latestChangeLabel = new Label("Latest change: -none-");
 
         final Grid grid = new Grid(getDataSource());
+
+        // Extend grid with navigation extension so we can navigate form input to input
         GridNavigationExtension.extend(grid);
 
         grid.setHeightByRows(10.0);
         grid.setWidth("700px");
 
-        TextFieldRenderer<String> stringRenderer = new TextFieldRenderer<String>();
-        grid.getColumn("foo").setRenderer(stringRenderer);
+        // Add cell renderers
+        grid.getColumn("foo").setRenderer(new TextFieldRenderer<String>());
         grid.getColumn("foo").setExpandRatio(1);
-        stringRenderer.addItemEditListener(new EditableRenderer.ItemEditListener() {
-            @Override
-            public void itemEdited(EditableRenderer.ItemEditEvent event) {
-                latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' " + event.getNewValue());
-            }
-        });
-        TextFieldRenderer<Integer> integerRenderer = new TextFieldRenderer<Integer>();
-        grid.getColumn("bar").setRenderer(integerRenderer);
+        grid.getColumn("bar").setRenderer(new TextFieldRenderer<Integer>());
         grid.getColumn("bar").setWidth(100);
-        integerRenderer.addItemEditListener(new EditableRenderer.ItemEditListener() {
-            @Override
-            public void itemEdited(EditableRenderer.ItemEditEvent event) {
-                latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' " + event.getNewValue());
-            }
-        });
-        TextFieldRenderer<Double> doubleRenderer = new TextFieldRenderer<Double>();
-        grid.getColumn("km").setRenderer(doubleRenderer);
+        grid.getColumn("km").setRenderer(new TextFieldRenderer<Double>());
         grid.getColumn("km").setWidth(100);
-        doubleRenderer.addItemEditListener(new EditableRenderer.ItemEditListener() {
-            @Override
-            public void itemEdited(EditableRenderer.ItemEditEvent event) {
-                latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' " + event.getNewValue());
-            }
-        });
-        DateFieldRenderer dateRenderer = new DateFieldRenderer();
-        grid.getColumn("today").setRenderer(dateRenderer);
+        grid.getColumn("today").setRenderer(new DateFieldRenderer());
         grid.getColumn("today").setWidth(200);
-        dateRenderer.addItemEditListener(new EditableRenderer.ItemEditListener() {
-            @Override
-            public void itemEdited(EditableRenderer.ItemEditEvent event) {
-                latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' " + new SimpleDateFormat("dd-MM-yyyy").format(event.getNewValue()));
+
+        // Add renderer listeners so we catch item edit events.
+        for (Grid.Column col : grid.getColumns()) {
+            Renderer<?> renderer = col.getRenderer();
+            if (!(renderer instanceof EditableRenderer)) continue;
+
+            // In the demo instance we want to show a formatted date
+            if (renderer.getPresentationType().equals(Date.class)) {
+                ((EditableRenderer) renderer).addItemEditListener(dateItemEdit);
+            } else {
+                ((EditableRenderer) renderer).addItemEditListener(itemEdit);
             }
-        });
+        }
 
         // Show it in the middle of the screen
         VerticalLayout content = new VerticalLayout();
@@ -99,6 +88,11 @@ public class DemoUI extends UI {
 
     }
 
+    /**
+     * Create and populate an indexed container
+     *
+     * @return Populated indexed container
+     */
     public IndexedContainer getDataSource() {
         IndexedContainer container = new IndexedContainer();
         container.addContainerProperty("foo", String.class, "");
@@ -118,4 +112,26 @@ public class DemoUI extends UI {
 
         return container;
     }
+
+    // --- ItemEditListeners ---
+
+    /**
+     * Update change lable with the column and value of the latest edit
+     */
+    private EditableRenderer.ItemEditListener itemEdit = new EditableRenderer.ItemEditListener() {
+        @Override
+        public void itemEdited(EditableRenderer.ItemEditEvent event) {
+            latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' " + event.getNewValue());
+        }
+    };
+
+    /**
+     * Same as itemEdit, but with the date value formatted.
+     */
+    private EditableRenderer.ItemEditListener dateItemEdit = new EditableRenderer.ItemEditListener() {
+        @Override
+        public void itemEdited(EditableRenderer.ItemEditEvent event) {
+            latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' " + new SimpleDateFormat("dd-MM-yyyy").format(event.getNewValue()));
+        }
+    };
 }
