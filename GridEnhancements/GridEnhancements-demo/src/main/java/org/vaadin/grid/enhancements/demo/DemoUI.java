@@ -16,6 +16,7 @@ import com.vaadin.ui.renderers.Renderer;
 import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.cellrenderers.editable.DateFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
+import org.vaadin.grid.enhancements.cellrenderers.CheckBoxRenderer;
 import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 
 import javax.servlet.annotation.WebServlet;
@@ -56,7 +57,9 @@ public class DemoUI extends UI {
         grid.getColumn("km").setRenderer(new TextFieldRenderer<Double>());
         grid.getColumn("km").setWidth(100);
         grid.getColumn("today").setRenderer(new DateFieldRenderer());
-        grid.getColumn("today").setWidth(200);
+        grid.getColumn("today").setWidth(150);
+        grid.getColumn("yes").setRenderer(new CheckBoxRenderer());
+        grid.getColumn("yes").setWidth(65);
 
         // Add renderer listeners so we catch item edit events.
         for (Grid.Column col : grid.getColumns()) {
@@ -100,6 +103,7 @@ public class DemoUI extends UI {
         // km contains double values from 0.0 to 2.0
         container.addContainerProperty("km", Double.class, 0);
         container.addContainerProperty("today", Date.class, new Date());
+        container.addContainerProperty("yes", Boolean.class, false);
 
         // Populate data
         for (int i = 0; i <= 30; ++i) {
