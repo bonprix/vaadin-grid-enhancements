@@ -11,8 +11,10 @@
 	<modules>
 		<!-- GridEnhancements add-on and demo -->
 		<module>GridEnhancements</module>
-		<!-- Only grid-renderers-collection add-on -->
+		<!-- Only add the grid-renderers-collection add-on module -->
 		<module>grid-renderers-collection-addon/grid-renderers-collection-addon</module>
+		<!-- Only add the gridactionrenderer add-on module -->
+		<module>GridActionRenderer/gridactionrenderer-addon</module>
 	</modules>
 
 </project>

@@ -1,3 +1,6 @@
 [submodule "grid-renderers-collection-addon"]
 	path = grid-renderers-collection-addon
 	url = https://github.com/bonprix/grid-renderers-collection-addon
+[submodule "GridActionRenderer"]
+	path = GridActionRenderer
+	url = https://github.com/bonprix/GridActionRenderer

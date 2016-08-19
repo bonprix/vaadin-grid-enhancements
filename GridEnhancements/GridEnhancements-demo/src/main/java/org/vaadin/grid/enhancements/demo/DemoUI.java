@@ -5,6 +5,7 @@ import com.vaadin.annotations.Title;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.data.Item;
 import com.vaadin.data.util.IndexedContainer;
+import com.vaadin.server.FontAwesome;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.Alignment;
@@ -13,6 +14,9 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.Renderer;
+import org.vaadin.anna.gridactionrenderer.ActionGrid;
+import org.vaadin.anna.gridactionrenderer.GridAction;
+import org.vaadin.anna.gridactionrenderer.GridActionRenderer;
 import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.cellrenderers.editable.DateFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
@@ -21,7 +25,9 @@ import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 
 import javax.servlet.annotation.WebServlet;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Theme("demo")
 @Title("MyComponent Add-on Demo")
@@ -41,15 +47,26 @@ public class DemoUI extends UI {
 
         latestChangeLabel = new Label("Latest change: -none-");
 
-        final Grid grid = new Grid(getDataSource());
+        final ActionGrid grid = new ActionGrid(createActions()) {
+            @Override
+            public void click(GridActionRenderer.GridActionClickEvent event) {
+
+            }
+        };
+        grid.setContainerDataSource(getDataSource());
 
         // Extend grid with navigation extension so we can navigate form input to input
         GridNavigationExtension.extend(grid);
 
         grid.setHeightByRows(10.0);
-        grid.setWidth("700px");
+        grid.setWidth("800px");
 
         // Add cell renderers
+        // Custom action renderers
+        grid.getColumn("actions").setRenderer(grid.getGridActionRenderer());
+        grid.getColumn("actions").setWidth(100);
+
+        // Field renderers
         grid.getColumn("foo").setRenderer(new TextFieldRenderer<String>());
         grid.getColumn("foo").setExpandRatio(1);
         grid.getColumn("bar").setRenderer(new TextFieldRenderer<Integer>());
@@ -91,6 +108,13 @@ public class DemoUI extends UI {
 
     }
 
+    private static List<GridAction> createActions() {
+        List<GridAction> actions = new ArrayList<GridAction>();
+        actions.add(new GridAction(FontAwesome.USER, "user"));
+        actions.add(new GridAction(FontAwesome.GEAR, "settings"));
+        return actions;
+    }
+
     /**
      * Create and populate an indexed container
      *
@@ -98,6 +122,7 @@ public class DemoUI extends UI {
      */
     public IndexedContainer getDataSource() {
         IndexedContainer container = new IndexedContainer();
+        container.addContainerProperty("actions", String.class, "0,1");
         container.addContainerProperty("foo", String.class, "");
         container.addContainerProperty("bar", Integer.class, 0);
         // km contains double values from 0.0 to 2.0
@@ -112,6 +137,9 @@ public class DemoUI extends UI {
             item.getItemProperty("foo").setValue("foo");
             item.getItemProperty("bar").setValue(i);
             item.getItemProperty("km").setValue(i / 5.0d);
+
+            // List index 0-1 not 1-2
+            if (new java.util.Random().nextInt(5) < 3) item.getItemProperty("actions").setValue("1");
         }
 
         return container;
