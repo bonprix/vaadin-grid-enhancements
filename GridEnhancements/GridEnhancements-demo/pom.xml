@@ -6,7 +6,7 @@
 	<artifactId>GridEnhancements-demo</artifactId>
 	<packaging>war</packaging>
 	<version>1.0-SNAPSHOT</version>
-	<name>MyComponent Add-on Demo</name>
+	<name>Grid enhancements Add-on Demo</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
