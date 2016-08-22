@@ -1,5 +1,7 @@
 package org.vaadin.grid.enhancements.client.cellrenderers;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.vaadin.client.connectors.ClickableRendererConnector;
 import com.vaadin.client.renderers.ClickableRenderer;
@@ -24,10 +26,10 @@ public class CheckBoxRendererConnector extends ClickableRendererConnector<Boolea
         return (CheckBoxClientRenderer) super.getRenderer();
     }
 
-    public static class CheckBoxClientRenderer extends ClickableRenderer<Boolean, VCheckBox> {
+    public static class CheckBoxClientRenderer extends ClickableRenderer<Boolean, CheckBox> {
 
         @Override
-        public void render(RendererCellReference rendererCellReference, Boolean aBoolean, VCheckBox checkBox) {
+        public void render(RendererCellReference rendererCellReference, Boolean aBoolean, CheckBox checkBox) {
             checkBox.setEnabled(rendererCellReference.getColumn().isEditable() && rendererCellReference.getGrid().isEnabled());
 
             checkBox.setValue(aBoolean);
@@ -36,11 +38,13 @@ public class CheckBoxRendererConnector extends ClickableRendererConnector<Boolea
         }
 
         @Override
-        public VCheckBox createWidget() {
-            VCheckBox checkBox = new VCheckBox();
+        public CheckBox createWidget() {
+            CheckBox checkBox = new CheckBox();
             checkBox.addClickHandler(this);
+            checkBox.setStyleName("v-checkbox");
             checkBox.getElement().removeAttribute("tabindex");
             return checkBox;
         }
+
     }
 }
