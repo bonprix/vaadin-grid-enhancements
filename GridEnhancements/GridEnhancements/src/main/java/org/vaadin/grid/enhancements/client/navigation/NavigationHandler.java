@@ -54,6 +54,8 @@ public class NavigationHandler implements KeyDownHandler {
                 if (cellReference.getRowIndex() > 0) {
                     NavigationUtil.focusCell(grid, cellReference.getRowIndex() - 1, cellReference.getColumnIndex());
                     focusInputField();
+                } else {
+                    focusedElement.focus();
                 }
                 break;
             case KeyCodes.KEY_DOWN:
@@ -65,6 +67,8 @@ public class NavigationHandler implements KeyDownHandler {
                 if (cellReference.getRowIndex() + 1 < grid.getDataSource().size()) {
                     NavigationUtil.focusCell(grid, cellReference.getRowIndex() + 1, cellReference.getColumnIndex());
                     focusInputField();
+                } else {
+                    focusedElement.focus();
                 }
                 break;
         }
