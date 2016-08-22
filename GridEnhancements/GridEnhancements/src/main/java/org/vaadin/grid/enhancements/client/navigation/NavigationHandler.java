@@ -71,6 +71,14 @@ public class NavigationHandler implements KeyDownHandler {
                     focusedElement.focus();
                 }
                 break;
+            case KeyCodes.KEY_TAB:
+                cellReference = grid.getCellReference(focusedElement.getParentElement());
+
+                if ((keyDownEvent.isShiftKeyDown() && NavigationUtil.isFirstCell(cellReference)) || (!keyDownEvent.isShiftKeyDown() && NavigationUtil.isLastCell(cellReference, grid))) {
+                    keyDownEvent.preventDefault();
+                    keyDownEvent.stopPropagation();
+                }
+                break;
         }
     }
 

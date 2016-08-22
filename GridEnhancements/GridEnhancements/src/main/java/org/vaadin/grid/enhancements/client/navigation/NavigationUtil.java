@@ -5,6 +5,7 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.vaadin.client.WidgetUtil;
 import com.vaadin.client.widget.escalator.Cell;
+import com.vaadin.client.widget.grid.CellReference;
 import com.vaadin.client.widgets.Grid;
 
 /**
@@ -52,6 +53,13 @@ public final class NavigationUtil {
         return null;
     }
 
+    protected static boolean isFirstCell(CellReference cellReference) {
+        return cellReference.getRowIndex() == 0 && cellReference.getColumnIndex() == 0;
+    }
+
+    protected static boolean isLastCell(CellReference cellReference, Grid grid) {
+        return cellReference.getRowIndex() + 1 == grid.getDataSource().size() && cellReference.getColumnIndex() + 1 == grid.getColumnCount();
+    }
     /**
      * Focus grid cell at rowIndex, columnIndex
      */
