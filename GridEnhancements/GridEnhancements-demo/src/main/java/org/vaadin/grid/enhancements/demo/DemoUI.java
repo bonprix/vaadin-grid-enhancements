@@ -21,12 +21,14 @@ import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.cellrenderers.editable.DateFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.CheckBoxRenderer;
+import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
 import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 
 import javax.servlet.annotation.WebServlet;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 @Theme("demo")
@@ -59,7 +61,7 @@ public class DemoUI extends UI {
         GridNavigationExtension.extend(grid);
 
         grid.setHeightByRows(10.0);
-        grid.setWidth("800px");
+        grid.setWidth("950px");
 
         // Add cell renderers
         // Custom action renderers
@@ -77,6 +79,8 @@ public class DemoUI extends UI {
         grid.getColumn("today").setWidth(150);
         grid.getColumn("yes").setRenderer(new CheckBoxRenderer());
         grid.getColumn("yes").setWidth(65);
+        grid.getColumn("combo").setRenderer(new ComboBoxRenderer(getItemList()));
+        grid.getColumn("combo").setWidth(150);
 
         // Add renderer listeners so we catch item edit events.
         for (Grid.Column col : grid.getColumns()) {
@@ -108,6 +112,21 @@ public class DemoUI extends UI {
 
     }
 
+    private LinkedList<String> getItemList() {
+        return new LinkedList<String>() {{
+            add("one");
+            add("two");
+            add("three");
+            add("four");
+            add("five");
+            add("six");
+            add("seven");
+            add("eight");
+            add("nine");
+            add("ten");
+        }};
+    }
+
     private static List<GridAction> createActions() {
         List<GridAction> actions = new ArrayList<GridAction>();
         actions.add(new GridAction(FontAwesome.USER, "user"));
@@ -129,6 +148,7 @@ public class DemoUI extends UI {
         container.addContainerProperty("km", Double.class, 0);
         container.addContainerProperty("today", Date.class, new Date());
         container.addContainerProperty("yes", Boolean.class, false);
+        container.addContainerProperty("combo", String.class, "");
 
         // Populate data
         for (int i = 0; i <= 30; ++i) {
@@ -137,6 +157,7 @@ public class DemoUI extends UI {
             item.getItemProperty("foo").setValue("foo");
             item.getItemProperty("bar").setValue(i);
             item.getItemProperty("km").setValue(i / 5.0d);
+            item.getItemProperty("combo").setValue("one");
 
             // List index 0-1 not 1-2
             if (new java.util.Random().nextInt(5) < 3) item.getItemProperty("actions").setValue("1");

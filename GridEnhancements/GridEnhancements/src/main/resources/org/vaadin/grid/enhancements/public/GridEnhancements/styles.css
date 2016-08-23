@@ -5,3 +5,76 @@ div.GridEnhancements {
 	-moz-user-select: none;
 	-ms-user-select: none;
 }
+
+.c-combobox-input {
+	box-sizing: border-box;
+	-webkit-appearance: none;margin: 0;
+	font: inherit;
+	font-weight: 400;
+	line-height: normal;border: 1px solid #c5c5c5;
+	background: white;
+	color: #474747;
+	-webkit-box-shadow: inset 0 1px 0 #f7f7f7, 0 1px 0 rgba(255, 255, 255, 0.1);
+	box-shadow: inset 0 1px 0 #f7f7f7, 0 1px 0 rgba(255, 255, 255, 0.1);
+	-webkit-transition: box-shadow 180ms, border 180ms;
+	-moz-transition: box-shadow 180ms, border 180ms;
+	transition: box-shadow 180ms, border 180ms;
+	width: 100% !important;
+	height: 100%;
+	padding-right: 38px;
+	border-radius: inherit;
+}
+
+.c-combobox-button {
+	/*-webkit-tap-highlight-color: transparent;*/
+	/*-webkit-touch-callout: none;*/
+	/*cursor: pointer;*/
+	/*position: absolute;*/
+	/*width: 37px;*/
+	/*top: 1px;*/
+	/*right: 1px;*/
+	/*bottom: 1px;*/
+	/*border-left: 1px solid #e4e4e4;*/
+	color: #a3a3a3;
+
+	border-radius: 0 3px 3px 0;background-image: -webkit-linear-gradient(#fcfcfc, #eee);
+    background-image: linear-gradient(#fcfcfc, #eee);
+}
+
+.c-combobox-button:before {
+	color: black;
+	/*font-family: ThemeIcons;*/
+	/*content: "\f078";*/
+	/*-webkit-transition: color 140ms;*/
+	/*-moz-transition: color 140ms;*/
+	/*transition: color 140ms;*/
+	/*position: absolute;*/
+	/*width: 37px;*/
+	/*text-align: center;*/
+	/*top: 50%;*/
+	/*line-height: 1;*/
+	right: -1px;
+	/*margin-top: -0.47em;*/
+}
+
+.c-combo-popup {
+    background-color: white;
+    border: 1px solid #a3a3a3;
+
+
+}
+
+.c-combo-popup-prevpage {
+    border: none;
+    border-bottom: 1px solid gray;
+    background-color: transparent;
+    font-size: 14px;
+}
+
+.c-combo-popup-nextpage {
+    border: none;
+    border-top: 1px solid gray;
+    background-color: transparent;
+    font-size: 14px;
+
+}
