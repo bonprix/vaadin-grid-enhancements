@@ -50,7 +50,7 @@ public class DemoUI extends UI {
         final ActionGrid grid = new ActionGrid(createActions()) {
             @Override
             public void click(GridActionRenderer.GridActionClickEvent event) {
-
+                latestChangeLabel.setValue("Latest change: '" + event.getAction().getDescription() + "'");
             }
         };
         grid.setContainerDataSource(getDataSource());

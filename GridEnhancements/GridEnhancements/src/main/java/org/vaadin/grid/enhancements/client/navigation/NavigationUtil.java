@@ -40,7 +40,8 @@ public final class NavigationUtil {
     protected static Element getInputElement(NodeList<Node> nodes) {
         for (int i = 0; i < nodes.getLength(); i++) {
             Node node = nodes.getItem(i);
-            if (node.getNodeName().equals("INPUT")) {
+            // Focus on <input> and <button> but only if they are visible.
+            if ((node.getNodeName().equals("INPUT") || node.getNodeName().equals("BUTTON")) && !((Element)node).getStyle().getDisplay().equals("none")) {
                 return (Element) node;
             } else if (node.getChildNodes().getLength() > 0) {
                 Element inputNode = getInputElement(node.getChildNodes());

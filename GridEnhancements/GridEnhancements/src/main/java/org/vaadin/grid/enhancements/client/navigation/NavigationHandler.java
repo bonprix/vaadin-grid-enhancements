@@ -21,7 +21,7 @@ public class NavigationHandler implements KeyDownHandler {
     public void onKeyDown(KeyDownEvent keyDownEvent) {
 
         Element focusedElement = WidgetUtil.getFocusedElement();
-        if (!focusedElement.getNodeName().equals("INPUT")) {
+        if (!(focusedElement.getNodeName().equals("INPUT") || focusedElement.getNodeName().equals("BUTTON"))) {
             return;
         }
 

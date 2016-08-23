@@ -58,7 +58,7 @@ public class BodyNaviagtionHandler implements BodyKeyDownHandler {
     private boolean containsInput(NodeList<Node> nodes) {
         for (int i = 0; i < nodes.getLength(); i++) {
             Node node = nodes.getItem(i);
-            if (node.getNodeName().equals("INPUT")) {
+            if (node.getNodeName().equals("INPUT") || node.getNodeName().equals("BUTTON")) {
                 return true;
             } else if (node.getChildNodes().getLength() > 0) {
                 if (containsInput(node.getChildNodes())) {
