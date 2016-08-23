@@ -41,7 +41,7 @@ public final class NavigationUtil {
         for (int i = 0; i < nodes.getLength(); i++) {
             Node node = nodes.getItem(i);
             // Focus on <input> and <button> but only if they are visible.
-            if ((node.getNodeName().equals("INPUT") || node.getNodeName().equals("BUTTON")) && !((Element)node).getStyle().getDisplay().equals("none")) {
+            if ((node.getNodeName().equals("INPUT") || node.getNodeName().equals("BUTTON")) && !((Element) node).getStyle().getDisplay().equals("none")) {
                 return (Element) node;
             } else if (node.getChildNodes().getLength() > 0) {
                 Element inputNode = getInputElement(node.getChildNodes());
@@ -54,13 +54,48 @@ public final class NavigationUtil {
         return null;
     }
 
+    /**
+     * Check if cell is the first cell in the whole grid
+     *
+     * @param cellReference Cell
+     * @return true if first cell in the first row
+     */
     protected static boolean isFirstCell(CellReference cellReference) {
         return cellReference.getRowIndex() == 0 && cellReference.getColumnIndex() == 0;
     }
 
+    /**
+     * Check if the cell is the last cell in the whole grid
+     *
+     * @param cellReference Cell
+     * @param grid          Grid to check
+     * @return true if the last column in the last row
+     */
     protected static boolean isLastCell(CellReference cellReference, Grid grid) {
         return cellReference.getRowIndex() + 1 == grid.getDataSource().size() && cellReference.getColumnIndex() + 1 == grid.getColumnCount();
     }
+
+    /**
+     * Check if given cell is in the first column of the row
+     *
+     * @param cellReference cell
+     * @return true if in first column
+     */
+    protected static boolean isfirstColumn(CellReference cellReference) {
+        return cellReference.getColumnIndex() == 0;
+    }
+
+    /**
+     * Check if given cell is on the last column of the row
+     *
+     * @param cellReference Cell
+     * @param grid          Grid for cell
+     * @return true if in last column
+     */
+    protected static boolean isLastColumn(CellReference cellReference, Grid grid) {
+        return cellReference.getColumnIndex() + 1 == grid.getColumnCount();
+    }
+
     /**
      * Focus grid cell at rowIndex, columnIndex
      */

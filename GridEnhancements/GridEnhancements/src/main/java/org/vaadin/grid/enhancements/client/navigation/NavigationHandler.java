@@ -40,6 +40,7 @@ public class NavigationHandler implements KeyDownHandler {
                 keyDownEvent.preventDefault();
                 keyDownEvent.stopPropagation();
 
+                // blur input element se we get a value change
                 focusedElement.blur();
                 cellReference = grid.getCellReference(focusedElement.getParentElement());
                 NavigationUtil.focusCell(grid, cellReference.getRowIndex(), cellReference.getColumnIndex());
@@ -49,12 +50,15 @@ public class NavigationHandler implements KeyDownHandler {
                 keyDownEvent.preventDefault();
                 keyDownEvent.stopPropagation();
 
+                // blur input element se we get a value change
                 focusedElement.blur();
                 cellReference = grid.getCellReference(focusedElement.getParentElement());
                 if (cellReference.getRowIndex() > 0) {
+                    // move up one row
                     NavigationUtil.focusCell(grid, cellReference.getRowIndex() - 1, cellReference.getColumnIndex());
                     focusInputField();
                 } else {
+                    // refocus element in case we can't move up
                     focusedElement.focus();
                 }
                 break;
@@ -62,24 +66,66 @@ public class NavigationHandler implements KeyDownHandler {
                 keyDownEvent.preventDefault();
                 keyDownEvent.stopPropagation();
 
+                // blur input element se we get a value change
                 focusedElement.blur();
                 cellReference = grid.getCellReference(focusedElement.getParentElement());
                 if (cellReference.getRowIndex() + 1 < grid.getDataSource().size()) {
+                    // move down one row
                     NavigationUtil.focusCell(grid, cellReference.getRowIndex() + 1, cellReference.getColumnIndex());
                     focusInputField();
                 } else {
+                    // refocus element in case we can't move down
                     focusedElement.focus();
                 }
                 break;
             case KeyCodes.KEY_TAB:
-                cellReference = grid.getCellReference(focusedElement.getParentElement());
+                cellReference = grid.getCellReference(getCellElement(focusedElement));
 
+                // If first or last cell in grid stop default and keep focus
                 if ((keyDownEvent.isShiftKeyDown() && NavigationUtil.isFirstCell(cellReference)) || (!keyDownEvent.isShiftKeyDown() && NavigationUtil.isLastCell(cellReference, grid))) {
                     keyDownEvent.preventDefault();
                     keyDownEvent.stopPropagation();
+                } else if (keyDownEvent.isShiftKeyDown() && NavigationUtil.isfirstColumn(cellReference)) {
+                    // If we have a sibling button to focus then focus normally.
+                    if (focusedElement.getNodeName().equals("BUTTON") && focusedElement.getPreviousSiblingElement() != null) {
+                        break;
+                    }
+                    // Prevent default and move one row up and to the last column
+                    keyDownEvent.preventDefault();
+                    keyDownEvent.stopPropagation();
+                    // Step up one row and to the last column
+                    NavigationUtil.focusCell(grid, cellReference.getRowIndex() - 1, grid.getColumnCount() - 1);
+                    focusInputField();
+                } else if (!keyDownEvent.isShiftKeyDown() && NavigationUtil.isLastColumn(cellReference, grid)) {
+                    // If we have a sibling button to focus then focus normally.
+                    if (focusedElement.getNodeName().equals("BUTTON") && focusedElement.getNextSiblingElement() != null) {
+                        break;
+                    }
+                    // Prevent default and move one row down and to the first column
+                    keyDownEvent.preventDefault();
+                    keyDownEvent.stopPropagation();
+                    // Step down one row and to the first column
+                    NavigationUtil.focusCell(grid, cellReference.getRowIndex() + 1, 0);
+                    focusInputField();
                 }
                 break;
         }
+    }
+
+    /**
+     * Get the cell element even if we have to recurse one or two steps.
+     * @param focusedElement Element for which we want the parent cell element
+     * @return Grid cell element if found else last parent element
+     */
+    private Element getCellElement(Element focusedElement) {
+        if (!focusedElement.hasParentElement()) {
+            return focusedElement;
+        }
+        if (focusedElement.getParentElement().getNodeName().equals("TD")) {
+            return focusedElement.getParentElement();
+        }
+
+        return getCellElement(focusedElement.getParentElement());
     }
 
     private void focusInputField() {
