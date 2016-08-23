@@ -40,14 +40,9 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
 
     private ComboBoxServerRpc rpc = new ComboBoxServerRpc() {
 
-        private Map<CellId, List<String>> filtered = Maps.newHashMap();
-
         @Override
         public void getPage(int page, CellId id) {
             // Clean old filter information
-            if (filtered.containsKey(id)) {
-                filtered.remove(id);
-            }
             if (page == -1) {
                 page = fullList.indexOf(getCellProperty(id).getValue()) / pageSize;
                 // Inform which page we are sending.
@@ -62,16 +57,16 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
 
         @Override
         public void getFilterPage(String filter, int page, CellId id) {
+            if(filter.isEmpty()) {
+                getPage(0, id);
+                return;
+            }
+
             List<String> filteredResult;
-            if (filtered.containsKey(id)) {
-                filteredResult = filtered.get(id);
-            } else {
                 filteredResult = new LinkedList<String>();
                 for (String s : fullList) {
                     if (s.contains(filter)) filteredResult.add(s);
                 }
-                filtered.put(id, filteredResult);
-            }
 
             int filteredPages = (int) Math.ceil((double) filteredResult.size() / pageSize);
 

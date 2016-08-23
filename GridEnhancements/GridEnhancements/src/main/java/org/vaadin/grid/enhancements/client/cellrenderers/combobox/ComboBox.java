@@ -1,5 +1,7 @@
 package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
 
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -25,48 +27,32 @@ import java.util.List;
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class ComboBox extends Composite implements KeyDownHandler, HasChangeHandlers {
+public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, HasChangeHandlers {
 
     private ComboBoxPopup popup = null;
 
     private String selected;
     private TextBox selector;
+    private Button drop;
 
     private EventHandler eventHandler;
 
     Timer t = null;
-
     // Page starts as page 0
     private int currentPage = 0;
+
     private int pages = 1;
+    private boolean skipBlur = false;
 
     public ComboBox() {
         selector = new TextBox();
-        selector.addBitlessDomHandler(this, KeyDownEvent.getType());
+        selector.addKeyDownHandler(this);
 
         selector.getElement().getStyle().setProperty("padding", "0 16px");
         selector.setStyleName("c-combobox-input");
+        selector.addBlurHandler(this);
 
-        selector.addKeyDownHandler(new KeyDownHandler() {
-            @Override
-            public void onKeyDown(KeyDownEvent event) {
-                RegExp regex = RegExp.compile("^[a-zA-Z0-9]+$");
-                if (!regex.test("" + (char) event.getNativeKeyCode())) {
-                    return;
-                }
-                if (t == null)
-                    t = new Timer() {
-                        @Override
-                        public void run() {
-                            currentPage = 0;
-                            eventHandler.filter(selector.getValue(), currentPage);
-                        }
-                    };
-                t.schedule(300);
-            }
-        });
-
-        Button drop = new Button();
+        drop = new Button();
         drop.setStyleName("c-combobox-button");
         drop.addClickHandler(new ClickHandler() {
             @Override
@@ -75,7 +61,7 @@ public class ComboBox extends Composite implements KeyDownHandler, HasChangeHand
                     popup.hide();
                     popup = null;
                 } else {
-                    // Start from first page when opening.
+                    // Start from page where selection is when opening.
                     currentPage = -1;
                     eventHandler.getPage(currentPage);
                 }
@@ -125,6 +111,8 @@ public class ComboBox extends Composite implements KeyDownHandler, HasChangeHand
         void nextPage();
 
         void prevPage();
+
+        void clear();
     }
 
     public void setEventHandler(EventHandler eventHandler) {
@@ -136,6 +124,7 @@ public class ComboBox extends Composite implements KeyDownHandler, HasChangeHand
     }
 
     public void setSelection(String selection) {
+        selected = selection;
         selector.setValue(selection);
     }
 
@@ -145,24 +134,6 @@ public class ComboBox extends Composite implements KeyDownHandler, HasChangeHand
 
     public void setEnabled(boolean enabled) {
         selector.setEnabled(enabled);
-    }
-
-    // -- Handlers --
-
-    @Override
-    public void onKeyDown(KeyDownEvent event) {
-        if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN) {
-            event.stopPropagation();
-
-            // Focus popup if open else open popup with first page
-            if (popup != null && popup.isVisible()) {
-                popup.focusSelection(selected);
-            } else {
-                // Start from page with selection when opening.
-                currentPage = -1;
-                eventHandler.getPage(currentPage);
-            }
-        }
     }
 
     private void openDropdown(List<String> items) {
@@ -193,6 +164,12 @@ public class ComboBox extends Composite implements KeyDownHandler, HasChangeHand
             public void prevPage() {
                 eventHandler.getPage(--currentPage);
             }
+
+            @Override
+            public void clear() {
+                selector.setFocus(true);
+                eventHandler.clearFilter();
+            }
         });
 
         popup.setPreviousPageEnabled(currentPage > 0);
@@ -209,6 +186,70 @@ public class ComboBox extends Composite implements KeyDownHandler, HasChangeHand
                 popup.setPopupPosition(ComboBox.this.getAbsoluteLeft(), top);
             }
         });
+        skipBlur = true;
         popup.focusSelection(selected);
+    }
+
+    // -- Handlers --
+
+    @Override
+    public void onKeyDown(KeyDownEvent event) {
+
+        switch (event.getNativeKeyCode()) {
+            case KeyCodes.KEY_ESCAPE:
+                event.preventDefault();
+                event.stopPropagation();
+                if (popup != null && popup.isVisible()) {
+                    popup.hide();
+                }
+                selector.setValue(selected);
+                break;
+            case KeyCodes.KEY_DOWN:
+                event.preventDefault();
+                event.stopPropagation();
+
+                // Focus popup if open else open popup with first page
+                if (popup != null && popup.isVisible()) {
+                    popup.focusSelection(selected);
+                } else {
+                    // Start from page with selection when opening.
+                    currentPage = -1;
+                    eventHandler.getPage(currentPage);
+                }
+                break;
+            case KeyCodes.KEY_TAB:
+                if (popup != null && popup.isVisible()) {
+                    popup.hide();
+                }
+                selector.setValue(selected);
+                break;
+        }
+
+        RegExp regex = RegExp.compile("^[a-zA-Z0-9]+$");
+        if (!regex.test("" + (char) event.getNativeKeyCode()) && event.getNativeKeyCode() != KeyCodes.KEY_BACKSPACE) {
+            return;
+        }
+
+        if (t == null)
+            t = new Timer() {
+                @Override
+                public void run() {
+                    currentPage = 0;
+                    eventHandler.filter(selector.getValue(), currentPage);
+                    t = null;
+                }
+            };
+        t.schedule(300);
+    }
+
+    @Override
+    public void onBlur(BlurEvent event) {
+        if (!skipBlur) {
+            if (popup != null && popup.isVisible()) {
+                popup.hide();
+            }
+            selector.setValue(selected);
+            skipBlur = false;
+        }
     }
 }

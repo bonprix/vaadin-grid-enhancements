@@ -60,7 +60,7 @@ public class DemoUI extends UI {
         // Extend grid with navigation extension so we can navigate form input to input
         GridNavigationExtension.extend(grid);
 
-        grid.setHeightByRows(10.0);
+        grid.setHeight("420px");
         grid.setWidth("950px");
 
         // Add cell renderers
