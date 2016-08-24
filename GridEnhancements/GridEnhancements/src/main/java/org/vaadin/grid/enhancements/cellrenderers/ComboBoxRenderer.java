@@ -1,6 +1,5 @@
 package org.vaadin.grid.enhancements.cellrenderers;
 
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
 import org.vaadin.grid.cellrenderers.EditableRenderer;
@@ -11,9 +10,10 @@ import org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxState;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 /**
+ * Grid renderer that renders a ComboBox element
+ *
  * @author Mikael Grankvist - Vaadin Ltd
  */
 public class ComboBoxRenderer extends EditableRenderer<String> {
@@ -33,6 +33,15 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
         pages = (int) Math.ceil((double) fullList.size() / pageSize);
     }
 
+    /**
+     * Set the amount of items to be shown in the dropdown.
+     *
+     * @param pageSize Amount of items to show on page
+     */
+    public void setPageSize(int pageSize) {
+        this.pageSize = pageSize;
+    }
+
     @Override
     protected ComboBoxState getState() {
         return (ComboBoxState) super.getState();
@@ -42,7 +51,6 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
 
         @Override
         public void getPage(int page, CellId id) {
-            // Clean old filter information
             if (page == -1) {
                 page = fullList.indexOf(getCellProperty(id).getValue()) / pageSize;
                 // Inform which page we are sending.
@@ -57,18 +65,24 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
 
         @Override
         public void getFilterPage(String filter, int page, CellId id) {
-            if(filter.isEmpty()) {
-                getPage(0, id);
+            if (filter.isEmpty()) {
+                getPage(-1, id);
                 return;
             }
 
             List<String> filteredResult;
-                filteredResult = new LinkedList<String>();
-                for (String s : fullList) {
-                    if (s.contains(filter)) filteredResult.add(s);
-                }
+            filteredResult = new LinkedList<String>();
+            for (String s : fullList) {
+                if (s.contains(filter)) filteredResult.add(s);
+            }
 
             int filteredPages = (int) Math.ceil((double) filteredResult.size() / pageSize);
+
+            if (page == -1) {
+                page = filteredResult.indexOf(getCellProperty(id).getValue()) / pageSize;
+                // Inform which page we are sending.
+                getRpcProxy(ComboBoxClientRpc.class).setCurrentPage(page, id);
+            }
 
             int fromIndex = pageSize * page;
             int toIndex = fromIndex + pageSize > filteredResult.size() ? filteredResult.size() : fromIndex + pageSize;

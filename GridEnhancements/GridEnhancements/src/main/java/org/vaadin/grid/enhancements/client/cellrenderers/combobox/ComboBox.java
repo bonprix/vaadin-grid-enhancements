@@ -202,6 +202,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
                 if (popup != null && popup.isVisible()) {
                     popup.hide();
                 }
+                eventHandler.clearFilter();
                 selector.setValue(selected);
                 break;
             case KeyCodes.KEY_DOWN:

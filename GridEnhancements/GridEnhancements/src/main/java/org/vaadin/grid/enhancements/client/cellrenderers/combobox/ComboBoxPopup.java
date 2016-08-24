@@ -1,6 +1,7 @@
 package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
 
 import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -26,18 +27,22 @@ import java.util.List;
  */
 public class ComboBoxPopup extends DecoratedPopupPanel {
 
-    final CellList<String> list;
-    final SingleSelectionModel<String> selectionModel;
-    List<String> values;
+    private final CellList<String> list;
+    private final SingleSelectionModel<String> selectionModel;
+    private List<String> values;
 
     private Button up, down;
-    HandlerRegistration keyPressHandler = null;
+    private HandlerRegistration keyPressHandler = null;
+
+    private ComboBox.PopupEvent selectionListener;
 
     public ComboBoxPopup(List<String> values) {
         this.values = values;
         selectionModel = new SingleSelectionModel<String>(keyProvider);
 
-        list = new CellList<String>(new Cell(), keyProvider);
+        CellList.Resources resources = GWT.create(CellListResources.class);
+
+        list = new CellList<String>(new Cell(), resources, keyProvider);
         list.setPageSize(values.size());
         list.setRowCount(values.size(), true);
         list.setRowData(0, values);
@@ -46,7 +51,7 @@ public class ComboBoxPopup extends DecoratedPopupPanel {
         list.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
         list.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
 
-        list.setStyleName("v-filterselect-suggestmenu");
+        list.setStyleName("c-combobox-options");
         list.setSelectionModel(selectionModel);
 
         if(keyPressHandler != null) {
@@ -128,8 +133,6 @@ public class ComboBoxPopup extends DecoratedPopupPanel {
         ComboBoxPopup.this.hide();
         keyPressHandler.removeHandler();
     }
-
-    ComboBox.PopupEvent selectionListener;
 
     public void addListener(ComboBox.PopupEvent event) {
         this.selectionListener = event;
