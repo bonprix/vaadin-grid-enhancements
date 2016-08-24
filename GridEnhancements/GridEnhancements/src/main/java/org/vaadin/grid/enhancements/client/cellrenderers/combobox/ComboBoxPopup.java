@@ -2,11 +2,14 @@ package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellList;
@@ -20,7 +23,9 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.vaadin.client.VConsole;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Mikael Grankvist - Vaadin Ltd
@@ -32,7 +37,7 @@ public class ComboBoxPopup extends DecoratedPopupPanel {
     private List<String> values;
 
     private Button up, down;
-    private HandlerRegistration keyPressHandler = null;
+    private Set<HandlerRegistration> handlers = new HashSet<HandlerRegistration>();
 
     private ComboBox.PopupEvent selectionListener;
 
@@ -54,26 +59,43 @@ public class ComboBoxPopup extends DecoratedPopupPanel {
         list.setStyleName("c-combobox-options");
         list.setSelectionModel(selectionModel);
 
-        if(keyPressHandler != null) {
-            keyPressHandler.removeHandler();
+        if (!handlers.isEmpty()) {
+            for(HandlerRegistration handler: handlers) {
+                handler.removeHandler();
+            }
         }
 
-        keyPressHandler = list.addHandler(new KeyDownHandler() {
+        HandlerRegistration mouseHandler = list.addBitlessDomHandler(new MouseMoveHandler() {
+            @Override
+            public void onMouseMove(MouseMoveEvent event) {
+                Element target = event.getNativeEvent().getEventTarget().cast();
+                for (int i = 0; i < list.getVisibleItems().size(); i++) {
+                    Element e = list.getRowElement(i);
+                    if (e.equals(target)) {
+                        list.setKeyboardSelectedRow(i, true);
+                        break;
+                    }
+                }
+            }
+        }, MouseMoveEvent.getType());
+        handlers.add(mouseHandler);
+
+        HandlerRegistration keyPressHandler = list.addHandler(new KeyDownHandler() {
             @Override
             public void onKeyDown(KeyDownEvent event) {
                 VConsole.log("Key down");
-                switch(event.getNativeEvent().getKeyCode()) {
+                switch (event.getNativeEvent().getKeyCode()) {
                     case KeyCodes.KEY_ESCAPE:
                         closePopup();
                         selectionListener.clear();
                         break;
                     case KeyCodes.KEY_DOWN:
-                        if(list.getKeyboardSelectedRow() == list.getVisibleItems().size()-1 && down.isEnabled()) {
+                        if (list.getKeyboardSelectedRow() == list.getVisibleItems().size() - 1 && down.isEnabled()) {
                             selectionListener.nextPage();
                         }
                         break;
                     case KeyCodes.KEY_UP:
-                        if(list.getKeyboardSelectedRow() == 0 && up.isEnabled()) {
+                        if (list.getKeyboardSelectedRow() == 0 && up.isEnabled()) {
                             selectionListener.prevPage();
                         }
                         break;
@@ -86,6 +108,7 @@ public class ComboBoxPopup extends DecoratedPopupPanel {
                 }
             }
         }, KeyDownEvent.getType());
+        handlers.add(keyPressHandler);
 
         selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
             public void onSelectionChange(SelectionChangeEvent event) {
@@ -131,7 +154,11 @@ public class ComboBoxPopup extends DecoratedPopupPanel {
 
     private void closePopup() {
         ComboBoxPopup.this.hide();
-        keyPressHandler.removeHandler();
+        if (!handlers.isEmpty()) {
+            for(HandlerRegistration handler: handlers) {
+                handler.removeHandler();
+            }
+        }
     }
 
     public void addListener(ComboBox.PopupEvent event) {
@@ -141,7 +168,7 @@ public class ComboBoxPopup extends DecoratedPopupPanel {
     public void focusSelection(String selected) {
         if (values.contains(selected)) {
             list.setKeyboardSelectedRow(values.indexOf(selected), true);
-        } else if(!values.isEmpty()) {
+        } else if (!values.isEmpty()) {
             list.setKeyboardSelectedRow(0, true);
         } else {
             list.setFocus(true);
