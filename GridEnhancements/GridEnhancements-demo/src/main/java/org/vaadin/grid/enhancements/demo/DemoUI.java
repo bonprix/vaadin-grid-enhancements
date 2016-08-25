@@ -9,7 +9,9 @@ import com.vaadin.server.FontAwesome;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.Alignment;
+import com.vaadin.ui.Button;
 import com.vaadin.ui.Grid;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
@@ -22,6 +24,8 @@ import org.vaadin.grid.cellrenderers.editable.DateFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.CheckBoxRenderer;
 import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
+import org.vaadin.teemusa.gridextensions.client.tableselection.TableSelectionState;
+import org.vaadin.teemusa.gridextensions.tableselection.TableSelectionModel;
 
 import javax.servlet.annotation.WebServlet;
 import java.text.SimpleDateFormat;
@@ -57,6 +61,24 @@ public class DemoUI extends UI {
 
         // Extend grid with navigation extension so we can navigate form input to input
         GridNavigationExtension.extend(grid);
+
+        final TableSelectionModel tableSelect = new TableSelectionModel();
+        grid.setSelectionModel(tableSelect);
+        tableSelect.setMode(TableSelectionState.TableSelectionMode.NONE);
+        
+        final HorizontalLayout tableSelectionControls = new HorizontalLayout();
+        tableSelectionControls.setCaption("Table Selection Controls - NONE");
+
+        // Controls for testing different TableSelectionModes
+        for (final TableSelectionState.TableSelectionMode t : TableSelectionState.TableSelectionMode.values()) {
+            tableSelectionControls.addComponent(new Button(t.toString(), new Button.ClickListener() {
+                @Override
+                public void buttonClick(Button.ClickEvent event) {
+                    tableSelect.setMode(t);
+                    tableSelectionControls.setCaption("Table Selection Controls - " + t.toString());
+                }
+            }));
+        }
 
         grid.setHeightByRows(10.0);
         grid.setWidth("800px");
@@ -102,6 +124,7 @@ public class DemoUI extends UI {
         layout.setSizeUndefined();
         layout.addComponent(grid);
         layout.addComponent(latestChangeLabel);
+        layout.addComponent(tableSelectionControls);
 
         content.addComponent(layout);
         content.setComponentAlignment(layout, Alignment.MIDDLE_CENTER);
