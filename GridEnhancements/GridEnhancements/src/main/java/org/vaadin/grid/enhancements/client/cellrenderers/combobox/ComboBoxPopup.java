@@ -10,6 +10,8 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellList;
@@ -31,7 +33,7 @@ import java.util.Set;
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class ComboBoxPopup<T> extends DecoratedPopupPanel {
+public class ComboBoxPopup<T> extends DecoratedPopupPanel implements CloseHandler, MouseMoveHandler, KeyDownHandler, SelectionChangeEvent.Handler {
 
     private final CellList<T> list;
     private final SelectionModel<T> selectionModel;
@@ -40,7 +42,7 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel {
     private Button up, down;
     private Set<HandlerRegistration> handlers = new HashSet<HandlerRegistration>();
 
-    private ComboBox.PopupEvent selectionListener;
+    private PopupCallback callback;
     // Not as items on page
     private Set<T> currentSelection = new HashSet<T>();
     private boolean updatingSelection = false;
@@ -52,6 +54,8 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel {
         } else {
             selectionModel = new SingleSelectionModel<T>(keyProvider);
         }
+
+        addCloseHandler(this);
 
         CellList.Resources resources = GWT.create(CellListResources.class);
 
@@ -67,74 +71,20 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel {
         list.setStyleName("c-combobox-options");
         list.setSelectionModel(selectionModel);
 
+        // Remove all handlers if any exist for any reason
         if (!handlers.isEmpty()) {
             for (HandlerRegistration handler : handlers) {
                 handler.removeHandler();
             }
         }
 
-        HandlerRegistration mouseHandler = list.addBitlessDomHandler(new MouseMoveHandler() {
-            @Override
-            public void onMouseMove(MouseMoveEvent event) {
-                Element target = event.getNativeEvent().getEventTarget().cast();
-                for (int i = 0; i < list.getVisibleItems().size(); i++) {
-                    Element e = list.getRowElement(i);
-                    if (e.equals(target)) {
-                        list.setKeyboardSelectedRow(i, true);
-                        break;
-                    }
-                }
-            }
-        }, MouseMoveEvent.getType());
-        handlers.add(mouseHandler);
+        // Add CellList listeners
+        handlers.add(list.addHandler(this, MouseMoveEvent.getType()));
+        handlers.add(list.addHandler(this, KeyDownEvent.getType()));
 
-        HandlerRegistration keyPressHandler = list.addHandler(new KeyDownHandler() {
-            @Override
-            public void onKeyDown(KeyDownEvent event) {
-                switch (event.getNativeEvent().getKeyCode()) {
-                    case KeyCodes.KEY_ESCAPE:
-                        closePopup();
-                        selectionListener.clear();
-                        break;
-                    case KeyCodes.KEY_DOWN:
-                        if (list.getKeyboardSelectedRow() == list.getVisibleItems().size() - 1 && down.isEnabled()) {
-                            selectionListener.nextPage();
-                        }
-                        break;
-                    case KeyCodes.KEY_UP:
-                        if (list.getKeyboardSelectedRow() == 0 && up.isEnabled()) {
-                            selectionListener.prevPage();
-                        }
-                        break;
-                    case KeyCodes.KEY_TAB:
-                        closePopup();
-                        if (selectionListener != null) {
-                            selectionListener.itemSelected(list.getVisibleItem(list.getKeyboardSelectedRow()));
-                        }
-                        break;
-                }
-            }
-        }, KeyDownEvent.getType());
-        handlers.add(keyPressHandler);
+        // Add selection change handler
+        handlers.add(selectionModel.addSelectionChangeHandler(this));
 
-        HandlerRegistration selectionHandler = selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            public void onSelectionChange(SelectionChangeEvent event) {
-                if (selectionModel instanceof SingleSelectionModel) {
-                    if (selectionListener != null) {
-                        selectionListener.itemSelected(getSelectedObject());
-                    }
-                    closePopup();
-                } else {
-                    if (!updatingSelection && selectionListener != null) {
-                        Set<T> selection = new HashSet<T>();
-                        selection.addAll(currentSelection);
-                        selection.addAll(getSelectedObjects());
-                        selectionListener.itemsSelected(selection);
-                    }
-                }
-            }
-        });
-        handlers.add(selectionHandler);
 
         setStyleName("c-combo-popup");
 
@@ -148,7 +98,7 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel {
         up.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-                selectionListener.prevPage();
+                callback.prevPage();
             }
         });
 
@@ -159,47 +109,42 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel {
         down.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-                selectionListener.nextPage();
+                callback.nextPage();
             }
         });
 
+        // Add widgets to content panel
         content.add(up);
         content.add(list);
         content.add(down);
 
+        // Init content widget
         add(content);
     }
 
+    /**
+     * Get the selected object when in singleSelection mode
+     *
+     * @return Single selected object
+     */
     private T getSelectedObject() {
         return ((SingleSelectionModel<T>) selectionModel).getSelectedObject();
     }
 
+    /**
+     * Get the set of selected objects when in multiselection mode
+     *
+     * @return Set of selected objects
+     */
     public Set<T> getSelectedObjects() {
         return ((MultiSelectionModel<T>) selectionModel).getSelectedSet();
     }
 
-
+    /**
+     * Hide popup
+     */
     private void closePopup() {
         ComboBoxPopup.this.hide();
-        if (!handlers.isEmpty()) {
-            for (HandlerRegistration handler : handlers) {
-                handler.removeHandler();
-            }
-        }
-    }
-
-    public void addEventListener(ComboBox.PopupEvent event) {
-        this.selectionListener = event;
-    }
-
-    public void focusSelection(String selected) {
-        if (values.contains(selected)) {
-            list.setKeyboardSelectedRow(values.indexOf(selected), true);
-        } else if (!values.isEmpty()) {
-            list.setKeyboardSelectedRow(0, true);
-        } else {
-            list.setFocus(true);
-        }
     }
 
     public void setNextPageEnabled(boolean nextPageEnabled) {
@@ -210,10 +155,36 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel {
         up.setEnabled(prevPageEnabled);
     }
 
+    /**
+     * Move keyboard focus to the selected item if found in current options
+     * @param selected Selected item to focus if available
+     */
+    public void focusSelection(T selected) {
+        if (values.contains(selected)) {
+            // Focus selected item
+            list.setKeyboardSelectedRow(values.indexOf(selected), true);
+        } else if (!values.isEmpty()) {
+            // Else focus first item if values exist
+            list.setKeyboardSelectedRow(0, true);
+        } else {
+            // Else move focus to list
+            list.setFocus(true);
+        }
+    }
+
+    /**
+     * Set the current selection set for multiselection mode
+     * @param currentSelection
+     */
     public void setCurrentSelection(Set<T> currentSelection) {
+        // Lock selection event so we don't send change events
         updatingSelection = true;
         this.currentSelection.clear();
+
         for (T value : currentSelection) {
+            // If current view doesn't contain item then add item to current selections that are selected but not visible!
+            //
+            // Note! currentSelection is always added to selection event selected items.
             if (!values.contains(value)) {
                 this.currentSelection.add(value);
             } else {
@@ -223,10 +194,35 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel {
         updatingSelection = false;
     }
 
-    public void removeEventListener(ComboBox.PopupEvent<T> eventListener) {
-        selectionListener = null;
+    /**
+     * Add a popup callback
+     * @param callback ComboBox callback
+     */
+    public void addPopupCallback(PopupCallback<T> callback) {
+        this.callback = callback;
     }
 
+    /**
+     * Remove popup callback
+     * @param callback
+     */
+    public void removePopupCallback(PopupCallback<T> callback) {
+        this.callback = null;
+    }
+
+    @Override
+    public void onClose(CloseEvent closeEvent) {
+        // Clear all handlers when popup closes!
+        if (!handlers.isEmpty()) {
+            for (HandlerRegistration handler : handlers) {
+                handler.removeHandler();
+            }
+        }
+    }
+
+    /**
+     * CellList cell content renderer implementation
+     */
     private class Cell extends AbstractCell<T> {
 
         @Override
@@ -241,10 +237,70 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel {
         }
     }
 
-    ProvidesKey<T> keyProvider = new ProvidesKey<T>() {
+    /**
+     * CellList item key provider
+     */
+    private ProvidesKey<T> keyProvider = new ProvidesKey<T>() {
         public Object getKey(T item) {
             // Always do a null check.
             return (item == null) ? null : item.hashCode();
         }
     };
+
+
+    // --- Event handler implementations ---
+
+    @Override
+    public void onKeyDown(KeyDownEvent event) {
+        switch (event.getNativeEvent().getKeyCode()) {
+            case KeyCodes.KEY_ESCAPE:
+                callback.clear();
+                closePopup();
+                break;
+            case KeyCodes.KEY_DOWN:
+                if (list.getKeyboardSelectedRow() == list.getVisibleItems().size() - 1 && down.isEnabled()) {
+                    callback.nextPage();
+                }
+                break;
+            case KeyCodes.KEY_UP:
+                if (list.getKeyboardSelectedRow() == 0 && up.isEnabled()) {
+                    callback.prevPage();
+                }
+                break;
+            case KeyCodes.KEY_TAB:
+                if (callback != null) {
+                    callback.itemSelected(list.getVisibleItem(list.getKeyboardSelectedRow()));
+                }
+                closePopup();
+                break;
+        }
+    }
+
+    @Override
+    public void onMouseMove(MouseMoveEvent event) {
+        Element target = event.getNativeEvent().getEventTarget().cast();
+        for (int i = 0; i < list.getVisibleItems().size(); i++) {
+            Element e = list.getRowElement(i);
+            if (e.equals(target)) {
+                list.setKeyboardSelectedRow(i, true);
+                break;
+            }
+        }
+    }
+
+    public void onSelectionChange(SelectionChangeEvent event) {
+        if (selectionModel instanceof SingleSelectionModel) {
+            if (callback != null) {
+                callback.itemSelected(getSelectedObject());
+            }
+            closePopup();
+        } else {
+            if (!updatingSelection && callback != null) {
+                Set<T> selection = new HashSet<T>();
+                selection.addAll(currentSelection);
+                selection.addAll(getSelectedObjects());
+                callback.itemsSelected(selection);
+            }
+        }
+    }
 }
