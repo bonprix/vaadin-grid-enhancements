@@ -79,7 +79,7 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel implements CloseHandle
         }
 
         // Add CellList listeners
-        handlers.add(list.addHandler(this, MouseMoveEvent.getType()));
+        handlers.add(list.addBitlessDomHandler(this, MouseMoveEvent.getType()));
         handlers.add(list.addHandler(this, KeyDownEvent.getType()));
 
         // Add selection change handler
