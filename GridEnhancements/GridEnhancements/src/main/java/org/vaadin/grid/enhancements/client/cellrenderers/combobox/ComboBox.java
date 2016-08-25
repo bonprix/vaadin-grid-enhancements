@@ -22,7 +22,9 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Mikael Grankvist - Vaadin Ltd
@@ -32,6 +34,8 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
     private ComboBoxPopup popup = null;
 
     private String selected;
+    private Set<String> selectedSet = new HashSet<String>();
+
     private TextBox selector;
     private Button drop;
 
@@ -43,6 +47,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 
     private int pages = 1;
     private boolean skipBlur = false;
+    private boolean multiSelect;
 
     public ComboBox() {
         selector = new TextBox();
@@ -65,6 +70,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
                     currentPage = -1;
                     eventHandler.getPage(currentPage);
                 }
+                selector.setFocus(true);
             }
         });
 
@@ -93,7 +99,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
         this.selected = selected;
 
         if (!old.equals(selected)) {
-            eventHandler.change();
+            eventHandler.change(selected);
         }
     }
 
@@ -105,14 +111,20 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
         this.currentPage = currentPage;
     }
 
-    protected interface PopupEvent {
-        void itemSelected(String item);
+    public void setMultiSelect(boolean multiSelect) {
+        this.multiSelect = multiSelect;
+    }
+
+    protected interface PopupEvent<T> {
+        void itemSelected(T item);
 
         void nextPage();
 
         void prevPage();
 
         void clear();
+
+        void itemsSelected(Set<T> selectedObjects);
     }
 
     public void setEventHandler(EventHandler eventHandler) {
@@ -140,37 +152,15 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
         if (popup != null) {
             popup.hide();
         }
-        popup = new ComboBoxPopup(items);
+        popup = new ComboBoxPopup(items, multiSelect);
         popup.addCloseHandler(new CloseHandler<PopupPanel>() {
             @Override
             public void onClose(CloseEvent<PopupPanel> closeEvent) {
+                popup.removeEventListener(eventListener);
                 popup = null;
             }
         });
-        popup.addListener(new PopupEvent() {
-            @Override
-            public void itemSelected(String item) {
-                setSelected(item);
-                selector.setFocus(true);
-                eventHandler.clearFilter();
-            }
-
-            @Override
-            public void nextPage() {
-                eventHandler.getPage(++currentPage);
-            }
-
-            @Override
-            public void prevPage() {
-                eventHandler.getPage(--currentPage);
-            }
-
-            @Override
-            public void clear() {
-                selector.setFocus(true);
-                eventHandler.clearFilter();
-            }
-        });
+        popup.addEventListener(eventListener);
 
         popup.setPreviousPageEnabled(currentPage > 0);
         popup.setNextPageEnabled(currentPage < pages - 1);
@@ -187,6 +177,9 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
             }
         });
         skipBlur = true;
+        if(multiSelect) {
+            popup.setCurrentSelection(selectedSet);
+        }
         popup.focusSelection(selected);
     }
 
@@ -253,4 +246,37 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
             skipBlur = false;
         }
     }
+
+    PopupEvent<String> eventListener  = new PopupEvent<String>() {
+        @Override
+        public void itemSelected(String item) {
+            setSelected(item);
+            selector.setFocus(true);
+            eventHandler.clearFilter();
+        }
+
+        @Override
+        public void nextPage() {
+            eventHandler.getPage(++currentPage);
+        }
+
+        @Override
+        public void prevPage() {
+            eventHandler.getPage(--currentPage);
+        }
+
+        @Override
+        public void clear() {
+            selector.setFocus(true);
+            eventHandler.clearFilter();
+        }
+
+        @Override
+        public void itemsSelected(Set<String> selectedObjects) {
+            selectedSet.clear();
+            selectedSet.addAll(selectedObjects);
+            eventHandler.change(selectedObjects);
+            // TODO: update selected items
+        }
+    };
 }

@@ -1,5 +1,7 @@
 package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
 
+import java.util.Set;
+
 /**
  * Event handler for events between Widget and Connector
  *
@@ -9,7 +11,9 @@ public interface EventHandler {
     /**
      * Send value change event to server
      */
-    void change();
+    void change(String item);
+
+    void change(Set<String> items);
 
     /**
      * Request options for page

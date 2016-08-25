@@ -18,10 +18,11 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DecoratedPopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.SingleSelectionModel;
-import com.vaadin.client.VConsole;
 
 import java.util.HashSet;
 import java.util.List;
@@ -30,24 +31,31 @@ import java.util.Set;
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class ComboBoxPopup extends DecoratedPopupPanel {
+public class ComboBoxPopup<T> extends DecoratedPopupPanel {
 
-    private final CellList<String> list;
-    private final SingleSelectionModel<String> selectionModel;
-    private List<String> values;
+    private final CellList<T> list;
+    private final SelectionModel<T> selectionModel;
+    private List<T> values;
 
     private Button up, down;
     private Set<HandlerRegistration> handlers = new HashSet<HandlerRegistration>();
 
     private ComboBox.PopupEvent selectionListener;
+    // Not as items on page
+    private Set<T> currentSelection = new HashSet<T>();
+    private boolean updatingSelection = false;
 
-    public ComboBoxPopup(List<String> values) {
+    public ComboBoxPopup(List<T> values, boolean multiSelect) {
         this.values = values;
-        selectionModel = new SingleSelectionModel<String>(keyProvider);
+        if (multiSelect) {
+            selectionModel = new MultiSelectionModel<T>(keyProvider);
+        } else {
+            selectionModel = new SingleSelectionModel<T>(keyProvider);
+        }
 
         CellList.Resources resources = GWT.create(CellListResources.class);
 
-        list = new CellList<String>(new Cell(), resources, keyProvider);
+        list = new CellList<T>(new Cell(), resources, keyProvider);
         list.setPageSize(values.size());
         list.setRowCount(values.size(), true);
         list.setRowData(0, values);
@@ -60,7 +68,7 @@ public class ComboBoxPopup extends DecoratedPopupPanel {
         list.setSelectionModel(selectionModel);
 
         if (!handlers.isEmpty()) {
-            for(HandlerRegistration handler: handlers) {
+            for (HandlerRegistration handler : handlers) {
                 handler.removeHandler();
             }
         }
@@ -83,7 +91,6 @@ public class ComboBoxPopup extends DecoratedPopupPanel {
         HandlerRegistration keyPressHandler = list.addHandler(new KeyDownHandler() {
             @Override
             public void onKeyDown(KeyDownEvent event) {
-                VConsole.log("Key down");
                 switch (event.getNativeEvent().getKeyCode()) {
                     case KeyCodes.KEY_ESCAPE:
                         closePopup();
@@ -110,15 +117,26 @@ public class ComboBoxPopup extends DecoratedPopupPanel {
         }, KeyDownEvent.getType());
         handlers.add(keyPressHandler);
 
-        selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+        HandlerRegistration selectionHandler = selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
             public void onSelectionChange(SelectionChangeEvent event) {
-                closePopup();
-                if (selectionListener != null) {
-                    selectionListener.itemSelected(selectionModel.getSelectedObject());
+                if (selectionModel instanceof SingleSelectionModel) {
+                    if (selectionListener != null) {
+                        selectionListener.itemSelected(getSelectedObject());
+                    }
+                    closePopup();
+                } else {
+                    if (!updatingSelection && selectionListener != null) {
+                        Set<T> selection = new HashSet<T>();
+                        selection.addAll(currentSelection);
+                        selection.addAll(getSelectedObjects());
+                        selectionListener.itemsSelected(selection);
+                    }
                 }
             }
         });
-        setStyleName("v-filterselect-suggestpopup c-combo-popup");
+        handlers.add(selectionHandler);
+
+        setStyleName("c-combo-popup");
 
         VerticalPanel content = new VerticalPanel();
         content.setWidth("100%");
@@ -152,16 +170,25 @@ public class ComboBoxPopup extends DecoratedPopupPanel {
         add(content);
     }
 
+    private T getSelectedObject() {
+        return ((SingleSelectionModel<T>) selectionModel).getSelectedObject();
+    }
+
+    public Set<T> getSelectedObjects() {
+        return ((MultiSelectionModel<T>) selectionModel).getSelectedSet();
+    }
+
+
     private void closePopup() {
         ComboBoxPopup.this.hide();
         if (!handlers.isEmpty()) {
-            for(HandlerRegistration handler: handlers) {
+            for (HandlerRegistration handler : handlers) {
                 handler.removeHandler();
             }
         }
     }
 
-    public void addListener(ComboBox.PopupEvent event) {
+    public void addEventListener(ComboBox.PopupEvent event) {
         this.selectionListener = event;
     }
 
@@ -183,19 +210,39 @@ public class ComboBoxPopup extends DecoratedPopupPanel {
         up.setEnabled(prevPageEnabled);
     }
 
-    private class Cell extends AbstractCell<String> {
+    public void setCurrentSelection(Set<T> currentSelection) {
+        updatingSelection = true;
+        this.currentSelection.clear();
+        for (T value : currentSelection) {
+            if (!values.contains(value)) {
+                this.currentSelection.add(value);
+            } else {
+                selectionModel.setSelected(value, true);
+            }
+        }
+        updatingSelection = false;
+    }
+
+    public void removeEventListener(ComboBox.PopupEvent<T> eventListener) {
+        selectionListener = null;
+    }
+
+    private class Cell extends AbstractCell<T> {
 
         @Override
-        public void render(Context context, String value, SafeHtmlBuilder sb) {
-            sb.appendHtmlConstant("<span class=\"" + (context.getIndex() % 2 == 0 ? "even" : "odd") + "\">");
-            sb.appendEscaped(value);
+        public void render(Context context, final T value, SafeHtmlBuilder sb) {
+            if (selectionModel instanceof MultiSelectionModel) {
+                sb.appendHtmlConstant("<input type=\"checkbox\" " + (((MultiSelectionModel) selectionModel).isSelected(value) ? "checked" : "") + ">");
+            }
+            sb.appendHtmlConstant("<span>"); // TODO: add something for icons?
+            sb.appendEscaped(value.toString());
             sb.appendHtmlConstant("</span>");
 
         }
     }
 
-    ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
-        public Object getKey(String item) {
+    ProvidesKey<T> keyProvider = new ProvidesKey<T>() {
+        public Object getKey(T item) {
             // Always do a null check.
             return (item == null) ? null : item.hashCode();
         }

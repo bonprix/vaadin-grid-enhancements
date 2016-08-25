@@ -61,7 +61,7 @@ public class DemoUI extends UI {
         GridNavigationExtension.extend(grid);
 
         grid.setHeight("420px");
-        grid.setWidth("950px");
+        grid.setWidth("1150px");
 
         // Add cell renderers
         // Custom action renderers
@@ -79,8 +79,14 @@ public class DemoUI extends UI {
         grid.getColumn("today").setWidth(150);
         grid.getColumn("yes").setRenderer(new CheckBoxRenderer());
         grid.getColumn("yes").setWidth(65);
-        grid.getColumn("combo").setRenderer(new ComboBoxRenderer(getItemList()));
-        grid.getColumn("combo").setWidth(150);
+
+        // ComboBox renderers
+        ComboBoxRenderer renderer1 = new ComboBoxRenderer(getItemList());
+        renderer1.setMultiselect(true);
+        grid.getColumn("multi").setRenderer(renderer1);
+        grid.getColumn("multi").setWidth(150);
+        grid.getColumn("single").setRenderer( new ComboBoxRenderer(getItemList()));
+        grid.getColumn("single").setWidth(150);
 
         // Add renderer listeners so we catch item edit events.
         for (Grid.Column col : grid.getColumns()) {
@@ -148,7 +154,8 @@ public class DemoUI extends UI {
         container.addContainerProperty("km", Double.class, 0);
         container.addContainerProperty("today", Date.class, new Date());
         container.addContainerProperty("yes", Boolean.class, false);
-        container.addContainerProperty("combo", String.class, "");
+        container.addContainerProperty("single", String.class, "");
+        container.addContainerProperty("multi", String.class, "");
 
         // Populate data
         for (int i = 0; i <= 30; ++i) {
@@ -157,7 +164,8 @@ public class DemoUI extends UI {
             item.getItemProperty("foo").setValue("foo");
             item.getItemProperty("bar").setValue(i);
             item.getItemProperty("km").setValue(i / 5.0d);
-            item.getItemProperty("combo").setValue("one");
+            item.getItemProperty("single").setValue("one");
+            item.getItemProperty("multi").setValue("one");
 
             // List index 0-1 not 1-2
             if (new java.util.Random().nextInt(5) < 3) item.getItemProperty("actions").setValue("1");

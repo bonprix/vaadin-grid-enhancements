@@ -18,6 +18,7 @@ import elemental.json.JsonObject;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Mikael Grankvist - Vaadin Ltd
@@ -37,6 +38,7 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<String>
         @Override
         public ComboBox createWidget() {
             final ComboBox comboBox = GWT.create(ComboBox.class);
+            comboBox.setMultiSelect(getState().isMultiSelect);
 
             comboBox.addDomHandler(new ClickHandler() {
                 @Override
@@ -54,8 +56,13 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<String>
 
             comboBox.setEventHandler(new EventHandler() {
                 @Override
-                public void change() {
-                    rpc.onChange(getCellId(comboBox), comboBox.getValue());
+                public void change(String item) {
+                    rpc.onValueChange(getCellId(comboBox), item);
+                }
+
+                @Override
+                public void change(Set<String> item) {
+                    rpc.onValueSetChange(getCellId(comboBox), item);
                 }
 
                 @Override

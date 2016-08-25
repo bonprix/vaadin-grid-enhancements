@@ -2,6 +2,8 @@ package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
 
 import com.vaadin.shared.communication.ServerRpc;
 
+import java.util.Set;
+
 /**
  * Client to server rpc
  *
@@ -32,7 +34,9 @@ public interface ComboBoxServerRpc extends ServerRpc {
      * @param id       Cell identification
      * @param newValue Selected new value
      */
-    void onChange(CellId id, String newValue);
+    void onValueChange(CellId id, String newValue);
+
+    void onValueSetChange(CellId id, Set<String> newValues);
 
     void filter(CellId id, String filter);
 }

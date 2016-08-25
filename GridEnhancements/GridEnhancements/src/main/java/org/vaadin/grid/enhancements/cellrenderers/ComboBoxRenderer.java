@@ -10,6 +10,7 @@ import org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxState;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Grid renderer that renders a ComboBox element
@@ -40,6 +41,10 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
      */
     public void setPageSize(int pageSize) {
         this.pageSize = pageSize;
+    }
+
+    public void setMultiselect(boolean multiselect) {
+        getState().isMultiSelect = multiselect;
     }
 
     @Override
@@ -100,7 +105,7 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
         }
 
         @Override
-        public void onChange(CellId id, String newValue) {
+        public void onValueChange(CellId id, String newValue) {
             Object itemId = getItemId(id.getRowId());
             Object columnPropertyId = getColumn(id.getColumnId()).getPropertyId();
 
@@ -111,6 +116,20 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
             cell.setValue(newValue);
 
             fireItemEditEvent(itemId, row, columnPropertyId, newValue);
+        }
+
+        @Override
+        public void onValueSetChange(CellId id, Set<String> newValue) {
+             Object itemId = getItemId(id.getRowId());
+            Object columnPropertyId = getColumn(id.getColumnId()).getPropertyId();
+
+            Item row = getParentGrid().getContainerDataSource().getItem(itemId);
+
+            Property<String> cell = getCellProperty(id);
+
+            cell.setValue(newValue.toString());
+
+            fireItemEditEvent(itemId, row, columnPropertyId, newValue.toString());
         }
 
         private Property<String> getCellProperty(CellId id) {
