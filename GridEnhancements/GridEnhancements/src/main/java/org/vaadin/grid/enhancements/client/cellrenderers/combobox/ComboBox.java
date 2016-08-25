@@ -124,15 +124,16 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
     }
 
     private void openDropdown(List<String> items) {
+        boolean focus = false;
         if (popup != null) {
-            popup.hide();
+            focus = popup.isJustClosed();
+            if (popup.isVisible()) popup.hide(true);
         }
         popup = new ComboBoxPopup(items, multiSelect);
         popup.addCloseHandler(new CloseHandler<PopupPanel>() {
             @Override
             public void onClose(CloseEvent<PopupPanel> closeEvent) {
                 popup.removePopupCallback(eventListener);
-                popup = null;
             }
         });
         popup.addPopupCallback(eventListener);
@@ -152,10 +153,10 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
             }
         });
         skipBlur = true;
-        if(multiSelect) {
+        if (multiSelect) {
             popup.setCurrentSelection(selectedSet);
         }
-        popup.focusSelection(selected);
+        popup.focusSelection(selected, focus);
     }
 
     // -- Handlers --
@@ -168,7 +169,8 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
                 event.preventDefault();
                 event.stopPropagation();
                 if (popup != null && popup.isVisible()) {
-                    popup.hide();
+                    popup.hide(true);
+                    popup = null;
                 }
                 eventHandler.clearFilter();
                 selector.setValue(selected);
@@ -178,8 +180,8 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
                 event.stopPropagation();
 
                 // Focus popup if open else open popup with first page
-                if (popup != null && popup.isVisible()) {
-                    popup.focusSelection(selected);
+                if (popup != null && popup.isAttached()) {
+                    popup.focusSelection(selected, true);
                 } else {
                     // Start from page with selection when opening.
                     currentPage = -1;
@@ -187,8 +189,8 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
                 }
                 break;
             case KeyCodes.KEY_TAB:
-                if (popup != null && popup.isVisible()) {
-                    popup.hide();
+                if (popup != null && popup.isAttached()) {
+                    popup.hide(true);
                 }
                 selector.setValue(selected);
                 break;
@@ -214,7 +216,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
     @Override
     public void onBlur(BlurEvent event) {
         if (!skipBlur) {
-            if (popup != null && popup.isVisible()) {
+            if (popup != null && popup.isAttached()) {
                 popup.hide();
             }
             selector.setValue(selected);
@@ -225,10 +227,10 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
     private ClickHandler dropDownClickHandler = new ClickHandler() {
         @Override
         public void onClick(ClickEvent event) {
-            if (popup != null && popup.isVisible()) {
+            if (popup != null && popup.isAttached()) {
                 popup.hide();
                 popup = null;
-            } else {
+            } else if (popup == null || !popup.isJustClosed()) {
                 // Start from page where selection is when opening.
                 currentPage = -1;
                 eventHandler.getPage(currentPage);
@@ -237,7 +239,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
         }
     };
 
-    PopupCallback<String> eventListener  = new PopupCallback<String>() {
+    PopupCallback<String> eventListener = new PopupCallback<String>() {
         @Override
         public void itemSelected(String item) {
             setSelected(item);

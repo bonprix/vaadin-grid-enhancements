@@ -85,7 +85,7 @@ public class DemoUI extends UI {
         renderer1.setMultiselect(true);
         grid.getColumn("multi").setRenderer(renderer1);
         grid.getColumn("multi").setWidth(150);
-        grid.getColumn("single").setRenderer( new ComboBoxRenderer(getItemList()));
+        grid.getColumn("single").setRenderer(new ComboBoxRenderer(getItemList()));
         grid.getColumn("single").setWidth(150);
 
         // Add renderer listeners so we catch item edit events.

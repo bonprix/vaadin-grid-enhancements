@@ -2,6 +2,7 @@ package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -11,21 +12,24 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.cellview.client.HasKeyboardPagingPolicy;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.DecoratedPopupPanel;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.view.client.CellPreviewEvent;
+import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.SingleSelectionModel;
+import com.vaadin.client.ui.VOverlay;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,7 +37,7 @@ import java.util.Set;
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class ComboBoxPopup<T> extends DecoratedPopupPanel implements CloseHandler, MouseMoveHandler, KeyDownHandler, SelectionChangeEvent.Handler {
+public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyDownHandler, SelectionChangeEvent.Handler, CellPreviewEvent.Handler<T> {
 
     private final CellList<T> list;
     private final SelectionModel<T> selectionModel;
@@ -47,14 +51,12 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel implements CloseHandle
     private Set<T> currentSelection = new HashSet<T>();
     private boolean updatingSelection = false;
 
-    public ComboBoxPopup(List<T> values, boolean multiSelect) {
-        this.values = values;
-        if (multiSelect) {
-            selectionModel = new MultiSelectionModel<T>(keyProvider);
-        } else {
-            selectionModel = new SingleSelectionModel<T>(keyProvider);
-        }
+    private long lastAutoClosed;
 
+    public ComboBoxPopup(List<T> values, boolean multiSelect) {
+        super(true);
+
+        this.values = values;
         addCloseHandler(this);
 
         CellList.Resources resources = GWT.create(CellListResources.class);
@@ -69,7 +71,16 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel implements CloseHandle
         list.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
 
         list.setStyleName("c-combobox-options");
-        list.setSelectionModel(selectionModel);
+
+
+        if (multiSelect) {
+            selectionModel = new MultiSelectionModel<T>(keyProvider);
+            final CellPreviewEvent.Handler<T> selectionEventManager = DefaultSelectionEventManager.createCheckboxManager();
+            list.setSelectionModel(selectionModel, selectionEventManager);
+        } else {
+            selectionModel = new SingleSelectionModel<T>(keyProvider);
+            list.setSelectionModel(selectionModel);
+        }
 
         // Remove all handlers if any exist for any reason
         if (!handlers.isEmpty()) {
@@ -81,6 +92,7 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel implements CloseHandle
         // Add CellList listeners
         handlers.add(list.addBitlessDomHandler(this, MouseMoveEvent.getType()));
         handlers.add(list.addHandler(this, KeyDownEvent.getType()));
+        handlers.add(list.addCellPreviewHandler(this));
 
         // Add selection change handler
         handlers.add(selectionModel.addSelectionChangeHandler(this));
@@ -157,23 +169,25 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel implements CloseHandle
 
     /**
      * Move keyboard focus to the selected item if found in current options
+     *
      * @param selected Selected item to focus if available
      */
-    public void focusSelection(T selected) {
+    public void focusSelection(T selected, boolean stealFocus) {
         if (values.contains(selected)) {
             // Focus selected item
-            list.setKeyboardSelectedRow(values.indexOf(selected), true);
+            list.setKeyboardSelectedRow(values.indexOf(selected), stealFocus);
         } else if (!values.isEmpty()) {
             // Else focus first item if values exist
-            list.setKeyboardSelectedRow(0, true);
+            list.setKeyboardSelectedRow(0, stealFocus);
         } else {
             // Else move focus to list
-            list.setFocus(true);
+            list.setFocus(stealFocus);
         }
     }
 
     /**
      * Set the current selection set for multiselection mode
+     *
      * @param currentSelection
      */
     public void setCurrentSelection(Set<T> currentSelection) {
@@ -196,6 +210,7 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel implements CloseHandle
 
     /**
      * Add a popup callback
+     *
      * @param callback ComboBox callback
      */
     public void addPopupCallback(PopupCallback<T> callback) {
@@ -204,15 +219,23 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel implements CloseHandle
 
     /**
      * Remove popup callback
+     *
      * @param callback
      */
     public void removePopupCallback(PopupCallback<T> callback) {
         this.callback = null;
     }
 
+    public boolean isJustClosed() {
+        final long now = (new Date()).getTime();
+        return (lastAutoClosed > 0 && (now - lastAutoClosed) < 200);
+    }
+
     @Override
-    public void onClose(CloseEvent closeEvent) {
-        // Clear all handlers when popup closes!
+    public void onClose(CloseEvent<PopupPanel> event) {
+        if (event.isAutoClosed()) {
+            lastAutoClosed = (new Date()).getTime();
+        }
         if (!handlers.isEmpty()) {
             for (HandlerRegistration handler : handlers) {
                 handler.removeHandler();
@@ -285,6 +308,17 @@ public class ComboBoxPopup<T> extends DecoratedPopupPanel implements CloseHandle
                 list.setKeyboardSelectedRow(i, true);
                 break;
             }
+        }
+    }
+
+    @Override
+    public void onCellPreview(CellPreviewEvent<T> event) {
+
+        if (BrowserEvents.CLICK.equals(event.getNativeEvent().getType())) {
+            final T value = event.getValue();
+            final Boolean state = !event.getDisplay().getSelectionModel().isSelected(value);
+            event.getDisplay().getSelectionModel().setSelected(value, state);
+            event.setCanceled(true);
         }
     }
 
