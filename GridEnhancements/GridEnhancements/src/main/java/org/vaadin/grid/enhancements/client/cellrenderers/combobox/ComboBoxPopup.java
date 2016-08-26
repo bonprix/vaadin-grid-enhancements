@@ -2,8 +2,10 @@ package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -18,6 +20,7 @@ import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.cellview.client.HasKeyboardPagingPolicy;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -249,7 +252,9 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
         @Override
         public void render(Context context, final T value, SafeHtmlBuilder sb) {
             if (selectionModel instanceof MultiSelectionModel) {
-                sb.appendHtmlConstant("<input type=\"checkbox\" " + (((MultiSelectionModel) selectionModel).isSelected(value) ? "checked" : "") + ">");
+                final CheckBox checkBox = new CheckBox();
+                checkBox.setValue(((MultiSelectionModel) selectionModel).isSelected(value));
+                sb.appendHtmlConstant(checkBox.getElement().getString());
             }
             sb.appendHtmlConstant("<span>"); // TODO: add something for icons?
             sb.appendEscaped(value.toString());
@@ -313,6 +318,15 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
     public void onCellPreview(CellPreviewEvent<T> event) {
 
         if (BrowserEvents.CLICK.equals(event.getNativeEvent().getType())) {
+            // Do not handle selection for clicks into CheckBoxes
+            // as the selectionEventManager already does this.
+            Element target = event.getNativeEvent().getEventTarget().cast();
+            if ("input".equals(StringCase.toLower(target.getTagName()))) {
+                final InputElement input = target.cast();
+                if ("checkbox".equals(StringCase.toLower(input.getType()))) {
+                    return;
+                }
+            }
             final T value = event.getValue();
             final Boolean state = !event.getDisplay().getSelectionModel().isSelected(value);
             event.getDisplay().getSelectionModel().setSelected(value, state);
