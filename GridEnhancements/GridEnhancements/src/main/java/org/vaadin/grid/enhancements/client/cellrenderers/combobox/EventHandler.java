@@ -11,9 +11,9 @@ public interface EventHandler {
     /**
      * Send value change event to server
      */
-    void change(String item);
+    void change(BoxItem item);
 
-    void change(Set<String> items);
+    void change(Set<BoxItem> items);
 
     /**
      * Request options for page

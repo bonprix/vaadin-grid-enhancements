@@ -21,9 +21,11 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.vaadin.client.ui.Icon;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -33,8 +35,8 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 
     private ComboBoxPopup popup = null;
 
-    private String selected;
-    private Set<String> selectedSet = new HashSet<String>();
+    private BoxItem selected;
+    private Set<BoxItem> selectedSet = new HashSet<BoxItem>();
 
     private TextBox selector;
     private Button drop;
@@ -72,7 +74,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 
     }
 
-    public void updateSelection(List<String> selection) {
+    public void updateSelection(Map<BoxItem, Icon> selection) {
         openDropdown(selection);
     }
 
@@ -80,13 +82,13 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
         this.pages = pages;
     }
 
-    public String getValue() {
+    public BoxItem getValue() {
         return selected;
     }
 
-    public void setSelected(String selected) {
-        String old = this.selected;
-        selector.setValue(selected);
+    public void setSelected(BoxItem selected) {
+        BoxItem old = this.selected;
+        selector.setValue(selected.toString());
         this.selected = selected;
 
         if (!old.equals(selected)) {
@@ -110,9 +112,9 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
         return addDomHandler(handler, ChangeEvent.getType());
     }
 
-    public void setSelection(String selection) {
+    public void setSelection(BoxItem selection) {
         selected = selection;
-        selector.setValue(selection);
+        selector.setValue(selection.toString());
     }
 
     public boolean isEnabled() {
@@ -123,7 +125,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
         selector.setEnabled(enabled);
     }
 
-    private void openDropdown(List<String> items) {
+    private void openDropdown(Map<BoxItem, Icon> items) {
         boolean focus = false;
         if (popup != null) {
             focus = popup.isJustClosed();
@@ -173,7 +175,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
                     popup = null;
                 }
                 eventHandler.clearFilter();
-                selector.setValue(selected);
+                selector.setValue(selected.toString());
                 break;
             case KeyCodes.KEY_DOWN:
                 event.preventDefault();
@@ -192,7 +194,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
                 if (popup != null && popup.isAttached()) {
                     popup.hide(true);
                 }
-                selector.setValue(selected);
+                selector.setValue(selected.toString());
                 break;
         }
 
@@ -219,7 +221,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
             if (popup != null && popup.isAttached()) {
                 popup.hide();
             }
-            selector.setValue(selected);
+            selector.setValue(selected.toString());
             skipBlur = false;
         }
     }
@@ -239,9 +241,9 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
         }
     };
 
-    PopupCallback<String> eventListener = new PopupCallback<String>() {
+    PopupCallback<BoxItem> eventListener = new PopupCallback<BoxItem>() {
         @Override
-        public void itemSelected(String item) {
+        public void itemSelected(BoxItem item) {
             setSelected(item);
             selector.setFocus(true);
             eventHandler.clearFilter();
@@ -264,7 +266,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
         }
 
         @Override
-        public void itemsSelected(Set<String> selectedObjects) {
+        public void itemsSelected(Set<BoxItem> selectedObjects) {
             selectedSet.clear();
             selectedSet.addAll(selectedObjects);
             eventHandler.change(selectedObjects);

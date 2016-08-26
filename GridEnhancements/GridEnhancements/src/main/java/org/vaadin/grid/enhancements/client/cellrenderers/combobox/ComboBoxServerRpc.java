@@ -34,9 +34,9 @@ public interface ComboBoxServerRpc extends ServerRpc {
      * @param id       Cell identification
      * @param newValue Selected new value
      */
-    void onValueChange(CellId id, String newValue);
+    void onValueChange(CellId id, BoxItem newValue);
 
-    void onValueSetChange(CellId id, Set<String> newValues);
+    void onValueSetChange(CellId id, Set<BoxItem> newValues);
 
     void filter(CellId id, String filter);
 }

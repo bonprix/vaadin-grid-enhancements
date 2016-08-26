@@ -3,6 +3,7 @@ package org.vaadin.grid.enhancements.cellrenderers;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
 import org.vaadin.grid.cellrenderers.EditableRenderer;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.BoxItem;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellId;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxClientRpc;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxServerRpc;
@@ -17,19 +18,28 @@ import java.util.Set;
  *
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class ComboBoxRenderer extends EditableRenderer<String> {
+public class ComboBoxRenderer extends EditableRenderer<BoxItem> {
 
-    List<String> fullList = new LinkedList<String>();
+    List<BoxItem> fullList = new LinkedList<BoxItem>();
 
     int pageSize = 5;
     int pages;
 
-    public ComboBoxRenderer(List<String> selections) {
-        super(String.class);
+    public ComboBoxRenderer(List<ServerBoxItem> selections) {
+        super(BoxItem.class);
 
         registerRpc(rpc);
-        // Add items to internal list so we don't expose ourselves to changes in the given list
-        fullList.addAll(selections);
+        for(ServerBoxItem item : selections) {
+
+            String key = item.getCaption();
+            setResource(key, item.getIcon());
+
+            BoxItem i = new BoxItem();
+            i.caption = item.getCaption();
+            i.key= key;
+            // Add items to internal list so we don't expose ourselves to changes in the given list
+            fullList.add(i);
+        }
 
         pages = (int) Math.ceil((double) fullList.size() / pageSize);
     }
@@ -75,10 +85,10 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
                 return;
             }
 
-            List<String> filteredResult;
-            filteredResult = new LinkedList<String>();
-            for (String s : fullList) {
-                if (s.contains(filter)) filteredResult.add(s);
+            List<BoxItem> filteredResult;
+            filteredResult = new LinkedList<BoxItem>();
+            for (BoxItem s : fullList) {
+                if (s.caption.contains(filter)) filteredResult.add(s);
             }
 
             int filteredPages = (int) Math.ceil((double) filteredResult.size() / pageSize);
@@ -96,22 +106,22 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
 
         @Override
         public void filter(CellId id, String filter) {
-            List<String> filteredResult = new LinkedList<String>();
-            for (String s : fullList) {
-                if (s.contains(filter)) filteredResult.add(s);
+            List<BoxItem> filteredResult = new LinkedList<BoxItem>();
+            for (BoxItem s : fullList) {
+                if (s.caption.contains(filter)) filteredResult.add(s);
             }
             int filteredPages = (int) Math.ceil((double) filteredResult.size() / pageSize);
             getRpcProxy(ComboBoxClientRpc.class).updateOptions(filteredPages, filteredResult, id);
         }
 
         @Override
-        public void onValueChange(CellId id, String newValue) {
+        public void onValueChange(CellId id, BoxItem newValue) {
             Object itemId = getItemId(id.getRowId());
             Object columnPropertyId = getColumn(id.getColumnId()).getPropertyId();
 
             Item row = getParentGrid().getContainerDataSource().getItem(itemId);
 
-            Property<String> cell = getCellProperty(id);
+            Property<BoxItem> cell = getCellProperty(id);
 
             cell.setValue(newValue);
 
@@ -119,26 +129,26 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
         }
 
         @Override
-        public void onValueSetChange(CellId id, Set<String> newValue) {
+        public void onValueSetChange(CellId id, Set<BoxItem> newValue) {
              Object itemId = getItemId(id.getRowId());
             Object columnPropertyId = getColumn(id.getColumnId()).getPropertyId();
 
             Item row = getParentGrid().getContainerDataSource().getItem(itemId);
 
-            Property<String> cell = getCellProperty(id);
+            Property<BoxItem> cell = getCellProperty(id);
 
-            cell.setValue(newValue.toString());
+            cell.setValue(newValue.iterator().next());
 
-            fireItemEditEvent(itemId, row, columnPropertyId, newValue.toString());
+            fireItemEditEvent(itemId, row, columnPropertyId, newValue.iterator().next());
         }
 
-        private Property<String> getCellProperty(CellId id) {
+        private Property<BoxItem> getCellProperty(CellId id) {
             Object itemId = getItemId(id.getRowId());
             Object columnPropertyId = getColumn(id.getColumnId()).getPropertyId();
 
             Item row = getParentGrid().getContainerDataSource().getItem(itemId);
 
-            return (Property<String>) row.getItemProperty(columnPropertyId);
+            return (Property<BoxItem>) row.getItemProperty(columnPropertyId);
         }
     };
 

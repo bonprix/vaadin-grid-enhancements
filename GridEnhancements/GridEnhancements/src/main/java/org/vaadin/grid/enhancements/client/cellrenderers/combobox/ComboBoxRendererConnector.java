@@ -11,24 +11,28 @@ import com.vaadin.client.connectors.AbstractRendererConnector;
 import com.vaadin.client.connectors.GridConnector;
 import com.vaadin.client.renderers.ClickableRenderer;
 import com.vaadin.client.renderers.Renderer;
+import com.vaadin.client.ui.Icon;
 import com.vaadin.client.widget.grid.RendererCellReference;
 import com.vaadin.client.widgets.Grid;
 import com.vaadin.shared.ui.Connect;
 import elemental.json.JsonObject;
+import org.vaadin.anna.gridactionrenderer.client.GridActionRendererConnector;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
 @Connect(ComboBoxRenderer.class)
-public class ComboBoxRendererConnector extends AbstractRendererConnector<String> {
+public class ComboBoxRendererConnector extends AbstractRendererConnector<BoxItem> {
 
     ComboBoxServerRpc rpc = RpcProxy.create(ComboBoxServerRpc.class, this);
 
-    public class ComboBoxRenderer extends ClickableRenderer<String, ComboBox> {
+    public class ComboBoxRenderer extends ClickableRenderer<BoxItem, ComboBox> {
 
         private static final String ROW_KEY_PROPERTY = "rowKey";
         private static final String COLUMN_ID_PROPERTY = "columnId";
@@ -56,12 +60,12 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<String>
 
             comboBox.setEventHandler(new EventHandler() {
                 @Override
-                public void change(String item) {
+                public void change(BoxItem item) {
                     rpc.onValueChange(getCellId(comboBox), item);
                 }
 
                 @Override
-                public void change(Set<String> item) {
+                public void change(Set<BoxItem> item) {
                     rpc.onValueSetChange(getCellId(comboBox), item);
                 }
 
@@ -90,7 +94,7 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<String>
         }
 
         @Override
-        public void render(final RendererCellReference cell, final String selectedValue, final ComboBox comboBox) {
+        public void render(final RendererCellReference cell, final BoxItem selectedValue, final ComboBox comboBox) {
             filter = "";
 
             registerRpc(ComboBoxClientRpc.class, new ComboBoxClientRpc() {
@@ -102,16 +106,31 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<String>
                 }
 
                 @Override
-                public void updateOptions(int pages, List<String> options, CellId id) {
+                public void updateOptions(int pages, List<BoxItem> options, CellId id) {
                     if (id.equals(getCellId(comboBox))) {
                         comboBox.updatePageAmount(pages);
-                        comboBox.updateSelection(options);
+                        Map<BoxItem, Icon> map = new HashMap<BoxItem, Icon>();
+                        for(BoxItem item : options) {
+                            Icon icon = ComboBoxRendererConnector.this.getConnection().getIcon(
+                                    ComboBoxRendererConnector.this.getResourceUrl(item.key));
+                            if (icon != null) {
+                                icon.setAlternateText("icon");
+//                            icon.addStyleName("grid-action-widget-icon");
+//                            if (hasDescription) {
+//                                icon.getElement().setAttribute(
+//                                        GridActionRendererConnector.TOOLTIP,
+//                                        gridAction.description);
+//                            }
+                            }
+                            map.put(item, icon);
+                        }
+                        comboBox.updateSelection(map);
                     }
                 }
             });
 
             Element e = comboBox.getElement();
-            getState().value = selectedValue;
+//            getState().value = selectedValue;
 
             if (e.getPropertyString(ROW_KEY_PROPERTY) != getRowKey((JsonObject) cell.getRow())) {
                 e.setPropertyString(ROW_KEY_PROPERTY, getRowKey((JsonObject) cell.getRow()));
@@ -147,7 +166,7 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<String>
     }
 
     @Override
-    protected Renderer<String> createRenderer() {
+    protected Renderer<BoxItem> createRenderer() {
         return new ComboBoxRenderer();
     }
 

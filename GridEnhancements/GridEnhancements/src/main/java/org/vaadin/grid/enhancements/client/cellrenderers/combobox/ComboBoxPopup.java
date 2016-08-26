@@ -27,11 +27,14 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.SingleSelectionModel;
+import com.vaadin.client.ui.Icon;
 import com.vaadin.client.ui.VOverlay;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -52,11 +55,13 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
     private boolean updatingSelection = false;
 
     private long lastAutoClosed;
+    Map<T, Icon> valuesMap;
 
-    public ComboBoxPopup(List<T> values, boolean multiSelect) {
+    public ComboBoxPopup(Map<T, Icon> valuesMap, boolean multiSelect) {
         super(true);
 
-        this.values = values;
+        this.values = new ArrayList<T>(valuesMap.keySet());
+        this.valuesMap = valuesMap;
         addCloseHandler(this);
 
         CellList.Resources resources = GWT.create(CellListResources.class);
@@ -251,6 +256,8 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
             if (selectionModel instanceof MultiSelectionModel) {
                 sb.appendHtmlConstant("<input type=\"checkbox\" " + (((MultiSelectionModel) selectionModel).isSelected(value) ? "checked" : "") + ">");
             }
+            if(valuesMap.get(value) != null)
+                sb.appendHtmlConstant(valuesMap.get(value).getElement().getString());
             sb.appendHtmlConstant("<span>"); // TODO: add something for icons?
             sb.appendEscaped(value.toString());
             sb.appendHtmlConstant("</span>");

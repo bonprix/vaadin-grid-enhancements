@@ -24,6 +24,8 @@ import org.vaadin.grid.cellrenderers.editable.DateFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.CheckBoxRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
+import org.vaadin.grid.enhancements.cellrenderers.ServerBoxItem;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.BoxItem;
 import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 import org.vaadin.teemusa.gridextensions.client.tableselection.TableSelectionState;
 import org.vaadin.teemusa.gridextensions.tableselection.TableSelectionModel;
@@ -141,18 +143,18 @@ public class DemoUI extends UI {
 
     }
 
-    private LinkedList<String> getItemList() {
-        return new LinkedList<String>() {{
-            add("one");
-            add("two");
-            add("three");
-            add("four");
-            add("five");
-            add("six");
-            add("seven");
-            add("eight");
-            add("nine");
-            add("ten");
+    private LinkedList<ServerBoxItem> getItemList() {
+        return new LinkedList<ServerBoxItem>() {{
+            add(new ServerBoxItem(FontAwesome.UMBRELLA, "one"));
+            add(new ServerBoxItem("two"));
+            add(new ServerBoxItem(FontAwesome.PAINT_BRUSH, "three"));
+            add(new ServerBoxItem(FontAwesome.PAPER_PLANE, "four"));
+            add(new ServerBoxItem(FontAwesome.PLUG, "five"));
+            add(new ServerBoxItem(FontAwesome.LAPTOP, "six"));
+            add(new ServerBoxItem(FontAwesome.LOCK, "seven"));
+            add(new ServerBoxItem(FontAwesome.LIFE_BOUY, "eight"));
+            add(new ServerBoxItem(FontAwesome.ANGLE_DOUBLE_DOWN, "nine"));
+            add(new ServerBoxItem(FontAwesome.RECYCLE, "ten"));
         }};
     }
 
@@ -177,8 +179,8 @@ public class DemoUI extends UI {
         container.addContainerProperty("km", Double.class, 0);
         container.addContainerProperty("today", Date.class, new Date());
         container.addContainerProperty("yes", Boolean.class, false);
-        container.addContainerProperty("single", String.class, "");
-        container.addContainerProperty("multi", String.class, "");
+        container.addContainerProperty("single", BoxItem.class, new BoxItem());
+        container.addContainerProperty("multi", BoxItem.class, new BoxItem());
 
         // Populate data
         for (int i = 0; i <= 30; ++i) {
@@ -187,8 +189,8 @@ public class DemoUI extends UI {
             item.getItemProperty("foo").setValue("foo");
             item.getItemProperty("bar").setValue(i);
             item.getItemProperty("km").setValue(i / 5.0d);
-            item.getItemProperty("single").setValue("one");
-            item.getItemProperty("multi").setValue("one");
+//            item.getItemProperty("single").setValue(new BoxItem());
+//            item.getItemProperty("multi").setValue(new BoxItem());
 
             // List index 0-1 not 1-2
             if (new java.util.Random().nextInt(5) < 3) item.getItemProperty("actions").setValue("1");
