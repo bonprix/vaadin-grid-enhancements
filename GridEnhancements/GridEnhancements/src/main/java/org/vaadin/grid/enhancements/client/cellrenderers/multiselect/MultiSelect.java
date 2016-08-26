@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.EventHandler;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.PopupCallback;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -85,16 +86,6 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
         return selected;
     }
 
-    public void setSelected(String selected) {
-        String old = this.selected;
-        selector.setValue(selected);
-        this.selected = selected;
-
-        if (!old.equals(selected)) {
-            eventHandler.change(selected);
-        }
-    }
-
     public void setCurrentPage(int currentPage) {
         this.currentPage = currentPage;
     }
@@ -108,6 +99,11 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
     }
 
     public void setSelection(String selection) {
+        if(!selection.isEmpty()) {
+            String[] split = selection.replaceAll("\\[", "").replaceAll("\\]", "").replaceAll(",\\s", ",").split(",");
+            selectedSet.clear();
+                selectedSet.addAll(Arrays.asList(split));
+        }
         selected = selection;
         selector.setValue(selection);
     }

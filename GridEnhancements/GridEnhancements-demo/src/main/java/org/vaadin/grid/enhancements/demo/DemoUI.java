@@ -190,6 +190,7 @@ public class DemoUI extends UI {
             item.getItemProperty("single").setValue("one");
             item.getItemProperty("multi").setValue(new HashSet<String>() {{
                 add("one");
+                add("eight");
             }}.toString());
 
             // List index 0-1 not 1-2
