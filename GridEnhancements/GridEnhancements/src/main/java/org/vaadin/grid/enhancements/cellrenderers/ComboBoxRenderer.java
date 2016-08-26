@@ -34,8 +34,7 @@ public class ComboBoxRenderer extends EditableRenderer<BoxItem> {
             String key = item.getCaption();
             setResource(key, item.getIcon());
 
-            BoxItem i = new BoxItem();
-            i.caption = item.getCaption();
+            BoxItem i = new BoxItem(item.getId(), item.getCaption());
             i.key= key;
             // Add items to internal list so we don't expose ourselves to changes in the given list
             fullList.add(i);

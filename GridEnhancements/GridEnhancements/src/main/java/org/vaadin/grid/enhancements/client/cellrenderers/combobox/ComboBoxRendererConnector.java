@@ -115,12 +115,6 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<BoxItem
                                     ComboBoxRendererConnector.this.getResourceUrl(item.key));
                             if (icon != null) {
                                 icon.setAlternateText("icon");
-//                            icon.addStyleName("grid-action-widget-icon");
-//                            if (hasDescription) {
-//                                icon.getElement().setAttribute(
-//                                        GridActionRendererConnector.TOOLTIP,
-//                                        gridAction.description);
-//                            }
                             }
                             map.put(item, icon);
                         }

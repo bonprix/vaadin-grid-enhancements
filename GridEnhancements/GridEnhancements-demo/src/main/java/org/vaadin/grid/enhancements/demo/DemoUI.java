@@ -145,16 +145,16 @@ public class DemoUI extends UI {
 
     private LinkedList<ServerBoxItem> getItemList() {
         return new LinkedList<ServerBoxItem>() {{
-            add(new ServerBoxItem(FontAwesome.UMBRELLA, "one"));
-            add(new ServerBoxItem("two"));
-            add(new ServerBoxItem(FontAwesome.PAINT_BRUSH, "three"));
-            add(new ServerBoxItem(FontAwesome.PAPER_PLANE, "four"));
-            add(new ServerBoxItem(FontAwesome.PLUG, "five"));
-            add(new ServerBoxItem(FontAwesome.LAPTOP, "six"));
-            add(new ServerBoxItem(FontAwesome.LOCK, "seven"));
-            add(new ServerBoxItem(FontAwesome.LIFE_BOUY, "eight"));
-            add(new ServerBoxItem(FontAwesome.ANGLE_DOUBLE_DOWN, "nine"));
-            add(new ServerBoxItem(FontAwesome.RECYCLE, "ten"));
+            add(new ServerBoxItem("1", FontAwesome.UMBRELLA, "one"));
+            add(new ServerBoxItem("2", "two"));
+            add(new ServerBoxItem("3", FontAwesome.PAINT_BRUSH, "three"));
+            add(new ServerBoxItem("4", FontAwesome.PAPER_PLANE, "four"));
+            add(new ServerBoxItem("5",FontAwesome.PLUG, "five"));
+            add(new ServerBoxItem("6",FontAwesome.LAPTOP, "six"));
+            add(new ServerBoxItem("7",FontAwesome.LOCK, "seven"));
+            add(new ServerBoxItem("8",FontAwesome.LIFE_BOUY, "eight"));
+            add(new ServerBoxItem("9",FontAwesome.ANGLE_DOUBLE_DOWN, "nine"));
+            add(new ServerBoxItem("10",FontAwesome.RECYCLE, "ten"));
         }};
     }
 
@@ -189,8 +189,8 @@ public class DemoUI extends UI {
             item.getItemProperty("foo").setValue("foo");
             item.getItemProperty("bar").setValue(i);
             item.getItemProperty("km").setValue(i / 5.0d);
-//            item.getItemProperty("single").setValue(new BoxItem());
-//            item.getItemProperty("multi").setValue(new BoxItem());
+            item.getItemProperty("single").setValue(new BoxItem("1","one"));
+            item.getItemProperty("multi").setValue(new BoxItem("1","one"));
 
             // List index 0-1 not 1-2
             if (new java.util.Random().nextInt(5) < 3) item.getItemProperty("actions").setValue("1");
