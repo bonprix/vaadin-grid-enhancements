@@ -22,9 +22,9 @@ public interface ComboBoxClientRpc extends ClientRpc {
     /**
      * Send updated options to client to be shown
      *
-     * @param pages   Total amount of pages
+     * @param optionsInfo   Total amount of pages
      * @param options Options for current page
      * @param id      Cell identification
      */
-    void updateOptions(int pages, List<String> options, CellId id);
+    void updateOptions(OptionsInfo optionsInfo, List<String> options, CellId id);
 }

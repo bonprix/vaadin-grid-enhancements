@@ -7,6 +7,7 @@ import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellId;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxClientRpc;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxServerRpc;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxState;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.OptionsInfo;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -52,16 +53,19 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
 
         @Override
         public void getPage(int page, CellId id) {
+            OptionsInfo info = new OptionsInfo(pages);
             if (page == -1) {
                 page = fullList.indexOf(getCellProperty(id).getValue()) / pageSize;
                 // Inform which page we are sending.
-                getRpcProxy(ComboBoxClientRpc.class).setCurrentPage(page, id);
+                info.setCurrentPage(page);
+//                getRpcProxy(ComboBoxClientRpc.class).setCurrentPage(page, id);
             }
+            info.setCurrentPage(page);
 
             // Get start id for page
             int fromIndex = pageSize * page;
             int toIndex = fromIndex + pageSize > fullList.size() ? fullList.size() : fromIndex + pageSize;
-            getRpcProxy(ComboBoxClientRpc.class).updateOptions(pages, fullList.subList(fromIndex, toIndex), id);
+            getRpcProxy(ComboBoxClientRpc.class).updateOptions(info, fullList.subList(fromIndex, toIndex), id);
         }
 
         @Override
@@ -79,15 +83,17 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
 
             int filteredPages = (int) Math.ceil((double) filteredResult.size() / pageSize);
 
+            OptionsInfo info = new OptionsInfo(filteredPages);
             if (page == -1) {
                 page = filteredResult.indexOf(getCellProperty(id).getValue()) / pageSize;
                 // Inform which page we are sending.
-                getRpcProxy(ComboBoxClientRpc.class).setCurrentPage(page, id);
+                info.setCurrentPage(page);
+//                getRpcProxy(ComboBoxClientRpc.class).setCurrentPage(page, id);
             }
 
             int fromIndex = pageSize * page;
             int toIndex = fromIndex + pageSize > filteredResult.size() ? filteredResult.size() : fromIndex + pageSize;
-            getRpcProxy(ComboBoxClientRpc.class).updateOptions(filteredPages, filteredResult.subList(fromIndex, toIndex), id);
+            getRpcProxy(ComboBoxClientRpc.class).updateOptions(info, filteredResult.subList(fromIndex, toIndex), id);
         }
 
         @Override
@@ -97,7 +103,8 @@ public class ComboBoxRenderer extends EditableRenderer<String> {
                 if (s.contains(filter)) filteredResult.add(s);
             }
             int filteredPages = (int) Math.ceil((double) filteredResult.size() / pageSize);
-            getRpcProxy(ComboBoxClientRpc.class).updateOptions(filteredPages, filteredResult, id);
+            OptionsInfo info = new OptionsInfo(filteredPages);
+            getRpcProxy(ComboBoxClientRpc.class).updateOptions(info, filteredResult, id);
         }
 
         @Override

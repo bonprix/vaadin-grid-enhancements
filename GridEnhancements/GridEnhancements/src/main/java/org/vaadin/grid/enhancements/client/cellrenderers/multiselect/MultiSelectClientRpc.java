@@ -2,6 +2,7 @@ package org.vaadin.grid.enhancements.client.cellrenderers.multiselect;
 
 import com.vaadin.shared.communication.ClientRpc;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellId;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.OptionsInfo;
 
 import java.util.List;
 
@@ -23,9 +24,9 @@ public interface MultiSelectClientRpc extends ClientRpc {
     /**
      * Send updated options to client to be shown
      *
-     * @param pages   Total amount of pages
+     * @param optionsInfo   Total amount of pages
      * @param options Options for current page
      * @param id      Cell identification
      */
-    void updateOptions(int pages, List<String> options, CellId id);
+    void updateOptions(OptionsInfo optionsInfo, List<String> options, CellId id);
 }

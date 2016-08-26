@@ -18,6 +18,7 @@ import elemental.json.JsonObject;
 import org.vaadin.grid.enhancements.cellrenderers.MultiSelectRenderer;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellId;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.EventHandler;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.OptionsInfo;
 
 import java.util.List;
 import java.util.Set;
@@ -91,27 +92,30 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Stri
         }
 
         @Override
-        public void render(final RendererCellReference cell, final String selectedValue, final MultiSelect comboBox) {
+        public void render(final RendererCellReference cell, final String selectedValue, final MultiSelect multiSelect) {
             filter = "";
 
             registerRpc(MultiSelectClientRpc.class, new MultiSelectClientRpc() {
                 @Override
                 public void setCurrentPage(int page, CellId id) {
-                    if (id.equals(getCellId(comboBox))) {
-                        comboBox.setCurrentPage(page);
+                    if (id.equals(getCellId(multiSelect))) {
+                        multiSelect.setCurrentPage(page);
                     }
                 }
 
                 @Override
-                public void updateOptions(int pages, List<String> options, CellId id) {
-                    if (id.equals(getCellId(comboBox))) {
-                        comboBox.updatePageAmount(pages);
-                        comboBox.updateSelection(options);
+                public void updateOptions(OptionsInfo optionsInfo, List<String> options, CellId id) {
+                    if (id.equals(getCellId(multiSelect))) {
+                        if(optionsInfo.getCurrentPage() != -1) {
+                            multiSelect.setCurrentPage(optionsInfo.getCurrentPage());
+                        }
+                        multiSelect.updatePageAmount(optionsInfo.getPageAmount());
+                        multiSelect.updateSelection(options);
                     }
                 }
             });
 
-            Element e = comboBox.getElement();
+            Element e = multiSelect.getElement();
             getState().value = selectedValue;
 
             if (e.getPropertyString(ROW_KEY_PROPERTY) != getRowKey((JsonObject) cell.getRow())) {
@@ -123,10 +127,10 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Stri
                 e.setPropertyString(COLUMN_ID_PROPERTY, getColumnId(getGrid().getColumn(cell.getColumnIndex())));
             }
 
-            comboBox.setSelection(selectedValue);
+            multiSelect.setSelection(selectedValue);
 
-            if (comboBox.isEnabled() != cell.getColumn().isEditable()) {
-                comboBox.setEnabled(cell.getColumn().isEditable());
+            if (multiSelect.isEnabled() != cell.getColumn().isEditable()) {
+                multiSelect.setEnabled(cell.getColumn().isEditable());
             }
         }
 

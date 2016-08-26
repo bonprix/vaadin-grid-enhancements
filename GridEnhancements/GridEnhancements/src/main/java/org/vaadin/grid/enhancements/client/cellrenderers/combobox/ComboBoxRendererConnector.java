@@ -101,9 +101,12 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<String>
                 }
 
                 @Override
-                public void updateOptions(int pages, List<String> options, CellId id) {
+                public void updateOptions(OptionsInfo optionsInfo, List<String> options, CellId id) {
                     if (id.equals(getCellId(comboBox))) {
-                        comboBox.updatePageAmount(pages);
+                        if(optionsInfo.getCurrentPage() != -1) {
+                            comboBox.setCurrentPage(optionsInfo.getCurrentPage());
+                        }
+                        comboBox.updatePageAmount(optionsInfo.getPageAmount());
                         comboBox.updateSelection(options);
                     }
                 }

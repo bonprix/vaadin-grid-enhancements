@@ -4,6 +4,7 @@ import com.vaadin.data.Item;
 import com.vaadin.data.Property;
 import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellId;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.OptionsInfo;
 import org.vaadin.grid.enhancements.client.cellrenderers.multiselect.MultiSelectClientRpc;
 import org.vaadin.grid.enhancements.client.cellrenderers.multiselect.MultiSelectServerRpc;
 import org.vaadin.grid.enhancements.client.cellrenderers.multiselect.MultiSelectState;
@@ -52,16 +53,18 @@ public class MultiSelectRenderer extends EditableRenderer<String> {
 
         @Override
         public void getPage(int page, CellId id) {
+            OptionsInfo info = new OptionsInfo(pages);
             if (page == -1) {
                 page = fullList.indexOf(getCellProperty(id).getValue()) / pageSize;
                 // Inform which page we are sending.
-                getRpcProxy(MultiSelectClientRpc.class).setCurrentPage(page, id);
+                info.setCurrentPage(page);
+//                getRpcProxy(MultiSelectClientRpc.class).setCurrentPage(page, id);
             }
 
             // Get start id for page
             int fromIndex = pageSize * page;
             int toIndex = fromIndex + pageSize > fullList.size() ? fullList.size() : fromIndex + pageSize;
-            getRpcProxy(MultiSelectClientRpc.class).updateOptions(pages, fullList.subList(fromIndex, toIndex), id);
+            getRpcProxy(MultiSelectClientRpc.class).updateOptions(info, fullList.subList(fromIndex, toIndex), id);
         }
 
         @Override
@@ -78,16 +81,18 @@ public class MultiSelectRenderer extends EditableRenderer<String> {
             }
 
             int filteredPages = (int) Math.ceil((double) filteredResult.size() / pageSize);
+            OptionsInfo info = new OptionsInfo(filteredPages);
 
             if (page == -1) {
                 page = filteredResult.indexOf(getCellProperty(id).getValue()) / pageSize;
                 // Inform which page we are sending.
-                getRpcProxy(MultiSelectClientRpc.class).setCurrentPage(page, id);
+                info.setCurrentPage(page);
+//                getRpcProxy(MultiSelectClientRpc.class).setCurrentPage(page, id);
             }
 
             int fromIndex = pageSize * page;
             int toIndex = fromIndex + pageSize > filteredResult.size() ? filteredResult.size() : fromIndex + pageSize;
-            getRpcProxy(MultiSelectClientRpc.class).updateOptions(filteredPages, filteredResult.subList(fromIndex, toIndex), id);
+            getRpcProxy(MultiSelectClientRpc.class).updateOptions(info, filteredResult.subList(fromIndex, toIndex), id);
         }
 
         @Override
@@ -97,7 +102,8 @@ public class MultiSelectRenderer extends EditableRenderer<String> {
                 if (s.contains(filter)) filteredResult.add(s);
             }
             int filteredPages = (int) Math.ceil((double) filteredResult.size() / pageSize);
-            getRpcProxy(MultiSelectClientRpc.class).updateOptions(filteredPages, filteredResult, id);
+            OptionsInfo info = new OptionsInfo(filteredPages);
+            getRpcProxy(MultiSelectClientRpc.class).updateOptions(info, filteredResult, id);
         }
 
 
