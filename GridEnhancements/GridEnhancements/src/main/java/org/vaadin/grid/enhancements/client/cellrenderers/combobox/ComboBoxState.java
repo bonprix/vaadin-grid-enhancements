@@ -10,7 +10,6 @@ import java.util.List;
  */
 public class ComboBoxState extends SharedState {
 
-    public boolean isMultiSelect = false;
     public String value = "";
 
 }

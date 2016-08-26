@@ -24,6 +24,7 @@ import org.vaadin.grid.cellrenderers.editable.DateFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.CheckBoxRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
+import org.vaadin.grid.enhancements.cellrenderers.MultiSelectRenderer;
 import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 import org.vaadin.teemusa.gridextensions.client.tableselection.TableSelectionState;
 import org.vaadin.teemusa.gridextensions.tableselection.TableSelectionModel;
@@ -32,6 +33,7 @@ import javax.servlet.annotation.WebServlet;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -67,7 +69,7 @@ public class DemoUI extends UI {
         final TableSelectionModel tableSelect = new TableSelectionModel();
         grid.setSelectionModel(tableSelect);
         tableSelect.setMode(TableSelectionState.TableSelectionMode.NONE);
-        
+
         final HorizontalLayout tableSelectionControls = new HorizontalLayout();
         tableSelectionControls.setCaption("Table Selection Controls - NONE");
 
@@ -103,9 +105,7 @@ public class DemoUI extends UI {
         grid.getColumn("yes").setWidth(65);
 
         // ComboBox renderers
-        ComboBoxRenderer renderer1 = new ComboBoxRenderer(getItemList());
-        renderer1.setMultiselect(true);
-        grid.getColumn("multi").setRenderer(renderer1);
+        grid.getColumn("multi").setRenderer(new MultiSelectRenderer(getItemList()));
         grid.getColumn("multi").setWidth(150);
         grid.getColumn("single").setRenderer(new ComboBoxRenderer(getItemList()));
         grid.getColumn("single").setWidth(150);
@@ -188,7 +188,9 @@ public class DemoUI extends UI {
             item.getItemProperty("bar").setValue(i);
             item.getItemProperty("km").setValue(i / 5.0d);
             item.getItemProperty("single").setValue("one");
-            item.getItemProperty("multi").setValue("one");
+            item.getItemProperty("multi").setValue(new HashSet<String>() {{
+                add("one");
+            }}.toString());
 
             // List index 0-1 not 1-2
             if (new java.util.Random().nextInt(5) < 3) item.getItemProperty("actions").setValue("1");

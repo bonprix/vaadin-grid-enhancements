@@ -1,4 +1,4 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
+package org.vaadin.grid.enhancements.client.cellrenderers.multiselect;
 
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -21,6 +21,8 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.EventHandler;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.PopupCallback;
 
 import java.util.HashSet;
 import java.util.List;
@@ -29,11 +31,12 @@ import java.util.Set;
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, HasChangeHandlers {
+public class MultiSelect extends Composite implements KeyDownHandler, BlurHandler, HasChangeHandlers {
 
-    private ComboBoxPopup popup = null;
+    private MultiSelectPopup popup = null;
 
     private String selected;
+    private Set<String> selectedSet = new HashSet<String>();
 
     private TextBox selector;
     private Button drop;
@@ -47,7 +50,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
     private int pages = 1;
     private boolean skipBlur = false;
 
-    public ComboBox() {
+    public MultiSelect() {
         selector = new TextBox();
         selector.addKeyDownHandler(this);
 
@@ -123,7 +126,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
             focus = popup.isJustClosed();
             if (popup.isVisible()) popup.hide(true);
         }
-        popup = new ComboBoxPopup(items);
+        popup = new MultiSelectPopup(items);
         popup.addCloseHandler(new CloseHandler<PopupPanel>() {
             @Override
             public void onClose(CloseEvent<PopupPanel> closeEvent) {
@@ -139,14 +142,15 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
         popup.getElement().getStyle().setZIndex(1000);
         popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
             public void setPosition(int offsetWidth, int offsetHeight) {
-                int top = ComboBox.this.getAbsoluteTop() + ComboBox.this.getOffsetHeight();
-                if (top + ComboBox.this.getOffsetHeight() > Window.getClientHeight()) {
-                    top = ComboBox.this.getAbsoluteTop() - ComboBox.this.getOffsetHeight();
+                int top = MultiSelect.this.getAbsoluteTop() + MultiSelect.this.getOffsetHeight();
+                if (top + MultiSelect.this.getOffsetHeight() > Window.getClientHeight()) {
+                    top = MultiSelect.this.getAbsoluteTop() - MultiSelect.this.getOffsetHeight();
                 }
-                popup.setPopupPosition(ComboBox.this.getAbsoluteLeft(), top);
+                popup.setPopupPosition(MultiSelect.this.getAbsoluteLeft(), top);
             }
         });
         skipBlur = true;
+        popup.setCurrentSelection(selectedSet);
         popup.focusSelection(selected, focus);
     }
 
@@ -233,9 +237,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
     PopupCallback<String> eventListener = new PopupCallback<String>() {
         @Override
         public void itemSelected(String item) {
-            setSelected(item);
-            selector.setFocus(true);
-            eventHandler.clearFilter();
+            // NOOP
         }
 
         @Override
@@ -256,7 +258,10 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 
         @Override
         public void itemsSelected(Set<String> selectedObjects) {
-            // NOOP
+            selectedSet.clear();
+            selectedSet.addAll(selectedObjects);
+            eventHandler.change(selectedObjects);
+            // TODO: update selected items
         }
     };
 }

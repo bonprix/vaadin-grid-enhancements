@@ -1,6 +1,7 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
+package org.vaadin.grid.enhancements.client.cellrenderers.multiselect;
 
 import com.vaadin.shared.communication.ServerRpc;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellId;
 
 import java.util.Set;
 
@@ -9,7 +10,7 @@ import java.util.Set;
  *
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public interface ComboBoxServerRpc extends ServerRpc {
+public interface MultiSelectServerRpc extends ServerRpc {
 
     /**
      * Get options for requested page offset
@@ -32,9 +33,9 @@ public interface ComboBoxServerRpc extends ServerRpc {
      * Selection event for combobox
      *
      * @param id       Cell identification
-     * @param newValue Selected new value
+     * @param newValues Selected values
      */
-    void onValueChange(CellId id, String newValue);
+    void onValueSetChange(CellId id, Set<String> newValues);
 
     void filter(CellId id, String filter);
 }

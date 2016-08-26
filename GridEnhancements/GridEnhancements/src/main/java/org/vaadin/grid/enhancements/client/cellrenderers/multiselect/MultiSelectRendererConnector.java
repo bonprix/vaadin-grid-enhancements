@@ -1,4 +1,4 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
+package org.vaadin.grid.enhancements.client.cellrenderers.multiselect;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -15,7 +15,9 @@ import com.vaadin.client.widget.grid.RendererCellReference;
 import com.vaadin.client.widgets.Grid;
 import com.vaadin.shared.ui.Connect;
 import elemental.json.JsonObject;
-import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
+import org.vaadin.grid.enhancements.cellrenderers.MultiSelectRenderer;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellId;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.EventHandler;
 
 import java.util.List;
 import java.util.Set;
@@ -23,12 +25,12 @@ import java.util.Set;
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-@Connect(ComboBoxRenderer.class)
-public class ComboBoxRendererConnector extends AbstractRendererConnector<String> {
+@Connect(MultiSelectRenderer.class)
+public class MultiSelectRendererConnector extends AbstractRendererConnector<String> {
 
-    ComboBoxServerRpc rpc = RpcProxy.create(ComboBoxServerRpc.class, this);
+    MultiSelectServerRpc rpc = RpcProxy.create(MultiSelectServerRpc.class, this);
 
-    public class ComboBoxRenderer extends ClickableRenderer<String, ComboBox> {
+    public class MultiSelectRenderer extends ClickableRenderer<String, MultiSelect> {
 
         private static final String ROW_KEY_PROPERTY = "rowKey";
         private static final String COLUMN_ID_PROPERTY = "columnId";
@@ -36,8 +38,8 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<String>
         private String filter = "";
 
         @Override
-        public ComboBox createWidget() {
-            final ComboBox comboBox = GWT.create(ComboBox.class);
+        public MultiSelect createWidget() {
+            final MultiSelect comboBox = GWT.create(MultiSelect.class);
 
             comboBox.addDomHandler(new ClickHandler() {
                 @Override
@@ -56,12 +58,12 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<String>
             comboBox.setEventHandler(new EventHandler() {
                 @Override
                 public void change(String item) {
-                    rpc.onValueChange(getCellId(comboBox), item);
+                    // NOOP
                 }
 
                 @Override
-                public void change(Set<String> items) {
-                    // NOOP
+                public void change(Set<String> item) {
+                    rpc.onValueSetChange(getCellId(comboBox), item);
                 }
 
                 @Override
@@ -89,10 +91,10 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<String>
         }
 
         @Override
-        public void render(final RendererCellReference cell, final String selectedValue, final ComboBox comboBox) {
+        public void render(final RendererCellReference cell, final String selectedValue, final MultiSelect comboBox) {
             filter = "";
 
-            registerRpc(ComboBoxClientRpc.class, new ComboBoxClientRpc() {
+            registerRpc(MultiSelectClientRpc.class, new MultiSelectClientRpc() {
                 @Override
                 public void setCurrentPage(int page, CellId id) {
                     if (id.equals(getCellId(comboBox))) {
@@ -134,25 +136,25 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<String>
          * @param comboBox ComboBox to get cell identification for
          * @return CellId for ComboBox
          */
-        private CellId getCellId(ComboBox comboBox) {
+        private CellId getCellId(MultiSelect comboBox) {
             Element e = comboBox.getElement();
             return new CellId(e.getPropertyString(ROW_KEY_PROPERTY), e.getPropertyString(COLUMN_ID_PROPERTY));
         }
     }
 
     @Override
-    public ComboBoxState getState() {
-        return (ComboBoxState) super.getState();
+    public MultiSelectState getState() {
+        return (MultiSelectState) super.getState();
     }
 
     @Override
     protected Renderer<String> createRenderer() {
-        return new ComboBoxRenderer();
+        return new MultiSelectRenderer();
     }
 
     @Override
-    public ComboBoxRenderer getRenderer() {
-        return (ComboBoxRenderer) super.getRenderer();
+    public MultiSelectRenderer getRenderer() {
+        return (MultiSelectRenderer) super.getRenderer();
     }
 
     private Grid<JsonObject> getGrid() {

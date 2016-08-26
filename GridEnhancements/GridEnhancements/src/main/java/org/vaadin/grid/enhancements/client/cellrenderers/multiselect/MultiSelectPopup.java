@@ -1,8 +1,11 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
+package org.vaadin.grid.enhancements.client.cellrenderers.multiselect;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.impl.StringCase;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -17,13 +20,19 @@ import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.cellview.client.HasKeyboardPagingPolicy;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.view.client.CellPreviewEvent;
+import com.google.gwt.view.client.DefaultSelectionEventManager;
+import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.vaadin.client.ui.VOverlay;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellListResources;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.PopupCallback;
 
 import java.util.Date;
 import java.util.HashSet;
@@ -33,7 +42,7 @@ import java.util.Set;
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyDownHandler, SelectionChangeEvent.Handler {
+public class MultiSelectPopup<T> extends VOverlay implements MouseMoveHandler, KeyDownHandler, SelectionChangeEvent.Handler, CellPreviewEvent.Handler<T> {
 
     private final CellList<T> list;
     private final SelectionModel<T> selectionModel;
@@ -43,10 +52,13 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
     private Set<HandlerRegistration> handlers = new HashSet<HandlerRegistration>();
 
     private PopupCallback callback;
+    // Not as items on page
+    private Set<T> currentSelection = new HashSet<T>();
+    private boolean updatingSelection = false;
 
     private long lastAutoClosed;
 
-    public ComboBoxPopup(List<T> values) {
+    public MultiSelectPopup(List<T> values) {
         super(true);
 
         this.values = values;
@@ -66,8 +78,9 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
         list.setStyleName("c-combobox-options");
 
 
-        selectionModel = new SingleSelectionModel<T>(keyProvider);
-        list.setSelectionModel(selectionModel);
+        selectionModel = new MultiSelectionModel<T>(keyProvider);
+        final CellPreviewEvent.Handler<T> selectionEventManager = DefaultSelectionEventManager.createCheckboxManager();
+        list.setSelectionModel(selectionModel, selectionEventManager);
 
         // Remove all handlers if any exist for any reason
         if (!handlers.isEmpty()) {
@@ -79,6 +92,7 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
         // Add CellList listeners
         handlers.add(list.addBitlessDomHandler(this, MouseMoveEvent.getType()));
         handlers.add(list.addHandler(this, KeyDownEvent.getType()));
+        handlers.add(list.addCellPreviewHandler(this));
 
         // Add selection change handler
         handlers.add(selectionModel.addSelectionChangeHandler(this));
@@ -128,10 +142,19 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
     }
 
     /**
+     * Get the set of selected objects when in multiselection mode
+     *
+     * @return Set of selected objects
+     */
+    public Set<T> getSelectedObjects() {
+        return ((MultiSelectionModel<T>) selectionModel).getSelectedSet();
+    }
+
+    /**
      * Hide popup
      */
     private void closePopup() {
-        ComboBoxPopup.this.hide();
+        MultiSelectPopup.this.hide();
     }
 
     public void setNextPageEnabled(boolean nextPageEnabled) {
@@ -158,6 +181,29 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
             // Else move focus to list
             list.setFocus(stealFocus);
         }
+    }
+
+    /**
+     * Set the current selection set for multiselection mode
+     *
+     * @param currentSelection
+     */
+    public void setCurrentSelection(Set<T> currentSelection) {
+        // Lock selection event so we don't send change events
+        updatingSelection = true;
+        this.currentSelection.clear();
+
+        for (T value : currentSelection) {
+            // If current view doesn't contain item then add item to current selections that are selected but not visible!
+            //
+            // Note! currentSelection is always added to selection event selected items.
+            if (!values.contains(value)) {
+                this.currentSelection.add(value);
+            } else {
+                selectionModel.setSelected(value, true);
+            }
+        }
+        updatingSelection = false;
     }
 
     /**
@@ -202,6 +248,9 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
 
         @Override
         public void render(Context context, final T value, SafeHtmlBuilder sb) {
+            final CheckBox checkBox = new CheckBox();
+            checkBox.setValue(((MultiSelectionModel) selectionModel).isSelected(value));
+            sb.appendHtmlConstant(checkBox.getElement().getString());
             sb.appendHtmlConstant("<span>"); // TODO: add something for icons?
             sb.appendEscaped(value.toString());
             sb.appendHtmlConstant("</span>");
@@ -260,10 +309,32 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
         }
     }
 
-    public void onSelectionChange(SelectionChangeEvent event) {
-        if (callback != null) {
-            callback.itemSelected(getSelectedObject());
+    @Override
+    public void onCellPreview(CellPreviewEvent<T> event) {
+
+        if (BrowserEvents.CLICK.equals(event.getNativeEvent().getType())) {
+            // Do not handle selection for clicks into CheckBoxes
+            // as the selectionEventManager already does this.
+            Element target = event.getNativeEvent().getEventTarget().cast();
+            if ("input".equals(StringCase.toLower(target.getTagName()))) {
+                final InputElement input = target.cast();
+                if ("checkbox".equals(StringCase.toLower(input.getType()))) {
+                    return;
+                }
+            }
+            final T value = event.getValue();
+            final Boolean state = !event.getDisplay().getSelectionModel().isSelected(value);
+            event.getDisplay().getSelectionModel().setSelected(value, state);
+            event.setCanceled(true);
         }
-        closePopup();
+    }
+
+    public void onSelectionChange(SelectionChangeEvent event) {
+        if (!updatingSelection && callback != null) {
+            Set<T> selection = new HashSet<T>();
+            selection.addAll(currentSelection);
+            selection.addAll(getSelectedObjects());
+            callback.itemsSelected(selection);
+        }
     }
 }
