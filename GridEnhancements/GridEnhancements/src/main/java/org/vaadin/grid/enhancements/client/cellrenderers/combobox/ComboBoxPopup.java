@@ -103,9 +103,8 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
         VerticalPanel content = new VerticalPanel();
         content.setWidth("100%");
 
-        up = new Button("Prev");
+        up = new Button("");
         up.getElement().removeAttribute("type");
-        up.setWidth("100%");
         up.setStyleName("c-combo-popup-prevpage");
         up.addClickHandler(new ClickHandler() {
             @Override
@@ -114,9 +113,8 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
             }
         });
 
-        down = new Button("Next");
+        down = new Button("");
         down.getElement().removeAttribute("type");
-        down.setWidth("100%");
         down.setStyleName("c-combo-popup-nextpage");
         down.addClickHandler(new ClickHandler() {
             @Override
@@ -160,11 +158,11 @@ public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyD
     }
 
     public void setNextPageEnabled(boolean nextPageEnabled) {
-        down.setEnabled(nextPageEnabled);
+        down.setVisible(nextPageEnabled);
     }
 
     public void setPreviousPageEnabled(boolean prevPageEnabled) {
-        up.setEnabled(prevPageEnabled);
+        up.setVisible(prevPageEnabled);
     }
 
     /**
