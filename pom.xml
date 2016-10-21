@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.vaadin.grid.enhancements</groupId>
 	<artifactId>Enhancements-root</artifactId>
@@ -11,8 +10,6 @@
 	<profiles>
 		<profile>
 			<modules>
-				<!-- GridEnhancements add-on and demo -->
-				<module>GridEnhancements</module>
 				<!-- Only add the grid-renderers-collection add-on module -->
 				<module>grid-renderers-collection-addon/grid-renderers-collection-addon</module>
 				<!-- Only add the gridactionrenderer add-on module -->
@@ -20,6 +17,11 @@
 			</modules>
 		</profile>
 	</profiles>
+	
+	<modules>
+		<!-- GridEnhancements add-on and demo -->
+		<module>GridEnhancements</module>
+	</modules>
 
 	<scm>
 		<url>git://github.com/bonprix/vaadin-grid-enhancements.git</url>
