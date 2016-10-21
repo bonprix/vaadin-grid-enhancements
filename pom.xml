@@ -8,13 +8,24 @@
 	<version>1.0-SNAPSHOT</version>
 	<name>Grid enhancements Add-on Super Root Project</name>
 
-	<modules>
-		<!-- GridEnhancements add-on and demo -->
-		<module>GridEnhancements</module>
-		<!-- Only add the grid-renderers-collection add-on module -->
-		<module>grid-renderers-collection-addon/grid-renderers-collection-addon</module>
-		<!-- Only add the gridactionrenderer add-on module -->
-		<module>GridActionRenderer/gridactionrenderer-addon</module>
-	</modules>
+	<profiles>
+		<profile>
+			<modules>
+				<!-- GridEnhancements add-on and demo -->
+				<module>GridEnhancements</module>
+				<!-- Only add the grid-renderers-collection add-on module -->
+				<module>grid-renderers-collection-addon/grid-renderers-collection-addon</module>
+				<!-- Only add the gridactionrenderer add-on module -->
+				<module>GridActionRenderer/gridactionrenderer-addon</module>
+			</modules>
+		</profile>
+	</profiles>
+
+	<scm>
+		<url>git://github.com/bonprix/vaadin-grid-enhancements.git</url>
+		<connection>scm:git:ssh://git@github.com/bonprix/vaadin-grid-enhancements.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/bonprix/vaadin-grid-enhancements.git</developerConnection>
+	  	<tag>vaadin-excel-exporter-root-1.0.0-SNAPSHOT</tag>
+  	</scm>
 
 </project>
