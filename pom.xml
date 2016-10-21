@@ -28,4 +28,17 @@
 	  	<tag>vaadin-excel-exporter-root-1.0.0-SNAPSHOT</tag>
   	</scm>
 
+	<distributionManagement>
+		<repository>
+			<id>bp_artifactory</id>
+			<name>bp_artifactory-releases</name>
+			<url>http://digistyle.bonprix.net/artifactory/libs-release-local</url>
+		</repository>
+		<snapshotRepository>
+			<id>bp_artifactory</id>
+			<name>bp_artifactory-snapshots</name>
+			<url>http://digistyle.bonprix.net/artifactory/libs-snapshot-local</url>
+		</snapshotRepository>
+	</distributionManagement>
+
 </project>
