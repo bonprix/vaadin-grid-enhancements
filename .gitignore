@@ -14,3 +14,8 @@ GridEnhancements/GridEnhancements-demo/target
 GridEnhancements/GridEnhancements/target
 GridEnhancements/GridEnhancements-demo/src/main/webapp/VAADIN/widgetsets
 styles.scss.cache
+
+#eclipse project settings
+.project
+.settings
+.classpath
