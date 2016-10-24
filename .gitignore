@@ -19,3 +19,4 @@ styles.scss.cache
 .project
 .settings
 .classpath
+target/
