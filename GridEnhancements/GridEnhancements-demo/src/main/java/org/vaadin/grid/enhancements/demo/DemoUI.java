@@ -24,7 +24,6 @@ import org.vaadin.grid.cellrenderers.editable.DateFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.CheckBoxRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
-import org.vaadin.grid.enhancements.cellrenderers.MultiSelectRenderer;
 import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 import org.vaadin.teemusa.gridextensions.client.tableselection.TableSelectionState;
 import org.vaadin.teemusa.gridextensions.tableselection.TableSelectionModel;
@@ -42,183 +41,246 @@ import java.util.List;
 @SuppressWarnings("serial")
 public class DemoUI extends UI {
 
+	@WebServlet(value = "/*", asyncSupported = true)
+	@VaadinServletConfiguration(productionMode = false, ui = DemoUI.class, widgetset = "org.vaadin.grid.enhancements.demo.DemoWidgetSet")
+	public static class Servlet extends VaadinServlet {
+	}
 
-    @WebServlet(value = "/*", asyncSupported = true)
-    @VaadinServletConfiguration(productionMode = false, ui = DemoUI.class, widgetset = "org.vaadin.grid.enhancements.demo.DemoWidgetSet")
-    public static class Servlet extends VaadinServlet {
-    }
+	private Label latestChangeLabel;
 
-    private Label latestChangeLabel;
+	@Override
+	protected void init(VaadinRequest request) {
 
-    @Override
-    protected void init(VaadinRequest request) {
+		this.latestChangeLabel = new Label("Latest change: -none-");
 
-        latestChangeLabel = new Label("Latest change: -none-");
+		final ActionGrid grid = new ActionGrid(createActions()) {
+			@Override
+			public void click(GridActionRenderer.GridActionClickEvent event) {
+				DemoUI.this.latestChangeLabel.setValue("Latest change: '" + event	.getAction()
+																					.getDescription()
+						+ "'");
+			}
+		};
+		grid.setContainerDataSource(getDataSource());
 
-        final ActionGrid grid = new ActionGrid(createActions()) {
-            @Override
-            public void click(GridActionRenderer.GridActionClickEvent event) {
-                latestChangeLabel.setValue("Latest change: '" + event.getAction().getDescription() + "'");
-            }
-        };
-        grid.setContainerDataSource(getDataSource());
+		// Extend grid with navigation extension so we can navigate form input
+		// to input
+		GridNavigationExtension.extend(grid);
 
-        // Extend grid with navigation extension so we can navigate form input to input
-        GridNavigationExtension.extend(grid);
+		final TableSelectionModel tableSelect = new TableSelectionModel();
+		grid.setSelectionModel(tableSelect);
+		tableSelect.setMode(TableSelectionState.TableSelectionMode.NONE);
 
-        final TableSelectionModel tableSelect = new TableSelectionModel();
-        grid.setSelectionModel(tableSelect);
-        tableSelect.setMode(TableSelectionState.TableSelectionMode.NONE);
+		final HorizontalLayout tableSelectionControls = new HorizontalLayout();
+		tableSelectionControls.setCaption("Table Selection Controls - NONE");
 
-        final HorizontalLayout tableSelectionControls = new HorizontalLayout();
-        tableSelectionControls.setCaption("Table Selection Controls - NONE");
+		// Controls for testing different TableSelectionModes
+		for (final TableSelectionState.TableSelectionMode t : TableSelectionState.TableSelectionMode.values()) {
+			tableSelectionControls.addComponent(new Button(t.toString(), new Button.ClickListener() {
+				@Override
+				public void buttonClick(Button.ClickEvent event) {
+					tableSelect.setMode(t);
+					tableSelectionControls.setCaption("Table Selection Controls - " + t.toString());
+				}
+			}));
+		}
 
-        // Controls for testing different TableSelectionModes
-        for (final TableSelectionState.TableSelectionMode t : TableSelectionState.TableSelectionMode.values()) {
-            tableSelectionControls.addComponent(new Button(t.toString(), new Button.ClickListener() {
-                @Override
-                public void buttonClick(Button.ClickEvent event) {
-                    tableSelect.setMode(t);
-                    tableSelectionControls.setCaption("Table Selection Controls - " + t.toString());
-                }
-            }));
-        }
+		grid.setHeight("420px");
+		grid.setWidth("1150px");
 
-        grid.setHeight("420px");
-        grid.setWidth("1150px");
+		// Add cell renderers
+		// Custom action renderers
+		grid.getColumn("actions")
+			.setRenderer(grid.getGridActionRenderer());
+		grid.getColumn("actions")
+			.setWidth(100);
 
-        // Add cell renderers
-        // Custom action renderers
-        grid.getColumn("actions").setRenderer(grid.getGridActionRenderer());
-        grid.getColumn("actions").setWidth(100);
+		// Field renderers
+		grid.getColumn("foo")
+			.setRenderer(new TextFieldRenderer<String>());
+		grid.getColumn("foo")
+			.setExpandRatio(1);
+		grid.getColumn("bar")
+			.setRenderer(new TextFieldRenderer<Integer>());
+		grid.getColumn("bar")
+			.setWidth(100);
+		grid.getColumn("km")
+			.setRenderer(new TextFieldRenderer<Double>());
+		grid.getColumn("km")
+			.setWidth(100);
+		grid.getColumn("today")
+			.setRenderer(new DateFieldRenderer());
+		grid.getColumn("today")
+			.setWidth(150);
+		grid.getColumn("yes")
+			.setRenderer(new CheckBoxRenderer());
+		grid.getColumn("yes")
+			.setWidth(65);
 
-        // Field renderers
-        grid.getColumn("foo").setRenderer(new TextFieldRenderer<String>());
-        grid.getColumn("foo").setExpandRatio(1);
-        grid.getColumn("bar").setRenderer(new TextFieldRenderer<Integer>());
-        grid.getColumn("bar").setWidth(100);
-        grid.getColumn("km").setRenderer(new TextFieldRenderer<Double>());
-        grid.getColumn("km").setWidth(100);
-        grid.getColumn("today").setRenderer(new DateFieldRenderer());
-        grid.getColumn("today").setWidth(150);
-        grid.getColumn("yes").setRenderer(new CheckBoxRenderer());
-        grid.getColumn("yes").setWidth(65);
+		// ComboBox renderers
+		// grid.getColumn("multi")
+		// .setRenderer(new MultiSelectRenderer(getItemList()));
+		// grid.getColumn("multi")
+		// .setWidth(150);
+		grid.getColumn("single")
+			.setRenderer(new ComboBoxRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name"));
+		grid.getColumn("single")
+			.setWidth(150);
 
-        // ComboBox renderers
-        grid.getColumn("multi").setRenderer(new MultiSelectRenderer(getItemList()));
-        grid.getColumn("multi").setWidth(150);
-        grid.getColumn("single").setRenderer(new ComboBoxRenderer(getItemList()));
-        grid.getColumn("single").setWidth(150);
+		// Add renderer listeners so we catch item edit events.
+		for (Grid.Column col : grid.getColumns()) {
+			Renderer<?> renderer = col.getRenderer();
+			if (!(renderer instanceof EditableRenderer))
+				continue;
 
-        // Add renderer listeners so we catch item edit events.
-        for (Grid.Column col : grid.getColumns()) {
-            Renderer<?> renderer = col.getRenderer();
-            if (!(renderer instanceof EditableRenderer)) continue;
+			// In the demo instance we want to show a formatted date
+			if (renderer.getPresentationType()
+						.equals(Date.class)) {
+				((EditableRenderer) renderer).addItemEditListener(this.dateItemEdit);
+			} else {
+				((EditableRenderer) renderer).addItemEditListener(this.itemEdit);
+			}
+		}
 
-            // In the demo instance we want to show a formatted date
-            if (renderer.getPresentationType().equals(Date.class)) {
-                ((EditableRenderer) renderer).addItemEditListener(dateItemEdit);
-            } else {
-                ((EditableRenderer) renderer).addItemEditListener(itemEdit);
-            }
-        }
+		// Show it in the middle of the screen
+		VerticalLayout content = new VerticalLayout();
+		content.setStyleName("demoContentLayout");
+		content.setSizeFull();
+		setContent(content);
 
-        // Show it in the middle of the screen
-        VerticalLayout content = new VerticalLayout();
-        content.setStyleName("demoContentLayout");
-        content.setSizeFull();
-        setContent(content);
+		final VerticalLayout layout = new VerticalLayout();
+		layout.setSpacing(true);
+		layout.setSizeUndefined();
+		layout.addComponent(grid);
+		layout.addComponent(this.latestChangeLabel);
+		layout.addComponent(tableSelectionControls);
 
-        final VerticalLayout layout = new VerticalLayout();
-        layout.setSpacing(true);
-        layout.setSizeUndefined();
-        layout.addComponent(grid);
-        layout.addComponent(latestChangeLabel);
-        layout.addComponent(tableSelectionControls);
+		content.addComponent(layout);
+		content.setComponentAlignment(layout, Alignment.MIDDLE_CENTER);
 
-        content.addComponent(layout);
-        content.setComponentAlignment(layout, Alignment.MIDDLE_CENTER);
+	}
 
-    }
+	public class DummyClass {
+		private Long id;
+		private String name;
 
-    private LinkedList<String> getItemList() {
-        return new LinkedList<String>() {{
-            add("one");
-            add("two");
-            add("three");
-            add("four");
-            add("five");
-            add("six");
-            add("seven");
-            add("eight");
-            add("nine");
-            add("ten");
-        }};
-    }
+		public DummyClass() {
+		}
 
-    private static List<GridAction> createActions() {
-        List<GridAction> actions = new ArrayList<GridAction>();
-        actions.add(new GridAction(FontAwesome.USER, "user"));
-        actions.add(new GridAction(FontAwesome.GEAR, "settings"));
-        return actions;
-    }
+		public DummyClass(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
 
-    /**
-     * Create and populate an indexed container
-     *
-     * @return Populated indexed container
-     */
-    public IndexedContainer getDataSource() {
-        IndexedContainer container = new IndexedContainer();
-        container.addContainerProperty("actions", String.class, "0,1");
-        container.addContainerProperty("foo", String.class, "");
-        container.addContainerProperty("bar", Integer.class, 0);
-        // km contains double values from 0.0 to 2.0
-        container.addContainerProperty("km", Double.class, 0);
-        container.addContainerProperty("today", Date.class, new Date());
-        container.addContainerProperty("yes", Boolean.class, false);
-        container.addContainerProperty("single", String.class, "");
-        container.addContainerProperty("multi", String.class, "");
+		public Long getId() {
+			return this.id;
+		}
 
-        // Populate data
-        for (int i = 0; i <= 30; ++i) {
-            Object itemId = container.addItem();
-            Item item = container.getItem(itemId);
-            item.getItemProperty("foo").setValue("foo");
-            item.getItemProperty("bar").setValue(i);
-            item.getItemProperty("km").setValue(i / 5.0d);
-            item.getItemProperty("single").setValue("one");
-            item.getItemProperty("multi").setValue(new HashSet<String>() {{
-                add("one");
-                add("eight");
-            }}.toString());
+		public void setId(Long id) {
+			this.id = id;
+		}
 
-            // List index 0-1 not 1-2
-            if (new java.util.Random().nextInt(5) < 3) item.getItemProperty("actions").setValue("1");
-        }
+		public String getName() {
+			return this.name;
+		}
 
-        return container;
-    }
+		public void setName(String name) {
+			this.name = name;
+		}
 
-    // --- ItemEditListeners ---
+	}
 
-    /**
-     * Update change lable with the column and value of the latest edit
-     */
-    private EditableRenderer.ItemEditListener itemEdit = new EditableRenderer.ItemEditListener() {
-        @Override
-        public void itemEdited(EditableRenderer.ItemEditEvent event) {
-            latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' " + event.getNewValue());
-        }
-    };
+	private LinkedList<DummyClass> getItemList() {
+		return new LinkedList<DummyClass>() {
+			{
+				add(new DummyClass(1L, "one"));
+				add(new DummyClass(2L, "two"));
+				add(new DummyClass(3L, "three"));
+				add(new DummyClass(4L, "four"));
+				add(new DummyClass(5L, "five"));
+				add(new DummyClass(6L, "six"));
+				add(new DummyClass(7L, "seven"));
+				add(new DummyClass(8L, "eight"));
+				add(new DummyClass(9L, "nine"));
+				add(new DummyClass(10L, "ten"));
+			}
+		};
+	}
 
-    /**
-     * Same as itemEdit, but with the date value formatted.
-     */
-    private EditableRenderer.ItemEditListener dateItemEdit = new EditableRenderer.ItemEditListener() {
-        @Override
-        public void itemEdited(EditableRenderer.ItemEditEvent event) {
-            latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' " + new SimpleDateFormat("dd-MM-yyyy").format(event.getNewValue()));
-        }
-    };
+	private static List<GridAction> createActions() {
+		List<GridAction> actions = new ArrayList<GridAction>();
+		actions.add(new GridAction(FontAwesome.USER, "user"));
+		actions.add(new GridAction(FontAwesome.GEAR, "settings"));
+		return actions;
+	}
+
+	/**
+	 * Create and populate an indexed container
+	 *
+	 * @return Populated indexed container
+	 */
+	public IndexedContainer getDataSource() {
+		IndexedContainer container = new IndexedContainer();
+		container.addContainerProperty("actions", String.class, "0,1");
+		container.addContainerProperty("foo", String.class, "");
+		container.addContainerProperty("bar", Integer.class, 0);
+		// km contains double values from 0.0 to 2.0
+		container.addContainerProperty("km", Double.class, 0);
+		container.addContainerProperty("today", Date.class, new Date());
+		container.addContainerProperty("yes", Boolean.class, false);
+		container.addContainerProperty("single", DummyClass.class, new DummyClass());
+		container.addContainerProperty("multi", String.class, "");
+
+		// Populate data
+		for (int i = 0; i <= 30; ++i) {
+			Object itemId = container.addItem();
+			Item item = container.getItem(itemId);
+			item.getItemProperty("foo")
+				.setValue("foo");
+			item.getItemProperty("bar")
+				.setValue(i);
+			item.getItemProperty("km")
+				.setValue(i / 5.0d);
+			item.getItemProperty("single")
+				.setValue(new DummyClass());
+			item.getItemProperty("multi")
+				.setValue(new HashSet<String>() {
+					{
+						add("one");
+						add("eight");
+					}
+				}.toString());
+
+			// List index 0-1 not 1-2
+			if (new java.util.Random().nextInt(5) < 3)
+				item.getItemProperty("actions")
+					.setValue("1");
+		}
+
+		return container;
+	}
+
+	// --- ItemEditListeners ---
+
+	/**
+	 * Update change lable with the column and value of the latest edit
+	 */
+	private EditableRenderer.ItemEditListener itemEdit = new EditableRenderer.ItemEditListener() {
+		@Override
+		public void itemEdited(EditableRenderer.ItemEditEvent event) {
+			DemoUI.this.latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' "
+					+ event.getNewValue());
+		}
+	};
+
+	/**
+	 * Same as itemEdit, but with the date value formatted.
+	 */
+	private EditableRenderer.ItemEditListener dateItemEdit = new EditableRenderer.ItemEditListener() {
+		@Override
+		public void itemEdited(EditableRenderer.ItemEditEvent event) {
+			DemoUI.this.latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' "
+					+ new SimpleDateFormat("dd-MM-yyyy").format(event.getNewValue()));
+		}
+	};
 }

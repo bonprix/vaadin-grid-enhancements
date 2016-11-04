@@ -33,237 +33,246 @@ import java.util.Set;
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class ComboBoxPopup<T> extends VOverlay implements MouseMoveHandler, KeyDownHandler, SelectionChangeEvent.Handler {
+public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDownHandler, SelectionChangeEvent.Handler {
 
-    private final CellList<T> list;
-    private final SelectionModel<T> selectionModel;
-    private List<T> values;
+	private final CellList<ComboBoxElement> list;
+	private final SelectionModel<ComboBoxElement> selectionModel;
+	private List<ComboBoxElement> values;
 
-    private Button up, down;
-    private Set<HandlerRegistration> handlers = new HashSet<HandlerRegistration>();
+	private Button up, down;
+	private Set<HandlerRegistration> handlers = new HashSet<HandlerRegistration>();
 
-    private PopupCallback callback;
+	// TODO
+	private PopupCallback callback;
 
-    private long lastAutoClosed;
+	private long lastAutoClosed;
 
-    public ComboBoxPopup(List<T> values) {
-        super(true);
+	public ComboBoxPopup(List<ComboBoxElement> values) {
+		super(true);
 
-        this.values = values;
-        addCloseHandler(this);
+		this.values = values;
+		addCloseHandler(this);
 
-        CellList.Resources resources = GWT.create(CellListResources.class);
+		CellList.Resources resources = GWT.create(CellListResources.class);
 
-        list = new CellList<T>(new Cell(), resources, keyProvider);
-        list.setPageSize(values.size());
-        list.setRowCount(values.size(), true);
-        list.setRowData(0, values);
-        list.setVisibleRange(0, values.size());
-        list.setWidth("100%");
-        list.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
-        list.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
+		this.list = new CellList<ComboBoxElement>(new Cell(), resources, this.keyProvider);
+		this.list.setPageSize(values.size());
+		this.list.setRowCount(values.size(), true);
+		this.list.setRowData(0, values);
+		this.list.setVisibleRange(0, values.size());
+		this.list.setWidth("100%");
+		this.list.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
+		this.list.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
 
-        list.setStyleName("c-combobox-options");
+		this.list.setStyleName("c-combobox-options");
 
+		this.selectionModel = new SingleSelectionModel<ComboBoxElement>(this.keyProvider);
+		this.list.setSelectionModel(this.selectionModel);
 
-        selectionModel = new SingleSelectionModel<T>(keyProvider);
-        list.setSelectionModel(selectionModel);
+		// Remove all handlers if any exist for any reason
+		if (!this.handlers.isEmpty()) {
+			for (HandlerRegistration handler : this.handlers) {
+				handler.removeHandler();
+			}
+		}
 
-        // Remove all handlers if any exist for any reason
-        if (!handlers.isEmpty()) {
-            for (HandlerRegistration handler : handlers) {
-                handler.removeHandler();
-            }
-        }
+		// Add CellList listeners
+		this.handlers.add(this.list.addBitlessDomHandler(this, MouseMoveEvent.getType()));
+		this.handlers.add(this.list.addHandler(this, KeyDownEvent.getType()));
 
-        // Add CellList listeners
-        handlers.add(list.addBitlessDomHandler(this, MouseMoveEvent.getType()));
-        handlers.add(list.addHandler(this, KeyDownEvent.getType()));
+		// Add selection change handler
+		this.handlers.add(this.selectionModel.addSelectionChangeHandler(this));
 
-        // Add selection change handler
-        handlers.add(selectionModel.addSelectionChangeHandler(this));
+		setStyleName("c-combo-popup");
 
+		VerticalPanel content = new VerticalPanel();
+		content.setWidth("100%");
 
-        setStyleName("c-combo-popup");
+		this.up = new Button("");
+		this.up	.getElement()
+				.removeAttribute("type");
+		this.up.setStyleName("c-combo-popup-prevpage");
+		this.up.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				ComboBoxPopup.this.callback.prevPage();
+			}
+		});
 
-        VerticalPanel content = new VerticalPanel();
-        content.setWidth("100%");
+		this.down = new Button("");
+		this.down	.getElement()
+					.removeAttribute("type");
+		this.down.setStyleName("c-combo-popup-nextpage");
+		this.down.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				ComboBoxPopup.this.callback.nextPage();
+			}
+		});
 
-        up = new Button("");
-        up.getElement().removeAttribute("type");
-        up.setStyleName("c-combo-popup-prevpage");
-        up.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                callback.prevPage();
-            }
-        });
+		// Add widgets to content panel
+		content.add(this.up);
+		content.add(this.list);
+		content.add(this.down);
 
-        down = new Button("");
-        down.getElement().removeAttribute("type");
-        down.setStyleName("c-combo-popup-nextpage");
-        down.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                callback.nextPage();
-            }
-        });
+		// Init content widget
+		add(content);
+	}
 
-        // Add widgets to content panel
-        content.add(up);
-        content.add(list);
-        content.add(down);
+	/**
+	 * Get the selected object when in singleSelection mode
+	 *
+	 * @return Single selected object
+	 */
+	private ComboBoxElement getSelectedObject() {
+		return ((SingleSelectionModel<ComboBoxElement>) this.selectionModel).getSelectedObject();
+	}
 
-        // Init content widget
-        add(content);
-    }
+	/**
+	 * Hide popup
+	 */
+	private void closePopup() {
+		ComboBoxPopup.this.hide();
+	}
 
-    /**
-     * Get the selected object when in singleSelection mode
-     *
-     * @return Single selected object
-     */
-    private T getSelectedObject() {
-        return ((SingleSelectionModel<T>) selectionModel).getSelectedObject();
-    }
+	public void setNextPageEnabled(boolean nextPageEnabled) {
+		this.down.setVisible(nextPageEnabled);
+	}
 
-    /**
-     * Hide popup
-     */
-    private void closePopup() {
-        ComboBoxPopup.this.hide();
-    }
+	public void setPreviousPageEnabled(boolean prevPageEnabled) {
+		this.up.setVisible(prevPageEnabled);
+	}
 
-    public void setNextPageEnabled(boolean nextPageEnabled) {
-        down.setVisible(nextPageEnabled);
-    }
+	/**
+	 * Move keyboard focus to the selected item if found in current options
+	 *
+	 * @param selected
+	 *            Selected item to focus if available
+	 */
+	public void focusSelection(ComboBoxElement selected, boolean stealFocus) {
+		if (this.values.contains(selected)) {
+			// Focus selected item
+			this.list.setKeyboardSelectedRow(this.values.indexOf(selected), stealFocus);
+		} else if (!this.values.isEmpty()) {
+			// Else focus first item if values exist
+			this.list.setKeyboardSelectedRow(0, stealFocus);
+		} else {
+			// Else move focus to list
+			this.list.setFocus(stealFocus);
+		}
+	}
 
-    public void setPreviousPageEnabled(boolean prevPageEnabled) {
-        up.setVisible(prevPageEnabled);
-    }
+	/**
+	 * Add a popup callback
+	 *
+	 * @param callback
+	 *            ComboBox callback
+	 */
+	public void addPopupCallback(PopupCallback<ComboBoxElement> callback) {
+		this.callback = callback;
+	}
 
-    /**
-     * Move keyboard focus to the selected item if found in current options
-     *
-     * @param selected Selected item to focus if available
-     */
-    public void focusSelection(T selected, boolean stealFocus) {
-        if (values.contains(selected)) {
-            // Focus selected item
-            list.setKeyboardSelectedRow(values.indexOf(selected), stealFocus);
-        } else if (!values.isEmpty()) {
-            // Else focus first item if values exist
-            list.setKeyboardSelectedRow(0, stealFocus);
-        } else {
-            // Else move focus to list
-            list.setFocus(stealFocus);
-        }
-    }
+	/**
+	 * Remove popup callback
+	 *
+	 * @param callback
+	 */
+	public void removePopupCallback(PopupCallback<ComboBoxElement> callback) {
+		this.callback = null;
+	}
 
-    /**
-     * Add a popup callback
-     *
-     * @param callback ComboBox callback
-     */
-    public void addPopupCallback(PopupCallback<T> callback) {
-        this.callback = callback;
-    }
+	public boolean isJustClosed() {
+		final long now = (new Date()).getTime();
+		return (this.lastAutoClosed > 0 && (now - this.lastAutoClosed) < 200);
+	}
 
-    /**
-     * Remove popup callback
-     *
-     * @param callback
-     */
-    public void removePopupCallback(PopupCallback<T> callback) {
-        this.callback = null;
-    }
+	@Override
+	public void onClose(CloseEvent<PopupPanel> event) {
+		if (event.isAutoClosed()) {
+			this.lastAutoClosed = (new Date()).getTime();
+		}
+		if (!this.handlers.isEmpty()) {
+			for (HandlerRegistration handler : this.handlers) {
+				handler.removeHandler();
+			}
+		}
+	}
 
-    public boolean isJustClosed() {
-        final long now = (new Date()).getTime();
-        return (lastAutoClosed > 0 && (now - lastAutoClosed) < 200);
-    }
+	/**
+	 * CellList cell content renderer implementation
+	 */
+	private class Cell extends AbstractCell<ComboBoxElement> {
 
-    @Override
-    public void onClose(CloseEvent<PopupPanel> event) {
-        if (event.isAutoClosed()) {
-            lastAutoClosed = (new Date()).getTime();
-        }
-        if (!handlers.isEmpty()) {
-            for (HandlerRegistration handler : handlers) {
-                handler.removeHandler();
-            }
-        }
-    }
+		@Override
+		public void render(Context context, final ComboBoxElement value, SafeHtmlBuilder sb) {
+			sb.appendHtmlConstant("<span>");
+			// TODO: add something for icons?
+			sb.appendEscaped(value.getName());
+			sb.appendHtmlConstant("</span>");
 
-    /**
-     * CellList cell content renderer implementation
-     */
-    private class Cell extends AbstractCell<T> {
+		}
+	}
 
-        @Override
-        public void render(Context context, final T value, SafeHtmlBuilder sb) {
-            sb.appendHtmlConstant("<span>"); // TODO: add something for icons?
-            sb.appendEscaped(value.toString());
-            sb.appendHtmlConstant("</span>");
+	/**
+	 * CellList item key provider
+	 */
+	private ProvidesKey<ComboBoxElement> keyProvider = new ProvidesKey<ComboBoxElement>() {
+		public Object getKey(ComboBoxElement item) {
+			// Always do a null check.
+			return (item == null) ? null : item.hashCode();
+		}
+	};
 
-        }
-    }
+	// --- Event handler implementations ---
 
-    /**
-     * CellList item key provider
-     */
-    private ProvidesKey<T> keyProvider = new ProvidesKey<T>() {
-        public Object getKey(T item) {
-            // Always do a null check.
-            return (item == null) ? null : item.hashCode();
-        }
-    };
+	@Override
+	public void onKeyDown(KeyDownEvent event) {
+		switch (event	.getNativeEvent()
+						.getKeyCode()) {
+		case KeyCodes.KEY_ESCAPE:
+			this.callback.clear();
+			closePopup();
+			break;
+		case KeyCodes.KEY_DOWN:
+			if (this.list.getKeyboardSelectedRow() == this.list	.getVisibleItems()
+																.size()
+					- 1 && this.down.isEnabled()) {
+				this.callback.nextPage();
+			}
+			break;
+		case KeyCodes.KEY_UP:
+			if (this.list.getKeyboardSelectedRow() == 0 && this.up.isEnabled()) {
+				this.callback.prevPage();
+			}
+			break;
+		case KeyCodes.KEY_TAB:
+			if (this.callback != null) {
+				this.callback.itemSelected(this.list.getVisibleItem(this.list.getKeyboardSelectedRow()));
+			}
+			closePopup();
+			break;
+		}
+	}
 
+	@Override
+	public void onMouseMove(MouseMoveEvent event) {
+		Element target = event	.getNativeEvent()
+								.getEventTarget()
+								.cast();
+		for (int i = 0; i < this.list	.getVisibleItems()
+										.size(); i++) {
+			Element e = this.list.getRowElement(i);
+			if (e.equals(target)) {
+				this.list.setKeyboardSelectedRow(i, true);
+				break;
+			}
+		}
+	}
 
-    // --- Event handler implementations ---
-
-    @Override
-    public void onKeyDown(KeyDownEvent event) {
-        switch (event.getNativeEvent().getKeyCode()) {
-            case KeyCodes.KEY_ESCAPE:
-                callback.clear();
-                closePopup();
-                break;
-            case KeyCodes.KEY_DOWN:
-                if (list.getKeyboardSelectedRow() == list.getVisibleItems().size() - 1 && down.isEnabled()) {
-                    callback.nextPage();
-                }
-                break;
-            case KeyCodes.KEY_UP:
-                if (list.getKeyboardSelectedRow() == 0 && up.isEnabled()) {
-                    callback.prevPage();
-                }
-                break;
-            case KeyCodes.KEY_TAB:
-                if (callback != null) {
-                    callback.itemSelected(list.getVisibleItem(list.getKeyboardSelectedRow()));
-                }
-                closePopup();
-                break;
-        }
-    }
-
-    @Override
-    public void onMouseMove(MouseMoveEvent event) {
-        Element target = event.getNativeEvent().getEventTarget().cast();
-        for (int i = 0; i < list.getVisibleItems().size(); i++) {
-            Element e = list.getRowElement(i);
-            if (e.equals(target)) {
-                list.setKeyboardSelectedRow(i, true);
-                break;
-            }
-        }
-    }
-
-    public void onSelectionChange(SelectionChangeEvent event) {
-        if (callback != null) {
-            callback.itemSelected(getSelectedObject());
-        }
-        closePopup();
-    }
+	public void onSelectionChange(SelectionChangeEvent event) {
+		if (this.callback != null) {
+			this.callback.itemSelected(getSelectedObject());
+		}
+		closePopup();
+	}
 }

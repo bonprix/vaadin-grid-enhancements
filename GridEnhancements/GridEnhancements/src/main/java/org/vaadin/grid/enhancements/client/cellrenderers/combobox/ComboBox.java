@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -31,232 +30,238 @@ import java.util.Set;
  */
 public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, HasChangeHandlers {
 
-    private ComboBoxPopup popup = null;
+	private ComboBoxPopup popup = null;
 
-    private String selected;
+	private ComboBoxElement selected;
 
-    private TextBox selector;
-    private Button drop;
+	private TextBox selector;
+	private Button drop;
 
-    private EventHandler eventHandler;
+	private EventHandler<ComboBoxElement> eventHandler;
 
-    private Timer t = null;
-    // Page starts as page 0
-    private int currentPage = 0;
+	private Timer t = null;
+	// Page starts as page 0
+	private int currentPage = 0;
 
-    private int pages = 1;
-    private boolean skipBlur = false;
+	private int pages = 1;
+	private boolean skipBlur = false;
 
-    public ComboBox() {
-        selector = new TextBox();
-        selector.addKeyDownHandler(this);
+	public ComboBox() {
+		this.selector = new TextBox();
+		this.selector.addKeyDownHandler(this);
 
-        selector.getElement().getStyle().setProperty("padding", "0 16px");
-        selector.setStyleName("c-combobox-input");
-        selector.addBlurHandler(this);
+		this.selector	.getElement()
+						.getStyle()
+						.setProperty("padding", "0 16px");
+		this.selector.setStyleName("c-combobox-input");
+		this.selector.addBlurHandler(this);
 
-        drop = new Button();
-        drop.setStyleName("c-combobox-button");
-        drop.addClickHandler(dropDownClickHandler);
+		this.drop = new Button();
+		this.drop.setStyleName("c-combobox-button");
+		this.drop.addClickHandler(this.dropDownClickHandler);
 
-        FlowPanel content = new FlowPanel();
-        content.setStyleName("v-widget v-has-width v-filterselect v-filterselect-prompt");
-        content.setWidth("100%");
+		FlowPanel content = new FlowPanel();
+		content.setStyleName("v-widget v-has-width v-filterselect v-filterselect-prompt");
+		content.setWidth("100%");
 
-        content.add(selector);
-        content.add(drop);
+		content.add(this.selector);
+		content.add(this.drop);
 
-        initWidget(content);
+		initWidget(content);
 
-    }
+	}
 
-    public void updateSelection(List<String> selection) {
-        openDropdown(selection);
-    }
+	public void updateSelection(List<ComboBoxElement> selection) {
+		openDropdown(selection);
+	}
 
-    public void updatePageAmount(int pages) {
-        this.pages = pages;
-    }
+	public void updatePageAmount(int pages) {
+		this.pages = pages;
+	}
 
-    public String getValue() {
-        return selected;
-    }
+	public ComboBoxElement getValue() {
+		return this.selected;
+	}
 
-    public void setSelected(String selected) {
-        String old = this.selected;
-        selector.setValue(selected);
-        this.selected = selected;
+	public void setSelected(ComboBoxElement selected) {
+		ComboBoxElement old = this.selected;
+		this.selector.setValue(selected.getName());
+		this.selected = selected;
 
-        if (!old.equals(selected)) {
-            eventHandler.change(selected);
-        }
-    }
+		if (!old.equals(selected)) {
+			this.eventHandler.change(selected);
+		}
+	}
 
-    public void setCurrentPage(int currentPage) {
-        this.currentPage = currentPage;
-    }
+	public void setCurrentPage(int currentPage) {
+		this.currentPage = currentPage;
+	}
 
-    public void setEventHandler(EventHandler eventHandler) {
-        this.eventHandler = eventHandler;
-    }
+	public void setEventHandler(EventHandler<ComboBoxElement> eventHandler) {
+		this.eventHandler = eventHandler;
+	}
 
-    public HandlerRegistration addChangeHandler(ChangeHandler handler) {
-        return addDomHandler(handler, ChangeEvent.getType());
-    }
+	public HandlerRegistration addChangeHandler(ChangeHandler handler) {
+		return addDomHandler(handler, ChangeEvent.getType());
+	}
 
-    public void setSelection(String selection) {
-        selected = selection;
-        selector.setValue(selection);
-    }
+	public void setSelection(ComboBoxElement selection) {
+		this.selected = selection;
+		this.selector.setValue(selection.getName());
+	}
 
-    public boolean isEnabled() {
-        return selector.isEnabled();
-    }
+	public boolean isEnabled() {
+		return this.selector.isEnabled();
+	}
 
-    public void setEnabled(boolean enabled) {
-        selector.setEnabled(enabled);
-    }
+	public void setEnabled(boolean enabled) {
+		this.selector.setEnabled(enabled);
+	}
 
-    private void openDropdown(List<String> items) {
-        boolean focus = false;
-        if (popup != null) {
-            focus = popup.isJustClosed();
-            if (popup.isVisible()) popup.hide(true);
-        }
-        popup = new ComboBoxPopup(items);
-        popup.addCloseHandler(new CloseHandler<PopupPanel>() {
-            @Override
-            public void onClose(CloseEvent<PopupPanel> closeEvent) {
-                popup.removePopupCallback(eventListener);
-            }
-        });
-        popup.addPopupCallback(eventListener);
+	private void openDropdown(List<ComboBoxElement> items) {
+		boolean focus = false;
+		if (this.popup != null) {
+			focus = this.popup.isJustClosed();
+			if (this.popup.isVisible())
+				this.popup.hide(true);
+		}
+		this.popup = new ComboBoxPopup(items);
+		this.popup.addCloseHandler(new CloseHandler<PopupPanel>() {
+			@Override
+			public void onClose(CloseEvent<PopupPanel> closeEvent) {
+				ComboBox.this.popup.removePopupCallback(ComboBox.this.eventListener);
+			}
+		});
+		this.popup.addPopupCallback(this.eventListener);
 
-        popup.setPreviousPageEnabled(currentPage > 0);
-        popup.setNextPageEnabled(currentPage < pages - 1);
+		this.popup.setPreviousPageEnabled(this.currentPage > 0);
+		this.popup.setNextPageEnabled(this.currentPage < this.pages - 1);
 
-        popup.setWidth(getOffsetWidth() + "px");
-        popup.getElement().getStyle().setZIndex(1000);
-        popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
-            public void setPosition(int offsetWidth, int offsetHeight) {
-                int top = ComboBox.this.getAbsoluteTop() + ComboBox.this.getOffsetHeight();
-                if (top + ComboBox.this.getOffsetHeight() > Window.getClientHeight()) {
-                    top = ComboBox.this.getAbsoluteTop() - ComboBox.this.getOffsetHeight();
-                }
-                popup.setPopupPosition(ComboBox.this.getAbsoluteLeft(), top);
-            }
-        });
-        skipBlur = true;
-        popup.focusSelection(selected, focus);
-    }
+		this.popup.setWidth(getOffsetWidth() + "px");
+		this.popup	.getElement()
+					.getStyle()
+					.setZIndex(1000);
+		this.popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
+			public void setPosition(int offsetWidth, int offsetHeight) {
+				int top = ComboBox.this.getAbsoluteTop() + ComboBox.this.getOffsetHeight();
+				if (top + ComboBox.this.getOffsetHeight() > Window.getClientHeight()) {
+					top = ComboBox.this.getAbsoluteTop() - ComboBox.this.getOffsetHeight();
+				}
+				ComboBox.this.popup.setPopupPosition(ComboBox.this.getAbsoluteLeft(), top);
+			}
+		});
+		this.skipBlur = true;
+		this.popup.focusSelection(this.selected, focus);
+	}
 
-    // -- Handlers --
+	// -- Handlers --
 
-    @Override
-    public void onKeyDown(KeyDownEvent event) {
+	@Override
+	public void onKeyDown(KeyDownEvent event) {
 
-        switch (event.getNativeKeyCode()) {
-            case KeyCodes.KEY_ESCAPE:
-                event.preventDefault();
-                event.stopPropagation();
-                if (popup != null && popup.isVisible()) {
-                    popup.hide(true);
-                    popup = null;
-                }
-                eventHandler.clearFilter();
-                selector.setValue(selected);
-                break;
-            case KeyCodes.KEY_DOWN:
-                event.preventDefault();
-                event.stopPropagation();
+		switch (event.getNativeKeyCode()) {
+		case KeyCodes.KEY_ESCAPE:
+			event.preventDefault();
+			event.stopPropagation();
+			if (this.popup != null && this.popup.isVisible()) {
+				this.popup.hide(true);
+				this.popup = null;
+			}
+			this.eventHandler.clearFilter();
 
-                // Focus popup if open else open popup with first page
-                if (popup != null && popup.isAttached()) {
-                    popup.focusSelection(selected, true);
-                } else {
-                    // Start from page with selection when opening.
-                    currentPage = -1;
-                    eventHandler.getPage(currentPage);
-                }
-                break;
-            case KeyCodes.KEY_TAB:
-                if (popup != null && popup.isAttached()) {
-                    popup.hide(true);
-                }
-                selector.setValue(selected);
-                break;
-        }
+			this.selector.setValue(this.selected.getName());
+			break;
+		case KeyCodes.KEY_DOWN:
+			event.preventDefault();
+			event.stopPropagation();
 
-        RegExp regex = RegExp.compile("^[a-zA-Z0-9]+$");
-        if (!regex.test("" + (char) event.getNativeKeyCode()) && event.getNativeKeyCode() != KeyCodes.KEY_BACKSPACE) {
-            return;
-        }
+			// Focus popup if open else open popup with first page
+			if (this.popup != null && this.popup.isAttached()) {
+				this.popup.focusSelection(this.selected, true);
+			} else {
+				// Start from page with selection when opening.
+				this.currentPage = -1;
+				this.eventHandler.getPage(this.currentPage);
+			}
+			break;
+		case KeyCodes.KEY_TAB:
+			if (this.popup != null && this.popup.isAttached()) {
+				this.popup.hide(true);
+			}
+			this.selector.setValue(this.selected.getName());
+			break;
+		}
 
-        if (t == null)
-            t = new Timer() {
-                @Override
-                public void run() {
-                    currentPage = 0;
-                    eventHandler.filter(selector.getValue(), currentPage);
-                    t = null;
-                }
-            };
-        t.schedule(300);
-    }
+		RegExp regex = RegExp.compile("^[a-zA-Z0-9]+$");
+		if (!regex.test("" + (char) event.getNativeKeyCode()) && event.getNativeKeyCode() != KeyCodes.KEY_BACKSPACE) {
+			return;
+		}
 
-    @Override
-    public void onBlur(BlurEvent event) {
-        if (!skipBlur) {
-            if (popup != null && popup.isAttached()) {
-                popup.hide();
-            }
-            selector.setValue(selected);
-            skipBlur = false;
-        }
-    }
+		if (this.t == null)
+			this.t = new Timer() {
+				@Override
+				public void run() {
+					ComboBox.this.currentPage = 0;
+					ComboBox.this.eventHandler.filter(ComboBox.this.selector.getValue(), ComboBox.this.currentPage);
+					ComboBox.this.t = null;
+				}
+			};
+		this.t.schedule(300);
+	}
 
-    private ClickHandler dropDownClickHandler = new ClickHandler() {
-        @Override
-        public void onClick(ClickEvent event) {
-            if (popup != null && popup.isAttached()) {
-                popup.hide();
-                popup = null;
-            } else if (popup == null || !popup.isJustClosed()) {
-                // Start from page where selection is when opening.
-                currentPage = -1;
-                eventHandler.getPage(currentPage);
-            }
-            selector.setFocus(true);
-        }
-    };
+	@Override
+	public void onBlur(BlurEvent event) {
+		if (!this.skipBlur) {
+			if (this.popup != null && this.popup.isAttached()) {
+				this.popup.hide();
+			}
+			this.selector.setValue(this.selected.getName());
+			this.skipBlur = false;
+		}
+	}
 
-    PopupCallback<String> eventListener = new PopupCallback<String>() {
-        @Override
-        public void itemSelected(String item) {
-            setSelected(item);
-            selector.setFocus(true);
-            eventHandler.clearFilter();
-        }
+	private ClickHandler dropDownClickHandler = new ClickHandler() {
+		@Override
+		public void onClick(ClickEvent event) {
+			if (ComboBox.this.popup != null && ComboBox.this.popup.isAttached()) {
+				ComboBox.this.popup.hide();
+				ComboBox.this.popup = null;
+			} else if (ComboBox.this.popup == null || !ComboBox.this.popup.isJustClosed()) {
+				// Start from page where selection is when opening.
+				ComboBox.this.currentPage = -1;
+				ComboBox.this.eventHandler.getPage(ComboBox.this.currentPage);
+			}
+			ComboBox.this.selector.setFocus(true);
+		}
+	};
 
-        @Override
-        public void nextPage() {
-            eventHandler.getPage(++currentPage);
-        }
+	PopupCallback<ComboBoxElement> eventListener = new PopupCallback<ComboBoxElement>() {
+		@Override
+		public void itemSelected(ComboBoxElement item) {
+			setSelected(item);
+			ComboBox.this.selector.setFocus(true);
+			ComboBox.this.eventHandler.clearFilter();
+		}
 
-        @Override
-        public void prevPage() {
-            eventHandler.getPage(--currentPage);
-        }
+		@Override
+		public void nextPage() {
+			ComboBox.this.eventHandler.getPage(++ComboBox.this.currentPage);
+		}
 
-        @Override
-        public void clear() {
-            selector.setFocus(true);
-            eventHandler.clearFilter();
-        }
+		@Override
+		public void prevPage() {
+			ComboBox.this.eventHandler.getPage(--ComboBox.this.currentPage);
+		}
 
-        @Override
-        public void itemsSelected(Set<String> selectedObjects) {
-            // NOOP
-        }
-    };
+		@Override
+		public void clear() {
+			ComboBox.this.selector.setFocus(true);
+			ComboBox.this.eventHandler.clearFilter();
+		}
+
+		@Override
+		public void itemsSelected(Set<ComboBoxElement> selectedObjects) {
+			// NOOP
+		}
+	};
 }

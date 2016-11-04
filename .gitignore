@@ -20,3 +20,6 @@ styles.scss.cache
 .settings
 .classpath
 target/
+
+#jrebel
+rebel.xml

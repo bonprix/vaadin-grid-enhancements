@@ -24,142 +24,147 @@ import java.util.Set;
  * @author Mikael Grankvist - Vaadin Ltd
  */
 @Connect(ComboBoxRenderer.class)
-public class ComboBoxRendererConnector extends AbstractRendererConnector<String> {
+public class ComboBoxRendererConnector extends AbstractRendererConnector<ComboBoxElement> {
 
-    ComboBoxServerRpc rpc = RpcProxy.create(ComboBoxServerRpc.class, this);
+	ComboBoxServerRpc rpc = RpcProxy.create(ComboBoxServerRpc.class, this);
 
-    public class ComboBoxRenderer extends ClickableRenderer<String, ComboBox> {
+	public class ComboBoxRenderer extends ClickableRenderer<ComboBoxElement, ComboBox> {
 
-        private static final String ROW_KEY_PROPERTY = "rowKey";
-        private static final String COLUMN_ID_PROPERTY = "columnId";
+		private static final String ROW_KEY_PROPERTY = "rowKey";
+		private static final String COLUMN_ID_PROPERTY = "columnId";
 
-        private String filter = "";
+		private String filter = "";
 
-        @Override
-        public ComboBox createWidget() {
-            final ComboBox comboBox = GWT.create(ComboBox.class);
+		@Override
+		public ComboBox createWidget() {
+			final ComboBox comboBox = GWT.create(ComboBox.class);
 
-            comboBox.addDomHandler(new ClickHandler() {
-                @Override
-                public void onClick(ClickEvent event) {
-                    event.stopPropagation();
-                }
-            }, ClickEvent.getType());
+			comboBox.addDomHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					event.stopPropagation();
+				}
+			}, ClickEvent.getType());
 
-            comboBox.addDomHandler(new MouseDownHandler() {
-                @Override
-                public void onMouseDown(MouseDownEvent event) {
-                    event.stopPropagation();
-                }
-            }, MouseDownEvent.getType());
+			comboBox.addDomHandler(new MouseDownHandler() {
+				@Override
+				public void onMouseDown(MouseDownEvent event) {
+					event.stopPropagation();
+				}
+			}, MouseDownEvent.getType());
 
-            comboBox.setEventHandler(new EventHandler() {
-                @Override
-                public void change(String item) {
-                    rpc.onValueChange(getCellId(comboBox), item);
-                }
+			comboBox.setEventHandler(new EventHandler<ComboBoxElement>() {
+				@Override
+				public void change(ComboBoxElement item) {
+					ComboBoxRendererConnector.this.rpc.onValueChange(getCellId(comboBox), item);
+				}
 
-                @Override
-                public void change(Set<String> items) {
-                    // NOOP
-                }
+				@Override
+				public void change(Set<ComboBoxElement> items) {
+					// NOOP
+				}
 
-                @Override
-                public void getPage(int pageNumber) {
-                    if (!filter.isEmpty()) {
-                        rpc.getFilterPage(filter, pageNumber, getCellId(comboBox));
-                    } else {
-                        rpc.getPage(pageNumber, getCellId(comboBox));
-                    }
-                }
+				@Override
+				public void getPage(int pageNumber) {
+					if (!org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxRendererConnector.ComboBoxRenderer.this.filter.isEmpty()) {
+						ComboBoxRendererConnector.this.rpc.getFilterPage(	org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxRendererConnector.ComboBoxRenderer.this.filter,
+																			pageNumber, getCellId(comboBox));
+					} else {
+						ComboBoxRendererConnector.this.rpc.getPage(pageNumber, getCellId(comboBox));
+					}
+				}
 
-                @Override
-                public void filter(String filterValue, int pageNumber) {
-                    filter = filterValue;
-                    rpc.getFilterPage(filterValue, pageNumber, getCellId(comboBox));
-                }
+				@Override
+				public void filter(String filterValue, int pageNumber) {
+					org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxRendererConnector.ComboBoxRenderer.this.filter = filterValue;
+					ComboBoxRendererConnector.this.rpc.getFilterPage(filterValue, pageNumber, getCellId(comboBox));
+				}
 
-                @Override
-                public void clearFilter() {
-                    filter = "";
-                }
-            });
+				@Override
+				public void clearFilter() {
+					org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxRendererConnector.ComboBoxRenderer.this.filter = "";
+				}
+			});
 
-            return comboBox;
-        }
+			return comboBox;
+		}
 
-        @Override
-        public void render(final RendererCellReference cell, final String selectedValue, final ComboBox comboBox) {
-            filter = "";
+		@Override
+		public void render(final RendererCellReference cell, final ComboBoxElement selectedValue,
+				final ComboBox comboBox) {
+			this.filter = "";
 
-            registerRpc(ComboBoxClientRpc.class, new ComboBoxClientRpc() {
-                @Override
-                public void setCurrentPage(int page, CellId id) {
-                    if (id.equals(getCellId(comboBox))) {
-                        comboBox.setCurrentPage(page);
-                    }
-                }
+			registerRpc(ComboBoxClientRpc.class, new ComboBoxClientRpc() {
+				@Override
+				public void setCurrentPage(int page, CellId id) {
+					if (id.equals(getCellId(comboBox))) {
+						comboBox.setCurrentPage(page);
+					}
+				}
 
-                @Override
-                public void updateOptions(OptionsInfo optionsInfo, List<String> options, CellId id) {
-                    if (id.equals(getCellId(comboBox))) {
-                        if(optionsInfo.getCurrentPage() != -1) {
-                            comboBox.setCurrentPage(optionsInfo.getCurrentPage());
-                        }
-                        comboBox.updatePageAmount(optionsInfo.getPageAmount());
-                        comboBox.updateSelection(options);
-                    }
-                }
-            });
+				@Override
+				public void updateOptions(OptionsInfo optionsInfo, List<ComboBoxElement> options, CellId id) {
+					if (id.equals(getCellId(comboBox))) {
+						if (optionsInfo.getCurrentPage() != -1) {
+							comboBox.setCurrentPage(optionsInfo.getCurrentPage());
+						}
+						comboBox.updatePageAmount(optionsInfo.getPageAmount());
+						comboBox.updateSelection(options);
+					}
+				}
+			});
 
-            Element e = comboBox.getElement();
-            getState().value = selectedValue;
+			Element e = comboBox.getElement();
+			getState().value = selectedValue;
 
-            if (e.getPropertyString(ROW_KEY_PROPERTY) != getRowKey((JsonObject) cell.getRow())) {
-                e.setPropertyString(ROW_KEY_PROPERTY, getRowKey((JsonObject) cell.getRow()));
-            }
-            // Generics issue, need a correctly typed column.
+			if (e.getPropertyString(ROW_KEY_PROPERTY) != getRowKey((JsonObject) cell.getRow())) {
+				e.setPropertyString(ROW_KEY_PROPERTY, getRowKey((JsonObject) cell.getRow()));
+			}
+			// Generics issue, need a correctly typed column.
 
-            if (e.getPropertyString(COLUMN_ID_PROPERTY) != getColumnId(getGrid().getColumn(cell.getColumnIndex()))) {
-                e.setPropertyString(COLUMN_ID_PROPERTY, getColumnId(getGrid().getColumn(cell.getColumnIndex())));
-            }
+			if (e.getPropertyString(COLUMN_ID_PROPERTY) != getColumnId(getGrid().getColumn(cell.getColumnIndex()))) {
+				e.setPropertyString(COLUMN_ID_PROPERTY, getColumnId(getGrid().getColumn(cell.getColumnIndex())));
+			}
 
-            comboBox.setSelection(selectedValue);
+			comboBox.setSelection(selectedValue);
 
-            if (comboBox.isEnabled() != cell.getColumn().isEditable()) {
-                comboBox.setEnabled(cell.getColumn().isEditable());
-            }
-        }
+			if (comboBox.isEnabled() != cell.getColumn()
+											.isEditable()) {
+				comboBox.setEnabled(cell.getColumn()
+										.isEditable());
+			}
+		}
 
-        /**
-         * Create cell identification for current ComboBox on row and column.
-         *
-         * @param comboBox ComboBox to get cell identification for
-         * @return CellId for ComboBox
-         */
-        private CellId getCellId(ComboBox comboBox) {
-            Element e = comboBox.getElement();
-            return new CellId(e.getPropertyString(ROW_KEY_PROPERTY), e.getPropertyString(COLUMN_ID_PROPERTY));
-        }
-    }
+		/**
+		 * Create cell identification for current ComboBox on row and column.
+		 *
+		 * @param comboBox
+		 *            ComboBox to get cell identification for
+		 * @return CellId for ComboBox
+		 */
+		private CellId getCellId(ComboBox comboBox) {
+			Element e = comboBox.getElement();
+			return new CellId(e.getPropertyString(ROW_KEY_PROPERTY), e.getPropertyString(COLUMN_ID_PROPERTY));
+		}
+	}
 
-    @Override
-    public ComboBoxState getState() {
-        return (ComboBoxState) super.getState();
-    }
+	@Override
+	public ComboBoxState getState() {
+		return (ComboBoxState) super.getState();
+	}
 
-    @Override
-    protected Renderer<String> createRenderer() {
-        return new ComboBoxRenderer();
-    }
+	@Override
+	protected Renderer<ComboBoxElement> createRenderer() {
+		return new ComboBoxRenderer();
+	}
 
-    @Override
-    public ComboBoxRenderer getRenderer() {
-        return (ComboBoxRenderer) super.getRenderer();
-    }
+	@Override
+	public ComboBoxRenderer getRenderer() {
+		return (ComboBoxRenderer) super.getRenderer();
+	}
 
-    private Grid<JsonObject> getGrid() {
-        return ((GridConnector) getParent()).getWidget();
-    }
+	private Grid<JsonObject> getGrid() {
+		return ((GridConnector) getParent()).getWidget();
+	}
 
 }
