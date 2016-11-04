@@ -3,8 +3,7 @@ package org.vaadin.grid.enhancements.demo;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.Title;
 import com.vaadin.annotations.VaadinServletConfiguration;
-import com.vaadin.data.Item;
-import com.vaadin.data.util.IndexedContainer;
+import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
@@ -23,6 +22,7 @@ import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.cellrenderers.editable.DateFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.CheckBoxRenderer;
+import org.vaadin.grid.enhancements.cellrenderers.ComboBoxMultiselectRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
 import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 import org.vaadin.teemusa.gridextensions.client.tableselection.TableSelectionState;
@@ -118,10 +118,10 @@ public class DemoUI extends UI {
 			.setWidth(65);
 
 		// ComboBox renderers
-		// grid.getColumn("multi")
-		// .setRenderer(new MultiSelectRenderer(getItemList()));
-		// grid.getColumn("multi")
-		// .setWidth(150);
+		grid.getColumn("multi")
+			.setRenderer(new ComboBoxMultiselectRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name"));
+		grid.getColumn("multi")
+			.setWidth(150);
 		grid.getColumn("single")
 			.setRenderer(new ComboBoxRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name"));
 		grid.getColumn("single")
@@ -219,42 +219,18 @@ public class DemoUI extends UI {
 	 *
 	 * @return Populated indexed container
 	 */
-	public IndexedContainer getDataSource() {
-		IndexedContainer container = new IndexedContainer();
-		container.addContainerProperty("actions", String.class, "0,1");
-		container.addContainerProperty("foo", String.class, "");
-		container.addContainerProperty("bar", Integer.class, 0);
-		// km contains double values from 0.0 to 2.0
-		container.addContainerProperty("km", Double.class, 0);
-		container.addContainerProperty("today", Date.class, new Date());
-		container.addContainerProperty("yes", Boolean.class, false);
-		container.addContainerProperty("single", DummyClass.class, new DummyClass());
-		container.addContainerProperty("multi", String.class, "");
+	public BeanItemContainer<DataSourceClass> getDataSource() {
+		BeanItemContainer<DataSourceClass> container = new BeanItemContainer<DataSourceClass>(DataSourceClass.class);
 
 		// Populate data
 		for (int i = 0; i <= 30; ++i) {
-			Object itemId = container.addItem();
-			Item item = container.getItem(itemId);
-			item.getItemProperty("foo")
-				.setValue("foo");
-			item.getItemProperty("bar")
-				.setValue(i);
-			item.getItemProperty("km")
-				.setValue(i / 5.0d);
-			item.getItemProperty("single")
-				.setValue(new DummyClass());
-			item.getItemProperty("multi")
-				.setValue(new HashSet<String>() {
-					{
-						add("one");
-						add("eight");
-					}
-				}.toString());
-
-			// List index 0-1 not 1-2
-			if (new java.util.Random().nextInt(5) < 3)
-				item.getItemProperty("actions")
-					.setValue("1");
+			container.addBean(new DataSourceClass("", "foo", i, i / 5.0d, new Date(), false, new DummyClass(),
+					new HashSet<DummyClass>() {
+						{
+							add(new DummyClass(1L, "one"));
+							add(new DummyClass(8L, "eight"));
+						}
+					}));
 		}
 
 		return container;
@@ -283,4 +259,97 @@ public class DemoUI extends UI {
 					+ new SimpleDateFormat("dd-MM-yyyy").format(event.getNewValue()));
 		}
 	};
+
+	public class DataSourceClass {
+
+		// container.addContainerProperty("actions", String.class, "0,1");
+		private String actions;
+		private String foo;
+		private Integer bar;
+		private Double km;
+		private Date today;
+		private Boolean yes;
+		private DummyClass single;
+		private HashSet<DummyClass> multi;
+
+		public DataSourceClass() {
+		}
+
+		public DataSourceClass(String actions, String foo, Integer bar, Double km, Date today, Boolean yes,
+				DummyClass single, HashSet<DummyClass> multi) {
+			this.actions = actions;
+			this.foo = foo;
+			this.bar = bar;
+			this.km = km;
+			this.today = today;
+			this.yes = yes;
+			this.single = single;
+			this.multi = multi;
+		}
+
+		public String getActions() {
+			return this.actions;
+		}
+
+		public void setActions(String actions) {
+			this.actions = actions;
+		}
+
+		public String getFoo() {
+			return this.foo;
+		}
+
+		public void setFoo(String foo) {
+			this.foo = foo;
+		}
+
+		public Integer getBar() {
+			return this.bar;
+		}
+
+		public void setBar(Integer bar) {
+			this.bar = bar;
+		}
+
+		public Double getKm() {
+			return this.km;
+		}
+
+		public void setKm(Double km) {
+			this.km = km;
+		}
+
+		public Date getToday() {
+			return this.today;
+		}
+
+		public void setToday(Date today) {
+			this.today = today;
+		}
+
+		public Boolean getYes() {
+			return this.yes;
+		}
+
+		public void setYes(Boolean yes) {
+			this.yes = yes;
+		}
+
+		public DummyClass getSingle() {
+			return this.single;
+		}
+
+		public void setSingle(DummyClass single) {
+			this.single = single;
+		}
+
+		public HashSet<DummyClass> getMulti() {
+			return this.multi;
+		}
+
+		public void setMulti(HashSet<DummyClass> multi) {
+			this.multi = multi;
+		}
+
+	}
 }

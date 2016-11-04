@@ -15,7 +15,7 @@ import com.vaadin.client.widget.grid.RendererCellReference;
 import com.vaadin.client.widgets.Grid;
 import com.vaadin.shared.ui.Connect;
 import elemental.json.JsonObject;
-import org.vaadin.grid.enhancements.cellrenderers.MultiSelectRenderer;
+import org.vaadin.grid.enhancements.cellrenderers.ComboBoxMultiselectRenderer;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellId;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.EventHandler;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.OptionsInfo;
@@ -26,12 +26,12 @@ import java.util.Set;
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-@Connect(MultiSelectRenderer.class)
-public class MultiSelectRendererConnector extends AbstractRendererConnector<String> {
+@Connect(ComboBoxMultiselectRenderer.class)
+public class MultiSelectRendererConnector extends AbstractRendererConnector<Set<ComboBoxMultiselectOption>> {
 
 	MultiSelectServerRpc rpc = RpcProxy.create(MultiSelectServerRpc.class, this);
 
-	public class MultiSelectRenderer extends ClickableRenderer<String, MultiSelect> {
+	public class MultiSelectRenderer extends ClickableRenderer<Set<ComboBoxMultiselectOption>, MultiSelect> {
 
 		private static final String ROW_KEY_PROPERTY = "rowKey";
 		private static final String COLUMN_ID_PROPERTY = "columnId";
@@ -56,14 +56,14 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Stri
 				}
 			}, MouseDownEvent.getType());
 
-			comboBox.setEventHandler(new EventHandler<String>() {
+			comboBox.setEventHandler(new EventHandler<ComboBoxMultiselectOption>() {
 				@Override
-				public void change(String item) {
+				public void change(ComboBoxMultiselectOption item) {
 					// NOOP
 				}
 
 				@Override
-				public void change(Set<String> item) {
+				public void change(Set<ComboBoxMultiselectOption> item) {
 					MultiSelectRendererConnector.this.rpc.onValueSetChange(getCellId(comboBox), item);
 				}
 
@@ -93,7 +93,7 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Stri
 		}
 
 		@Override
-		public void render(final RendererCellReference cell, final String selectedValue,
+		public void render(final RendererCellReference cell, final Set<ComboBoxMultiselectOption> selectedValue,
 				final MultiSelect multiSelect) {
 			this.filter = "";
 
@@ -106,7 +106,7 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Stri
 				}
 
 				@Override
-				public void updateOptions(OptionsInfo optionsInfo, List<String> options, CellId id) {
+				public void updateOptions(OptionsInfo optionsInfo, List<ComboBoxMultiselectOption> options, CellId id) {
 					if (id.equals(getCellId(multiSelect))) {
 						if (optionsInfo.getCurrentPage() != -1) {
 							multiSelect.setCurrentPage(optionsInfo.getCurrentPage());
@@ -149,6 +149,7 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Stri
 			Element e = comboBox.getElement();
 			return new CellId(e.getPropertyString(ROW_KEY_PROPERTY), e.getPropertyString(COLUMN_ID_PROPERTY));
 		}
+
 	}
 
 	@Override
@@ -157,7 +158,7 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Stri
 	}
 
 	@Override
-	protected Renderer<String> createRenderer() {
+	protected Renderer<Set<ComboBoxMultiselectOption>> createRenderer() {
 		return new MultiSelectRenderer();
 	}
 

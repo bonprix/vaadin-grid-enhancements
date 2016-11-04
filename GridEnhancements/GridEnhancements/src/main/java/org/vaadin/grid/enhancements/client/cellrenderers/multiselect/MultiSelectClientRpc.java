@@ -13,20 +13,25 @@ import java.util.List;
  */
 public interface MultiSelectClientRpc extends ClientRpc {
 
-    /**
-     * Send to the client which page of options we are showing now
-     *
-     * @param page Page of options
-     * @param id   Cell identification
-     */
-    void setCurrentPage(int page, CellId id);
+	/**
+	 * Send to the client which page of options we are showing now
+	 *
+	 * @param page
+	 *            Page of options
+	 * @param id
+	 *            Cell identification
+	 */
+	void setCurrentPage(int page, CellId id);
 
-    /**
-     * Send updated options to client to be shown
-     *
-     * @param optionsInfo   Total amount of pages
-     * @param options Options for current page
-     * @param id      Cell identification
-     */
-    void updateOptions(OptionsInfo optionsInfo, List<String> options, CellId id);
+	/**
+	 * Send updated options to client to be shown
+	 *
+	 * @param optionsInfo
+	 *            Total amount of pages
+	 * @param options
+	 *            Options for current page
+	 * @param id
+	 *            Cell identification
+	 */
+	void updateOptions(OptionsInfo optionsInfo, List<ComboBoxMultiselectOption> options, CellId id);
 }
