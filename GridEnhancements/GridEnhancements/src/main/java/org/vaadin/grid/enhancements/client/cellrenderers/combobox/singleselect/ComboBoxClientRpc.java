@@ -1,17 +1,19 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.multiselect;
+package org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect;
 
 import com.vaadin.shared.communication.ClientRpc;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellId;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.OptionsInfo;
 
 import java.util.List;
+
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionsInfo;
 
 /**
  * Server to client rpc
  *
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public interface MultiSelectClientRpc extends ClientRpc {
+public interface ComboBoxClientRpc extends ClientRpc {
 
 	/**
 	 * Send to the client which page of options we are showing now
@@ -33,5 +35,5 @@ public interface MultiSelectClientRpc extends ClientRpc {
 	 * @param id
 	 *            Cell identification
 	 */
-	void updateOptions(OptionsInfo optionsInfo, List<ComboBoxMultiselectOption> options, CellId id);
+	void updateOptions(OptionsInfo optionsInfo, List<OptionElement> options, CellId id);
 }

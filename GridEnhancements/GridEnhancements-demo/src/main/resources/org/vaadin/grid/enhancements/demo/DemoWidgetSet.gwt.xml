@@ -44,4 +44,8 @@
     <inherits name="org.vaadin.anna.gridactionrenderer.WidgetSet" />
 
     <inherits name="org.vaadin.grid.cellrenderers.RenderersCollectionWidgetSet" />
+
+    
+
+    
 </module>

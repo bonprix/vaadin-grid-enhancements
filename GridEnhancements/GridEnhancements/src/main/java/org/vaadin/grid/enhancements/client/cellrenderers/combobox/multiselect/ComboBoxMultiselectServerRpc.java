@@ -1,16 +1,18 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.multiselect;
+package org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect;
 
 import com.vaadin.shared.communication.ServerRpc;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellId;
 
 import java.util.Set;
+
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
 
 /**
  * Client to server rpc
  *
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public interface MultiSelectServerRpc extends ServerRpc {
+public interface ComboBoxMultiselectServerRpc extends ServerRpc {
 
 	/**
 	 * Get options for requested page offset
@@ -42,7 +44,24 @@ public interface MultiSelectServerRpc extends ServerRpc {
 	 * @param newValues
 	 *            Selected values
 	 */
-	void onValueSetChange(CellId id, Set<ComboBoxMultiselectOption> newValues);
+	void onValueSetChange(CellId id, Set<OptionElement> newValues);
 
+	/**
+	 * filtering the visible options in the dropdown
+	 * 
+	 * @param id
+	 *            Cell identification
+	 * @param filter
+	 *            string to filter the elements
+	 */
 	void filter(CellId id, String filter);
+
+	/**
+	 * workaround to load the value of the correct property
+	 * 
+	 * @param id
+	 *            Cell identification
+	 */
+	void onRender(CellId id);
+
 }

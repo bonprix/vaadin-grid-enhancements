@@ -3,7 +3,10 @@ package org.vaadin.grid.enhancements.demo;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.Title;
 import com.vaadin.annotations.VaadinServletConfiguration;
+import com.vaadin.data.Item;
 import com.vaadin.data.util.BeanItemContainer;
+import com.vaadin.data.util.GeneratedPropertyContainer;
+import com.vaadin.data.util.PropertyValueGenerator;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
@@ -14,6 +17,7 @@ import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.renderers.Renderer;
 import org.vaadin.anna.gridactionrenderer.ActionGrid;
 import org.vaadin.anna.gridactionrenderer.GridAction;
@@ -24,6 +28,7 @@ import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.CheckBoxRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxMultiselectRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
 import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 import org.vaadin.teemusa.gridextensions.client.tableselection.TableSelectionState;
 import org.vaadin.teemusa.gridextensions.tableselection.TableSelectionModel;
@@ -61,7 +66,7 @@ public class DemoUI extends UI {
 						+ "'");
 			}
 		};
-		grid.setContainerDataSource(getDataSource());
+		grid.setContainerDataSource(new GeneratedPropertyContainer(getDataSource()));
 
 		// Extend grid with navigation extension so we can navigate form input
 		// to input
@@ -118,8 +123,26 @@ public class DemoUI extends UI {
 			.setWidth(65);
 
 		// ComboBox renderers
-		grid.getColumn("multi")
+		((GeneratedPropertyContainer) grid.getContainerDataSource()).addGeneratedProperty(	"_multi",
+																							new PropertyValueGenerator<OptionElement>() {
+
+																								@Override
+																								public OptionElement getValue(
+																										Item item,
+																										Object itemId,
+																										Object propertyId) {
+																									return new OptionElement();
+																								}
+
+																								@Override
+																								public Class<OptionElement> getType() {
+																									return OptionElement.class;
+																								}
+																							});
+		grid.getColumn("_multi")
 			.setRenderer(new ComboBoxMultiselectRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name"));
+		grid.getColumn("_multi")
+			.setWidth(400);
 		grid.getColumn("multi")
 			.setWidth(150);
 		grid.getColumn("single")
@@ -157,6 +180,25 @@ public class DemoUI extends UI {
 
 		content.addComponent(layout);
 		content.setComponentAlignment(layout, Alignment.MIDDLE_CENTER);
+		content.addComponent(new Button("test", new Button.ClickListener() {
+
+			@Override
+			public void buttonClick(ClickEvent event) {
+				int i = 0;
+				for (Object object : grid	.getContainerDataSource()
+											.getItemIds()) {
+					DataSourceClass dataSourceClass = (DataSourceClass) object;
+					StringBuffer strBuffer = new StringBuffer();
+					strBuffer.append(i++ + ": ");
+					for (DummyClass dummyClass : dataSourceClass.getMulti()) {
+						strBuffer.append(dummyClass.getId());
+					}
+					System.out.println(strBuffer.toString());
+				}
+			}
+		}));
+
+		grid.setColumnOrder("_multi");
 
 	}
 
@@ -186,6 +228,29 @@ public class DemoUI extends UI {
 
 		public void setName(String name) {
 			this.name = name;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (!(obj instanceof DummyClass)) {
+				return false;
+			}
+
+			DummyClass otherDummyClass = (DummyClass) obj;
+			if (otherDummyClass.getId() == null) {
+				return false;
+			}
+
+			return otherDummyClass	.getId()
+									.equals(this.getId());
+		}
+
+		@Override
+		public int hashCode() {
+			if (getId() == null) {
+				return 0;
+			}
+			return (int) (getId() ^ (getId() >>> 32));
 		}
 
 	}

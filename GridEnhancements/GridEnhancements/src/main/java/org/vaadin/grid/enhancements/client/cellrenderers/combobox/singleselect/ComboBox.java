@@ -1,4 +1,4 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.multiselect;
+package org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect;
 
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -21,27 +21,27 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.EventHandler;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.PopupCallback;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.EventHandler;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.PopupCallback;
 
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class MultiSelect extends Composite implements KeyDownHandler, BlurHandler, HasChangeHandlers {
+public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, HasChangeHandlers {
 
-	private MultiSelectPopup popup = null;
+	private ComboBoxPopup popup = null;
 
-	private Set<ComboBoxMultiselectOption> selected = new HashSet<ComboBoxMultiselectOption>();
+	private OptionElement selected;
 
 	private TextBox selector;
 	private Button drop;
 
-	private EventHandler<ComboBoxMultiselectOption> eventHandler;
+	private EventHandler<OptionElement> eventHandler;
 
 	private Timer t = null;
 	// Page starts as page 0
@@ -50,7 +50,7 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
 	private int pages = 1;
 	private boolean skipBlur = false;
 
-	public MultiSelect() {
+	public ComboBox() {
 		this.selector = new TextBox();
 		this.selector.addKeyDownHandler(this);
 
@@ -75,7 +75,7 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
 
 	}
 
-	public void updateSelection(List<ComboBoxMultiselectOption> selection) {
+	public void updateSelection(List<OptionElement> selection) {
 		openDropdown(selection);
 	}
 
@@ -83,15 +83,25 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
 		this.pages = pages;
 	}
 
-	public Set<ComboBoxMultiselectOption> getValue() {
+	public OptionElement getValue() {
 		return this.selected;
+	}
+
+	public void setSelected(OptionElement selected) {
+		OptionElement old = this.selected;
+		this.selector.setValue(selected.getName());
+		this.selected = selected;
+
+		if (!old.equals(selected)) {
+			this.eventHandler.change(selected);
+		}
 	}
 
 	public void setCurrentPage(int currentPage) {
 		this.currentPage = currentPage;
 	}
 
-	public void setEventHandler(EventHandler eventHandler) {
+	public void setEventHandler(EventHandler<OptionElement> eventHandler) {
 		this.eventHandler = eventHandler;
 	}
 
@@ -99,10 +109,9 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
 		return addDomHandler(handler, ChangeEvent.getType());
 	}
 
-	public void setSelection(Set<ComboBoxMultiselectOption> selection) {
+	public void setSelection(OptionElement selection) {
 		this.selected = selection;
-		// TODO
-		this.selector.setValue(selection.toString());
+		this.selector.setValue(selection.getName());
 	}
 
 	public boolean isEnabled() {
@@ -113,18 +122,18 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
 		this.selector.setEnabled(enabled);
 	}
 
-	private void openDropdown(List<ComboBoxMultiselectOption> items) {
+	private void openDropdown(List<OptionElement> items) {
 		boolean focus = false;
 		if (this.popup != null) {
 			focus = this.popup.isJustClosed();
 			if (this.popup.isVisible())
 				this.popup.hide(true);
 		}
-		this.popup = new MultiSelectPopup(items);
+		this.popup = new ComboBoxPopup(items);
 		this.popup.addCloseHandler(new CloseHandler<PopupPanel>() {
 			@Override
 			public void onClose(CloseEvent<PopupPanel> closeEvent) {
-				MultiSelect.this.popup.removePopupCallback(MultiSelect.this.eventListener);
+				ComboBox.this.popup.removePopupCallback(ComboBox.this.eventListener);
 			}
 		});
 		this.popup.addPopupCallback(this.eventListener);
@@ -138,17 +147,15 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
 					.setZIndex(1000);
 		this.popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
 			public void setPosition(int offsetWidth, int offsetHeight) {
-				int top = MultiSelect.this.getAbsoluteTop() + MultiSelect.this.getOffsetHeight();
-				if (top + MultiSelect.this.getOffsetHeight() > Window.getClientHeight()) {
-					top = MultiSelect.this.getAbsoluteTop() - MultiSelect.this.getOffsetHeight();
+				int top = ComboBox.this.getAbsoluteTop() + ComboBox.this.getOffsetHeight();
+				if (top + ComboBox.this.getOffsetHeight() > Window.getClientHeight()) {
+					top = ComboBox.this.getAbsoluteTop() - ComboBox.this.getOffsetHeight();
 				}
-				MultiSelect.this.popup.setPopupPosition(MultiSelect.this.getAbsoluteLeft(), top);
+				ComboBox.this.popup.setPopupPosition(ComboBox.this.getAbsoluteLeft(), top);
 			}
 		});
 		this.skipBlur = true;
-		this.popup.setCurrentSelection(this.selected);
-		// TODO?!
-		// this.popup.focusSelection(this.selected, focus);
+		this.popup.focusSelection(this.selected, focus);
 	}
 
 	// -- Handlers --
@@ -165,8 +172,8 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
 				this.popup = null;
 			}
 			this.eventHandler.clearFilter();
-			// TODO
-			this.selector.setValue(this.selected.toString());
+
+			this.selector.setValue(this.selected.getName());
 			break;
 		case KeyCodes.KEY_DOWN:
 			event.preventDefault();
@@ -174,8 +181,7 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
 
 			// Focus popup if open else open popup with first page
 			if (this.popup != null && this.popup.isAttached()) {
-				// TODO?!
-				// this.popup.focusSelection(this.selected, true);
+				this.popup.focusSelection(this.selected, true);
 			} else {
 				// Start from page with selection when opening.
 				this.currentPage = -1;
@@ -186,8 +192,7 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
 			if (this.popup != null && this.popup.isAttached()) {
 				this.popup.hide(true);
 			}
-			// TODO
-			this.selector.setValue(this.selected.toString());
+			this.selector.setValue(this.selected.getName());
 			break;
 		}
 
@@ -200,10 +205,9 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
 			this.t = new Timer() {
 				@Override
 				public void run() {
-					MultiSelect.this.currentPage = 0;
-					MultiSelect.this.eventHandler.filter(	MultiSelect.this.selector.getValue(),
-															MultiSelect.this.currentPage);
-					MultiSelect.this.t = null;
+					ComboBox.this.currentPage = 0;
+					ComboBox.this.eventHandler.filter(ComboBox.this.selector.getValue(), ComboBox.this.currentPage);
+					ComboBox.this.t = null;
 				}
 			};
 		this.t.schedule(300);
@@ -215,8 +219,7 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
 			if (this.popup != null && this.popup.isAttached()) {
 				this.popup.hide();
 			}
-			// TODO
-			this.selector.setValue(this.selected.toString());
+			this.selector.setValue(this.selected.getName());
 			this.skipBlur = false;
 		}
 	}
@@ -224,46 +227,45 @@ public class MultiSelect extends Composite implements KeyDownHandler, BlurHandle
 	private ClickHandler dropDownClickHandler = new ClickHandler() {
 		@Override
 		public void onClick(ClickEvent event) {
-			if (MultiSelect.this.popup != null && MultiSelect.this.popup.isAttached()) {
-				MultiSelect.this.popup.hide();
-				MultiSelect.this.popup = null;
-			} else if (MultiSelect.this.popup == null || !MultiSelect.this.popup.isJustClosed()) {
+			if (ComboBox.this.popup != null && ComboBox.this.popup.isAttached()) {
+				ComboBox.this.popup.hide();
+				ComboBox.this.popup = null;
+			} else if (ComboBox.this.popup == null || !ComboBox.this.popup.isJustClosed()) {
 				// Start from page where selection is when opening.
-				MultiSelect.this.currentPage = -1;
-				MultiSelect.this.eventHandler.getPage(MultiSelect.this.currentPage);
+				ComboBox.this.currentPage = -1;
+				ComboBox.this.eventHandler.getPage(ComboBox.this.currentPage);
 			}
-			MultiSelect.this.selector.setFocus(true);
+			ComboBox.this.selector.setFocus(true);
 		}
 	};
 
-	PopupCallback<ComboBoxMultiselectOption> eventListener = new PopupCallback<ComboBoxMultiselectOption>() {
+	PopupCallback<OptionElement> eventListener = new PopupCallback<OptionElement>() {
 		@Override
-		public void itemSelected(ComboBoxMultiselectOption item) {
-			// NOOP
+		public void itemSelected(OptionElement item) {
+			setSelected(item);
+			ComboBox.this.selector.setFocus(true);
+			ComboBox.this.eventHandler.clearFilter();
 		}
 
 		@Override
 		public void nextPage() {
-			MultiSelect.this.eventHandler.getPage(++MultiSelect.this.currentPage);
+			ComboBox.this.eventHandler.getPage(++ComboBox.this.currentPage);
 		}
 
 		@Override
 		public void prevPage() {
-			MultiSelect.this.eventHandler.getPage(--MultiSelect.this.currentPage);
+			ComboBox.this.eventHandler.getPage(--ComboBox.this.currentPage);
 		}
 
 		@Override
 		public void clear() {
-			MultiSelect.this.selector.setFocus(true);
-			MultiSelect.this.eventHandler.clearFilter();
+			ComboBox.this.selector.setFocus(true);
+			ComboBox.this.eventHandler.clearFilter();
 		}
 
 		@Override
-		public void itemsSelected(Set<ComboBoxMultiselectOption> selectedObjects) {
-			MultiSelect.this.selected.clear();
-			MultiSelect.this.selected.addAll(selectedObjects);
-			MultiSelect.this.eventHandler.change(selectedObjects);
-			// TODO: update selected items
+		public void itemsSelected(Set<OptionElement> selectedObjects) {
+			// NOOP
 		}
 	};
 }

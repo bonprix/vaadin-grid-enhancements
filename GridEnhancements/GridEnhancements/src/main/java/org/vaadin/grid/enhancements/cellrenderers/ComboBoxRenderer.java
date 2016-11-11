@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.vaadin.grid.cellrenderers.EditableRenderer;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellId;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxClientRpc;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxElement;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxServerRpc;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxState;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.OptionsInfo;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionsInfo;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxClientRpc;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxServerRpc;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxState;
 
 import com.vaadin.data.Container.Filter;
 import com.vaadin.data.Container.Filterable;
@@ -89,17 +89,17 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 			List<BEANTYPE> elements = ComboBoxRenderer.this.container	.getItemIds()
 																		.subList(fromIndex, toIndex);
 
-			ArrayList<ComboBoxElement> options = convertBeansToComboBoxElements(elements);
+			ArrayList<OptionElement> options = convertBeansToOptionElements(elements);
 			getRpcProxy(ComboBoxClientRpc.class).updateOptions(info, options, id);
 		}
 
-		private ArrayList<ComboBoxElement> convertBeansToComboBoxElements(List<BEANTYPE> elements) {
-			ArrayList<ComboBoxElement> options = new ArrayList<ComboBoxElement>();
+		private ArrayList<OptionElement> convertBeansToOptionElements(List<BEANTYPE> elements) {
+			ArrayList<OptionElement> options = new ArrayList<OptionElement>();
 			for (BEANTYPE bean : elements) {
 				Item item = ComboBoxRenderer.this.container.getItem(bean);
 				final Property<?> idProperty = item.getItemProperty(ComboBoxRenderer.this.itemIdPropertyId);
 				final Property<?> captionProperty = item.getItemProperty(ComboBoxRenderer.this.itemCaptionPropertyId);
-				options.add(new ComboBoxElement((Long) idProperty.getValue(), (String) captionProperty.getValue()));
+				options.add(new OptionElement((Long) idProperty.getValue(), (String) captionProperty.getValue()));
 			}
 			return options;
 		}
@@ -119,7 +119,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 				filterable.addContainerFilter(filter);
 			}
 
-			List<ComboBoxElement> filteredResult = convertBeansToComboBoxElements(ComboBoxRenderer.this.container.getItemIds());
+			List<OptionElement> filteredResult = convertBeansToOptionElements(ComboBoxRenderer.this.container.getItemIds());
 
 			int filteredPages = (int) Math.ceil((double) filteredResult.size() / ComboBoxRenderer.this.pageSize);
 
@@ -184,7 +184,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 				filterable.addContainerFilter(filter);
 			}
 
-			List<ComboBoxElement> filteredResult = convertBeansToComboBoxElements(ComboBoxRenderer.this.container.getItemIds());
+			List<OptionElement> filteredResult = convertBeansToOptionElements(ComboBoxRenderer.this.container.getItemIds());
 
 			int filteredPages = (int) Math.ceil((double) filteredResult.size() / ComboBoxRenderer.this.pageSize);
 			OptionsInfo info = new OptionsInfo(filteredPages);
@@ -197,7 +197,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 		}
 
 		@Override
-		public void onValueChange(CellId id, ComboBoxElement newValue) {
+		public void onValueChange(CellId id, OptionElement newValue) {
 			Object itemId = getItemId(id.getRowId());
 			Object columnPropertyId = getColumn(id.getColumnId()).getPropertyId();
 

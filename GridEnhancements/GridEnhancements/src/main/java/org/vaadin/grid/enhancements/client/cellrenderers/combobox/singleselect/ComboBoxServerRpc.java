@@ -1,4 +1,7 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
+package org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect;
+
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
 
 import com.vaadin.shared.communication.ServerRpc;
 
@@ -39,7 +42,7 @@ public interface ComboBoxServerRpc extends ServerRpc {
 	 * @param newValue
 	 *            Selected new value
 	 */
-	void onValueChange(CellId id, ComboBoxElement newValue);
+	void onValueChange(CellId id, OptionElement newValue);
 
 	void filter(CellId id, String filter);
 }

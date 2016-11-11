@@ -1,4 +1,4 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
+package org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -16,6 +16,10 @@ import com.vaadin.client.widgets.Grid;
 import com.vaadin.shared.ui.Connect;
 import elemental.json.JsonObject;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.EventHandler;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionsInfo;
 
 import java.util.List;
 import java.util.Set;
@@ -24,11 +28,11 @@ import java.util.Set;
  * @author Mikael Grankvist - Vaadin Ltd
  */
 @Connect(ComboBoxRenderer.class)
-public class ComboBoxRendererConnector extends AbstractRendererConnector<ComboBoxElement> {
+public class ComboBoxRendererConnector extends AbstractRendererConnector<OptionElement> {
 
 	ComboBoxServerRpc rpc = RpcProxy.create(ComboBoxServerRpc.class, this);
 
-	public class ComboBoxRenderer extends ClickableRenderer<ComboBoxElement, ComboBox> {
+	public class ComboBoxRenderer extends ClickableRenderer<OptionElement, ComboBox> {
 
 		private static final String ROW_KEY_PROPERTY = "rowKey";
 		private static final String COLUMN_ID_PROPERTY = "columnId";
@@ -53,21 +57,21 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<ComboBo
 				}
 			}, MouseDownEvent.getType());
 
-			comboBox.setEventHandler(new EventHandler<ComboBoxElement>() {
+			comboBox.setEventHandler(new EventHandler<OptionElement>() {
 				@Override
-				public void change(ComboBoxElement item) {
+				public void change(OptionElement item) {
 					ComboBoxRendererConnector.this.rpc.onValueChange(getCellId(comboBox), item);
 				}
 
 				@Override
-				public void change(Set<ComboBoxElement> items) {
+				public void change(Set<OptionElement> items) {
 					// NOOP
 				}
 
 				@Override
 				public void getPage(int pageNumber) {
-					if (!org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxRendererConnector.ComboBoxRenderer.this.filter.isEmpty()) {
-						ComboBoxRendererConnector.this.rpc.getFilterPage(	org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxRendererConnector.ComboBoxRenderer.this.filter,
+					if (!org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxRendererConnector.ComboBoxRenderer.this.filter.isEmpty()) {
+						ComboBoxRendererConnector.this.rpc.getFilterPage(	org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxRendererConnector.ComboBoxRenderer.this.filter,
 																			pageNumber, getCellId(comboBox));
 					} else {
 						ComboBoxRendererConnector.this.rpc.getPage(pageNumber, getCellId(comboBox));
@@ -76,13 +80,13 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<ComboBo
 
 				@Override
 				public void filter(String filterValue, int pageNumber) {
-					org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxRendererConnector.ComboBoxRenderer.this.filter = filterValue;
+					org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxRendererConnector.ComboBoxRenderer.this.filter = filterValue;
 					ComboBoxRendererConnector.this.rpc.getFilterPage(filterValue, pageNumber, getCellId(comboBox));
 				}
 
 				@Override
 				public void clearFilter() {
-					org.vaadin.grid.enhancements.client.cellrenderers.combobox.ComboBoxRendererConnector.ComboBoxRenderer.this.filter = "";
+					org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxRendererConnector.ComboBoxRenderer.this.filter = "";
 				}
 			});
 
@@ -90,7 +94,7 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<ComboBo
 		}
 
 		@Override
-		public void render(final RendererCellReference cell, final ComboBoxElement selectedValue,
+		public void render(final RendererCellReference cell, final OptionElement selectedValue,
 				final ComboBox comboBox) {
 			this.filter = "";
 
@@ -103,7 +107,7 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<ComboBo
 				}
 
 				@Override
-				public void updateOptions(OptionsInfo optionsInfo, List<ComboBoxElement> options, CellId id) {
+				public void updateOptions(OptionsInfo optionsInfo, List<OptionElement> options, CellId id) {
 					if (id.equals(getCellId(comboBox))) {
 						if (optionsInfo.getCurrentPage() != -1) {
 							comboBox.setCurrentPage(optionsInfo.getCurrentPage());
@@ -154,7 +158,7 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<ComboBo
 	}
 
 	@Override
-	protected Renderer<ComboBoxElement> createRenderer() {
+	protected Renderer<OptionElement> createRenderer() {
 		return new ComboBoxRenderer();
 	}
 

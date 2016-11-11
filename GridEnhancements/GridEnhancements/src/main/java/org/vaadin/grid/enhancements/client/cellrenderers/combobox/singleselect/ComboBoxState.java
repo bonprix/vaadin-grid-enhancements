@@ -1,4 +1,4 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
+package org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect;
 
 import com.vaadin.shared.communication.SharedState;
 

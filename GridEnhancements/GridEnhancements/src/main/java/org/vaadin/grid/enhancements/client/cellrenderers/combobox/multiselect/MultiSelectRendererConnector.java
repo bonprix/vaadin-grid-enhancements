@@ -1,4 +1,4 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.multiselect;
+package org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -16,9 +16,10 @@ import com.vaadin.client.widgets.Grid;
 import com.vaadin.shared.ui.Connect;
 import elemental.json.JsonObject;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxMultiselectRenderer;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.CellId;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.EventHandler;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.OptionsInfo;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.EventHandler;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionsInfo;
 
 import java.util.List;
 import java.util.Set;
@@ -27,11 +28,12 @@ import java.util.Set;
  * @author Mikael Grankvist - Vaadin Ltd
  */
 @Connect(ComboBoxMultiselectRenderer.class)
-public class MultiSelectRendererConnector extends AbstractRendererConnector<Set<ComboBoxMultiselectOption>> {
+public class MultiSelectRendererConnector extends AbstractRendererConnector<OptionElement> {
+	private static final long serialVersionUID = 1L;
 
-	MultiSelectServerRpc rpc = RpcProxy.create(MultiSelectServerRpc.class, this);
+	ComboBoxMultiselectServerRpc rpc = RpcProxy.create(ComboBoxMultiselectServerRpc.class, this);
 
-	public class MultiSelectRenderer extends ClickableRenderer<Set<ComboBoxMultiselectOption>, MultiSelect> {
+	public class MultiSelectRenderer extends ClickableRenderer<OptionElement, MultiSelect> {
 
 		private static final String ROW_KEY_PROPERTY = "rowKey";
 		private static final String COLUMN_ID_PROPERTY = "columnId";
@@ -56,21 +58,21 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Set<
 				}
 			}, MouseDownEvent.getType());
 
-			comboBox.setEventHandler(new EventHandler<ComboBoxMultiselectOption>() {
+			comboBox.setEventHandler(new EventHandler<OptionElement>() {
 				@Override
-				public void change(ComboBoxMultiselectOption item) {
+				public void change(OptionElement item) {
 					// NOOP
 				}
 
 				@Override
-				public void change(Set<ComboBoxMultiselectOption> item) {
+				public void change(Set<OptionElement> item) {
 					MultiSelectRendererConnector.this.rpc.onValueSetChange(getCellId(comboBox), item);
 				}
 
 				@Override
 				public void getPage(int pageNumber) {
-					if (!org.vaadin.grid.enhancements.client.cellrenderers.multiselect.MultiSelectRendererConnector.MultiSelectRenderer.this.filter.isEmpty()) {
-						MultiSelectRendererConnector.this.rpc.getFilterPage(org.vaadin.grid.enhancements.client.cellrenderers.multiselect.MultiSelectRendererConnector.MultiSelectRenderer.this.filter,
+					if (!org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.MultiSelectRendererConnector.MultiSelectRenderer.this.filter.isEmpty()) {
+						MultiSelectRendererConnector.this.rpc.getFilterPage(org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.MultiSelectRendererConnector.MultiSelectRenderer.this.filter,
 																			pageNumber, getCellId(comboBox));
 					} else {
 						MultiSelectRendererConnector.this.rpc.getPage(pageNumber, getCellId(comboBox));
@@ -79,13 +81,13 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Set<
 
 				@Override
 				public void filter(String filterValue, int pageNumber) {
-					org.vaadin.grid.enhancements.client.cellrenderers.multiselect.MultiSelectRendererConnector.MultiSelectRenderer.this.filter = filterValue;
+					org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.MultiSelectRendererConnector.MultiSelectRenderer.this.filter = filterValue;
 					MultiSelectRendererConnector.this.rpc.getFilterPage(filterValue, pageNumber, getCellId(comboBox));
 				}
 
 				@Override
 				public void clearFilter() {
-					org.vaadin.grid.enhancements.client.cellrenderers.multiselect.MultiSelectRendererConnector.MultiSelectRenderer.this.filter = "";
+					org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.MultiSelectRendererConnector.MultiSelectRenderer.this.filter = "";
 				}
 			});
 
@@ -93,11 +95,11 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Set<
 		}
 
 		@Override
-		public void render(final RendererCellReference cell, final Set<ComboBoxMultiselectOption> selectedValue,
+		public void render(final RendererCellReference cell, final OptionElement selectedValue,
 				final MultiSelect multiSelect) {
 			this.filter = "";
 
-			registerRpc(MultiSelectClientRpc.class, new MultiSelectClientRpc() {
+			registerRpc(ComboBoxMultiselectClientRpc.class, new ComboBoxMultiselectClientRpc() {
 				@Override
 				public void setCurrentPage(int page, CellId id) {
 					if (id.equals(getCellId(multiSelect))) {
@@ -106,7 +108,7 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Set<
 				}
 
 				@Override
-				public void updateOptions(OptionsInfo optionsInfo, List<ComboBoxMultiselectOption> options, CellId id) {
+				public void updateOptions(OptionsInfo optionsInfo, List<OptionElement> options, CellId id) {
 					if (id.equals(getCellId(multiSelect))) {
 						if (optionsInfo.getCurrentPage() != -1) {
 							multiSelect.setCurrentPage(optionsInfo.getCurrentPage());
@@ -115,10 +117,19 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Set<
 						multiSelect.updateSelection(options);
 					}
 				}
+
+				@Override
+				public void updateSelectedOptions(Set<OptionElement> selectedOptions, CellId id) {
+					if (id.equals(getCellId(multiSelect))) {
+						multiSelect.setSelection(selectedOptions);
+					}
+				}
 			});
 
 			Element e = multiSelect.getElement();
-			getState().value = selectedValue;
+
+			// TODO
+			// getState().value = selectedValue;
 
 			if (e.getPropertyString(ROW_KEY_PROPERTY) != getRowKey((JsonObject) cell.getRow())) {
 				e.setPropertyString(ROW_KEY_PROPERTY, getRowKey((JsonObject) cell.getRow()));
@@ -129,7 +140,8 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Set<
 				e.setPropertyString(COLUMN_ID_PROPERTY, getColumnId(getGrid().getColumn(cell.getColumnIndex())));
 			}
 
-			multiSelect.setSelection(selectedValue);
+			MultiSelectRendererConnector.this.rpc.onRender(new CellId(e.getPropertyString(ROW_KEY_PROPERTY),
+					e.getPropertyString(COLUMN_ID_PROPERTY)));
 
 			if (multiSelect.isEnabled() != cell	.getColumn()
 												.isEditable()) {
@@ -153,12 +165,12 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Set<
 	}
 
 	@Override
-	public MultiSelectState getState() {
-		return (MultiSelectState) super.getState();
+	public ComboBoxMultiselectState getState() {
+		return (ComboBoxMultiselectState) super.getState();
 	}
 
 	@Override
-	protected Renderer<Set<ComboBoxMultiselectOption>> createRenderer() {
+	protected Renderer<OptionElement> createRenderer() {
 		return new MultiSelectRenderer();
 	}
 

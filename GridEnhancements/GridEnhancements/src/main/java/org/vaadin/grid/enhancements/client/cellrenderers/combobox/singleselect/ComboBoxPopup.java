@@ -1,4 +1,4 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
+package org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -30,14 +30,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.PopupCallback;
+
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
 public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDownHandler, SelectionChangeEvent.Handler {
 
-	private final CellList<ComboBoxElement> list;
-	private final SelectionModel<ComboBoxElement> selectionModel;
-	private List<ComboBoxElement> values;
+	private final CellList<OptionElement> list;
+	private final SelectionModel<OptionElement> selectionModel;
+	private List<OptionElement> values;
 
 	private Button up, down;
 	private Set<HandlerRegistration> handlers = new HashSet<HandlerRegistration>();
@@ -47,15 +50,15 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 
 	private long lastAutoClosed;
 
-	public ComboBoxPopup(List<ComboBoxElement> values) {
+	public ComboBoxPopup(List<OptionElement> values) {
 		super(true);
 
 		this.values = values;
 		addCloseHandler(this);
 
-		CellList.Resources resources = GWT.create(CellListResources.class);
+		CellList.Resources resources = GWT.create(CellList.Resources.class);
 
-		this.list = new CellList<ComboBoxElement>(new Cell(), resources, this.keyProvider);
+		this.list = new CellList<OptionElement>(new Cell(), resources, this.keyProvider);
 		this.list.setPageSize(values.size());
 		this.list.setRowCount(values.size(), true);
 		this.list.setRowData(0, values);
@@ -66,7 +69,7 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 
 		this.list.setStyleName("c-combobox-options");
 
-		this.selectionModel = new SingleSelectionModel<ComboBoxElement>(this.keyProvider);
+		this.selectionModel = new SingleSelectionModel<OptionElement>(this.keyProvider);
 		this.list.setSelectionModel(this.selectionModel);
 
 		// Remove all handlers if any exist for any reason
@@ -124,8 +127,8 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 	 *
 	 * @return Single selected object
 	 */
-	private ComboBoxElement getSelectedObject() {
-		return ((SingleSelectionModel<ComboBoxElement>) this.selectionModel).getSelectedObject();
+	private OptionElement getSelectedObject() {
+		return ((SingleSelectionModel<OptionElement>) this.selectionModel).getSelectedObject();
 	}
 
 	/**
@@ -149,7 +152,7 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 	 * @param selected
 	 *            Selected item to focus if available
 	 */
-	public void focusSelection(ComboBoxElement selected, boolean stealFocus) {
+	public void focusSelection(OptionElement selected, boolean stealFocus) {
 		if (this.values.contains(selected)) {
 			// Focus selected item
 			this.list.setKeyboardSelectedRow(this.values.indexOf(selected), stealFocus);
@@ -168,7 +171,7 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 	 * @param callback
 	 *            ComboBox callback
 	 */
-	public void addPopupCallback(PopupCallback<ComboBoxElement> callback) {
+	public void addPopupCallback(PopupCallback<OptionElement> callback) {
 		this.callback = callback;
 	}
 
@@ -177,7 +180,7 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 	 *
 	 * @param callback
 	 */
-	public void removePopupCallback(PopupCallback<ComboBoxElement> callback) {
+	public void removePopupCallback(PopupCallback<OptionElement> callback) {
 		this.callback = null;
 	}
 
@@ -201,10 +204,10 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 	/**
 	 * CellList cell content renderer implementation
 	 */
-	private class Cell extends AbstractCell<ComboBoxElement> {
+	private class Cell extends AbstractCell<OptionElement> {
 
 		@Override
-		public void render(Context context, final ComboBoxElement value, SafeHtmlBuilder sb) {
+		public void render(Context context, final OptionElement value, SafeHtmlBuilder sb) {
 			sb.appendHtmlConstant("<span>");
 			// TODO: add something for icons?
 			sb.appendEscaped(value.getName());
@@ -216,8 +219,8 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 	/**
 	 * CellList item key provider
 	 */
-	private ProvidesKey<ComboBoxElement> keyProvider = new ProvidesKey<ComboBoxElement>() {
-		public Object getKey(ComboBoxElement item) {
+	private ProvidesKey<OptionElement> keyProvider = new ProvidesKey<OptionElement>() {
+		public Object getKey(OptionElement item) {
 			// Always do a null check.
 			return (item == null) ? null : item.hashCode();
 		}
@@ -236,12 +239,12 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 		case KeyCodes.KEY_DOWN:
 			if (this.list.getKeyboardSelectedRow() == this.list	.getVisibleItems()
 																.size()
-					- 1 && this.down.isEnabled()) {
+					- 1 && this.down.isVisible()) {
 				this.callback.nextPage();
 			}
 			break;
 		case KeyCodes.KEY_UP:
-			if (this.list.getKeyboardSelectedRow() == 0 && this.up.isEnabled()) {
+			if (this.list.getKeyboardSelectedRow() == 0 && this.up.isVisible()) {
 				this.callback.prevPage();
 			}
 			break;

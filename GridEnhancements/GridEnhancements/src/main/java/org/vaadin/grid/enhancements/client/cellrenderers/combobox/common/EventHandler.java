@@ -1,4 +1,4 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.combobox;
+package org.vaadin.grid.enhancements.client.cellrenderers.combobox.common;
 
 import java.util.Set;
 
@@ -10,9 +10,18 @@ import java.util.Set;
 public interface EventHandler<BEANTYPE> {
 	/**
 	 * Send value change event to server
+	 * 
+	 * @param item
+	 *            changing item
 	 */
 	void change(BEANTYPE item);
 
+	/**
+	 * Send value change event to server
+	 * 
+	 * @param items
+	 *            changing items
+	 */
 	void change(Set<BEANTYPE> items);
 
 	/**
