@@ -1,5 +1,16 @@
 package org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.EventHandler;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.PopupCallback;
+
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -23,22 +34,14 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.EventHandler;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.PopupCallback;
+import com.vaadin.client.VConsole;
 
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
 public class MultiSelect extends Composite implements KeyDownHandler, FocusHandler, BlurHandler, HasChangeHandlers {
+
+	private static final String PROMPT_STYLE = "v-filterselect-prompt";
 
 	private MultiselectPopup popup = null;
 
@@ -54,6 +57,7 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 	private int currentPage = 0;
 
 	private int pages = 1;
+	private boolean skipFocus = false;
 	private boolean skipBlur = false;
 
 	private boolean prevPage = false;
@@ -61,9 +65,10 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 	public MultiSelect() {
 		this.selector = new TextBox();
 		this.selector.addKeyDownHandler(this);
+		this.selector.addFocusHandler(this);
+		this.selector.addBlurHandler(this);
 
 		this.selector.setStyleName("c-combobox-input");
-		this.selector.addBlurHandler(this);
 
 		this.drop = new Button();
 		this.drop.setStyleName("c-combobox-button");
@@ -77,7 +82,12 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 		content.add(this.drop);
 
 		initWidget(content);
+	}
 
+	@Override
+	protected void onAttach() {
+		super.onAttach();
+		this.drop.setTabIndex(-1);
 	}
 
 	public void updateSelection(List<OptionElement> selection) {
@@ -104,8 +114,13 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 		return addDomHandler(handler, ChangeEvent.getType());
 	}
 
-	public void setSelection(Set<OptionElement> selection) {
+	public void setSelection(Set<OptionElement> selection, boolean refreshPage) {
 		this.selected = selection;
+		if (refreshPage) {
+			this.eventHandler.getPage(0);
+			return;
+		}
+
 		if (this.popup == null || !this.popup.isAttached()) {
 			this.selector.setValue(getTextFieldValue(selection));
 		} else if (this.popup != null) {
@@ -155,7 +170,6 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 				MultiSelect.this.popup.setPopupPosition(MultiSelect.this.getAbsoluteLeft(), top);
 			}
 		});
-		this.skipBlur = true;
 		this.popup.updateElementCss();
 
 		if (this.prevPage) {
@@ -171,6 +185,9 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 	@Override
 	public void onKeyDown(KeyDownEvent event) {
 		switch (event.getNativeKeyCode()) {
+		case KeyCodes.KEY_TAB:
+			this.skipBlur = false;
+			break;
 		case KeyCodes.KEY_ESCAPE:
 			event.preventDefault();
 			event.stopPropagation();
@@ -178,14 +195,12 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 				this.popup.hide(true);
 				this.popup = null;
 			}
-			this.eventHandler.clearFilter();
-			this.selector.setValue(getTextFieldValue(this.selected));
 			break;
 		case KeyCodes.KEY_ENTER:
 			event.preventDefault();
 			event.stopPropagation();
 			if (this.popup != null && this.popup.isVisible()) {
-				this.popup.selectCurrentFocus();
+				this.popup.toggleSelectionOfCurrentFocus();
 			}
 			break;
 		case KeyCodes.KEY_UP:
@@ -237,13 +252,6 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 			this.currentPage = -1;
 			this.prevPage = false;
 			this.eventHandler.getPage(this.currentPage);
-
-			break;
-		case KeyCodes.KEY_TAB:
-			if (this.popup != null && this.popup.isAttached()) {
-				this.popup.hide(true);
-			}
-			this.selector.setValue(getTextFieldValue(this.selected));
 			break;
 		}
 
@@ -266,14 +274,31 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 	}
 
 	@Override
-	public void onBlur(BlurEvent event) {
-		if (!this.skipBlur) {
-			if (this.popup != null && this.popup.isAttached()) {
-				this.popup.hide();
-			}
-			this.selector.setValue(getTextFieldValue(this.selected));
-			this.skipBlur = false;
+	public void onFocus(FocusEvent event) {
+		if (this.skipFocus) {
+			this.skipFocus = false;
+			return;
 		}
+
+		if (MultiSelect.this.popup == null || !MultiSelect.this.popup.isAttached()
+				|| !MultiSelect.this.popup.isJustClosed()) {
+			this.selector.removeStyleDependentName(PROMPT_STYLE);
+			MultiSelect.this.selector.setValue("");
+		}
+	}
+
+	@Override
+	public void onBlur(BlurEvent event) {
+		VConsole.error("onBlur(..) skipBlur: " + this.skipBlur);
+		if (this.skipBlur) {
+			return;
+		}
+
+		if (this.popup != null && this.popup.isAttached()) {
+			this.popup.hide();
+		}
+		this.selector.setValue(getTextFieldValue(this.selected));
+		this.eventHandler.clearFilter();
 	}
 
 	private ClickHandler dropDownClickHandler = new ClickHandler() {
@@ -309,20 +334,41 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 		}
 
 		@Override
-		public void clear() {
-			MultiSelect.this.selector.setFocus(true);
-			MultiSelect.this.eventHandler.clearFilter();
-		}
-
-		@Override
 		public void itemsSelected(Set<OptionElement> selectedObjects) {
 			MultiSelect.this.selected.clear();
 			MultiSelect.this.selected.addAll(selectedObjects);
 			MultiSelect.this.eventHandler.change(selectedObjects);
 		}
+
+		@Override
+		public void focus() {
+			MultiSelect.this.skipFocus = true;
+			MultiSelect.this.selector.setFocus(true);
+		}
+
+		@Override
+		public void selectAll() {
+			MultiSelect.this.eventHandler.selectAll();
+		}
+
+		@Override
+		public void deselectAll() {
+			MultiSelect.this.eventHandler.deselectAll();
+		}
+
+		@Override
+		public void setSkipBlur(boolean skipBlur) {
+			MultiSelect.this.skipBlur = skipBlur;
+		}
 	};
 
 	private String getTextFieldValue(Set<OptionElement> selection) {
+		if (selection.size() == 0) {
+			this.selector.addStyleName(PROMPT_STYLE);
+			// TODO
+			return "prompt text";
+		}
+
 		StringBuffer stringBuffer = new StringBuffer();
 		stringBuffer.append("(" + selection.size() + ") ");
 
@@ -351,11 +397,4 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 		return stringBuffer.toString();
 	}
 
-	@Override
-	public void onFocus(FocusEvent event) {
-		if (MultiSelect.this.popup == null || !MultiSelect.this.popup.isAttached()
-				|| !MultiSelect.this.popup.isJustClosed()) {
-			MultiSelect.this.selector.setValue("");
-		}
-	}
 }

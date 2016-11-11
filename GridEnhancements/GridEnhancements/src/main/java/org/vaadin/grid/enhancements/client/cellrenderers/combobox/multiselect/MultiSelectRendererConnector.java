@@ -88,6 +88,17 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Opti
 				@Override
 				public void clearFilter() {
 					org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.MultiSelectRendererConnector.MultiSelectRenderer.this.filter = "";
+					MultiSelectRendererConnector.this.rpc.setSortingNeeded(true);
+				}
+
+				@Override
+				public void selectAll() {
+					MultiSelectRendererConnector.this.rpc.selectAll(getCellId(comboBox));
+				}
+
+				@Override
+				public void deselectAll() {
+					MultiSelectRendererConnector.this.rpc.deselectAll(getCellId(comboBox));
 				}
 			});
 
@@ -119,9 +130,9 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Opti
 				}
 
 				@Override
-				public void updateSelectedOptions(Set<OptionElement> selectedOptions, CellId id) {
+				public void updateSelectedOptions(Set<OptionElement> selectedOptions, CellId id, boolean refreshPage) {
 					if (id.equals(getCellId(multiSelect))) {
-						multiSelect.setSelection(selectedOptions);
+						multiSelect.setSelection(selectedOptions, refreshPage);
 					}
 				}
 			});

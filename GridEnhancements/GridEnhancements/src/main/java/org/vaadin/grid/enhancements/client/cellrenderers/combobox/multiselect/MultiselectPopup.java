@@ -5,17 +5,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.DeselectAllOptionElement;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.PopupCallback;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.SelectAllOptionElement;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
@@ -31,11 +34,6 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
-import com.google.gwt.view.client.DefaultSelectionEventManager;
-import com.google.gwt.view.client.MultiSelectionModel;
-import com.google.gwt.view.client.ProvidesKey;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel;
 import com.vaadin.client.VConsole;
 import com.vaadin.client.ui.VOverlay;
 
@@ -44,12 +42,11 @@ import com.vaadin.client.ui.VOverlay;
  */
 @SuppressWarnings("deprecation")
 public class MultiselectPopup extends VOverlay
-		implements MouseMoveHandler, SelectionChangeEvent.Handler, CellPreviewEvent.Handler<OptionElement> {
+		implements FocusHandler, MouseMoveHandler, CellPreviewEvent.Handler<OptionElement> {
 
 	private static final String SELECTED_ROW_CLASS = "gwt-MenuItem-selected";
 
 	private CellList<OptionElement> optionList;
-	private SelectionModel<OptionElement> selectionModel;
 	private List<OptionElement> options;
 
 	private Button up, down;
@@ -57,17 +54,12 @@ public class MultiselectPopup extends VOverlay
 
 	private PopupCallback<OptionElement> callback;
 	// Not as items on page
-	private Set<OptionElement> currentSelection = new HashSet<OptionElement>();
+	private HashSet<OptionElement> currentSelections = new HashSet<OptionElement>();
 	private boolean updatingSelection = false;
 
 	private long lastAutoClosed;
 
 	int focusedPosition = -1;
-
-	/**
-	 * CellList item key provider
-	 */
-	private ProvidesKey<OptionElement> keyProvider;
 
 	public MultiselectPopup(List<OptionElement> options) {
 		super(true);
@@ -76,27 +68,25 @@ public class MultiselectPopup extends VOverlay
 
 		setStyleName("v-filterselect-suggestpopup");
 
-		initGwtParts();
+		initOptionList();
 
 		initHandlers();
 
 		add(layout());
 	}
 
-	private void initGwtParts() {
-		this.keyProvider = new ProvidesKey<OptionElement>() {
-			public Object getKey(OptionElement item) {
-				// Always do a null check.
-				return (item == null) ? null : item.hashCode();
-			}
-		};
+	private void initOptionList() {
+		DeselectAllOptionElement deselectAllOption = new DeselectAllOptionElement("clear");
+		if (!this.options.contains(deselectAllOption)) {
+			this.options.add(0, deselectAllOption);
+		}
 
-		this.selectionModel = new MultiSelectionModel<OptionElement>(this.keyProvider);
-		final CellPreviewEvent.Handler<OptionElement> selectionEventManager = DefaultSelectionEventManager.createCheckboxManager();
+		SelectAllOptionElement selectAllOption = new SelectAllOptionElement("select all");
+		if (!this.options.contains(selectAllOption)) {
+			this.options.add(0, selectAllOption);
+		}
 
-		CellList.Resources resources = GWT.create(CellList.Resources.class);
-
-		this.optionList = new CellList<OptionElement>(new OptionCell(), resources, this.keyProvider);
+		this.optionList = new CellList<OptionElement>(new OptionCell());
 		this.optionList.setStyleName("v-filterselect-suggestmenu");
 		this.optionList.setPageSize(this.options.size());
 		this.optionList.setRowCount(this.options.size(), true);
@@ -105,8 +95,7 @@ public class MultiselectPopup extends VOverlay
 		this.optionList.setWidth("100%");
 		this.optionList.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
 		this.optionList.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
-
-		this.optionList.setSelectionModel(this.selectionModel, selectionEventManager);
+		this.optionList.addHandler(this, FocusEvent.getType());
 	}
 
 	private Widget layout() {
@@ -156,25 +145,6 @@ public class MultiselectPopup extends VOverlay
 		// Add CellList listeners
 		this.handlers.add(this.optionList.addBitlessDomHandler(this, MouseMoveEvent.getType()));
 		this.handlers.add(this.optionList.addCellPreviewHandler(this));
-
-		// Add selection change handler
-		this.handlers.add(this.selectionModel.addSelectionChangeHandler(this));
-	}
-
-	/**
-	 * Get the set of selected objects when in multiselection mode
-	 *
-	 * @return Set of selected objects
-	 */
-	public Set<OptionElement> getSelectedOptions() {
-		return ((MultiSelectionModel<OptionElement>) this.selectionModel).getSelectedSet();
-	}
-
-	/**
-	 * Hide popup
-	 */
-	private void closePopup() {
-		MultiselectPopup.this.hide();
 	}
 
 	public void setNextPageEnabled(boolean nextPageEnabled) {
@@ -209,14 +179,20 @@ public class MultiselectPopup extends VOverlay
 	}
 
 	public void focusSelectionFirst(boolean focus) {
+		int cntOptionalButtons = 0;
 		for (int i = 0; i < this.options.size(); i++) {
-			if (!this.selectionModel.isSelected(this.options.get(i))) {
+			OptionElement option = this.options.get(i);
+			if (option instanceof SelectAllOptionElement || option instanceof DeselectAllOptionElement) {
+				cntOptionalButtons++;
+				continue;
+			}
+			if (!this.currentSelections.contains(option)) {
 				focusSelectionViaPosition(i, focus);
 				return;
 			}
 		}
 
-		focusSelectionViaPosition(0, focus);
+		focusSelectionViaPosition(cntOptionalButtons, focus);
 	}
 
 	public void focusSelectionLast(boolean focus) {
@@ -226,7 +202,7 @@ public class MultiselectPopup extends VOverlay
 	}
 
 	public void focusSelectionCurrent(boolean focus) {
-		focusSelectionViaPosition(this.focusedPosition - 1, focus);
+		focusSelectionViaPosition(this.focusedPosition, focus);
 	}
 
 	public void focusSelectionViaPosition(int newPosition, boolean stealFocus) {
@@ -248,25 +224,13 @@ public class MultiselectPopup extends VOverlay
 	/**
 	 * Set the current selection set for multiselection mode
 	 *
-	 * @param currentSelection
+	 * @param currentSelections
 	 */
-	public void setCurrentSelection(Set<OptionElement> currentSelection) {
+	public void setCurrentSelection(Set<OptionElement> currentSelections) {
 		// Lock selection event so we don't send change events
 		this.updatingSelection = true;
-		this.currentSelection.clear();
-
-		for (OptionElement value : currentSelection) {
-			// If current view doesn't contain item then add item to current
-			// selections that are selected but not visible!
-			//
-			// Note! currentSelection is always added to selection event
-			// selected items.
-			if (!this.options.contains(value)) {
-				this.currentSelection.add(value);
-			} else {
-				this.selectionModel.setSelected(value, true);
-			}
-		}
+		this.currentSelections.clear();
+		this.currentSelections.addAll(currentSelections);
 		this.updatingSelection = false;
 	}
 
@@ -313,8 +277,15 @@ public class MultiselectPopup extends VOverlay
 
 		@Override
 		public void render(Context context, final OptionElement option, SafeHtmlBuilder sb) {
+			if (option instanceof SelectAllOptionElement || option instanceof DeselectAllOptionElement) {
+				sb.appendHtmlConstant("<span class='align-center'>");
+				sb.appendEscaped(option.getName());
+				sb.appendHtmlConstant("</span>");
+				return;
+			}
+
 			final CheckBox checkBox = new CheckBox();
-			checkBox.setValue(((MultiSelectionModel<OptionElement>) MultiselectPopup.this.selectionModel).isSelected(option));
+			checkBox.setValue(MultiselectPopup.this.currentSelections.contains(option));
 			sb.appendHtmlConstant(checkBox	.getElement()
 											.getString());
 			sb.appendHtmlConstant("<span>");
@@ -333,10 +304,19 @@ public class MultiselectPopup extends VOverlay
 											.size(); i++) {
 			Element e = this.optionList.getRowElement(i);
 			if (e.equals(target)) {
-				// focusSelection(, stealFocus);
 				focusSelectionViaPosition(i, true);
-				break;
+				this.callback.setSkipBlur(true);
+				return;
 			}
+		}
+
+		this.callback.setSkipBlur(false);
+	}
+
+	@Override
+	public void onFocus(FocusEvent event) {
+		if (MultiselectPopup.this.callback != null) {
+			MultiselectPopup.this.callback.focus();
 		}
 	}
 
@@ -356,24 +336,13 @@ public class MultiselectPopup extends VOverlay
 					return;
 				}
 			}
-			final OptionElement value = event.getValue();
-			final Boolean state = !event.getDisplay()
-										.getSelectionModel()
-										.isSelected(value);
-			event	.getDisplay()
-					.getSelectionModel()
-					.setSelected(value, state);
+			final OptionElement option = event.getValue();
+			toggleSelection(option);
 			event.setCanceled(true);
-		}
-	}
-
-	@Override
-	public void onSelectionChange(SelectionChangeEvent event) {
-		if (!this.updatingSelection && this.callback != null) {
-			Set<OptionElement> selection = new HashSet<OptionElement>();
-			selection.addAll(this.currentSelection);
-			selection.addAll(getSelectedOptions());
-			this.callback.itemsSelected(selection);
+			event	.getNativeEvent()
+					.preventDefault();
+			event	.getNativeEvent()
+					.stopPropagation();
 		}
 	}
 
@@ -410,10 +379,36 @@ public class MultiselectPopup extends VOverlay
 		this.callback.prevPage();
 	}
 
-	public void selectCurrentFocus() {
+	public void toggleSelectionOfCurrentFocus() {
 		OptionElement focusedOption = this.options.get(this.focusedPosition);
-		final Boolean state = !this.selectionModel.isSelected(focusedOption);
-		this.selectionModel.setSelected(focusedOption, state);
+		toggleSelection(focusedOption);
+	}
+
+	private void toggleSelection(OptionElement option) {
+		if (option instanceof SelectAllOptionElement) {
+			this.callback.selectAll();
+			return;
+		}
+		if (option instanceof DeselectAllOptionElement) {
+			this.callback.deselectAll();
+			return;
+		}
+
+		if (this.currentSelections.contains(option)) {
+			this.currentSelections.remove(option);
+		} else {
+			this.currentSelections.add(option);
+		}
+
+		if (!this.updatingSelection && this.callback != null) {
+			this.callback.itemsSelected(this.currentSelections);
+		}
+
+		for (int i = 0; i < this.options.size(); i++) {
+			this.optionList.redrawRow(i);
+			focusSelectionViaNativeKey(i, true);
+		}
+
 	}
 
 }

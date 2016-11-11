@@ -316,7 +316,35 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 			ComboBoxMultiselectRenderer.this.selectedOptions = selected;
 
 			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateSelectedOptions(	ComboBoxMultiselectRenderer.this.selectedOptions,
-																					id);
+																					id, false);
+		}
+
+		@Override
+		public void setSortingNeeded(boolean sortingNeeded) {
+			ComboBoxMultiselectRenderer.this.sortingNeeded = sortingNeeded;
+		}
+
+		@Override
+		public void selectAll(CellId id) {
+			ComboBoxMultiselectRenderer.this.sortingNeeded = true;
+			Set<OptionElement> selected = new HashSet<OptionElement>();
+			for (BEANTYPE bean : ComboBoxMultiselectRenderer.this.container.getItemIds()) {
+				Item item = ComboBoxMultiselectRenderer.this.container.getItem(bean);
+				final Property<?> idProperty = item.getItemProperty(ComboBoxMultiselectRenderer.this.itemIdPropertyId);
+				final Property<?> captionProperty = item.getItemProperty(ComboBoxMultiselectRenderer.this.itemCaptionPropertyId);
+				selected.add(new OptionElement((Long) idProperty.getValue(), (String) captionProperty.getValue()));
+			}
+			ComboBoxMultiselectRenderer.this.selectedOptions = selected;
+			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateSelectedOptions(	ComboBoxMultiselectRenderer.this.selectedOptions,
+																					id, true);
+		}
+
+		@Override
+		public void deselectAll(CellId id) {
+			ComboBoxMultiselectRenderer.this.sortingNeeded = true;
+			ComboBoxMultiselectRenderer.this.selectedOptions = new HashSet<OptionElement>();
+			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateSelectedOptions(	ComboBoxMultiselectRenderer.this.selectedOptions,
+																					id, true);
 		}
 	};
 

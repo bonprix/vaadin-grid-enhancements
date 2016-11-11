@@ -64,4 +64,27 @@ public interface ComboBoxMultiselectServerRpc extends ServerRpc {
 	 */
 	void onRender(CellId id);
 
+	/**
+	 * sets the sorting is needed for next popup opening
+	 * 
+	 * @param sortingNeeded
+	 */
+	void setSortingNeeded(boolean sortingNeeded);
+
+	/**
+	 * selects all elements in the combobox
+	 * 
+	 * @param id
+	 *            Cell identification
+	 */
+	void selectAll(CellId id);
+
+	/**
+	 * deselects all elements in the combobox
+	 * 
+	 * @param id
+	 *            Cell identification
+	 */
+	void deselectAll(CellId id);
+
 }

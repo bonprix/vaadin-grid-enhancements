@@ -46,4 +46,14 @@ public interface EventHandler<BEANTYPE> {
 	 * Clear any existing filter value
 	 */
 	void clearFilter();
+
+	/**
+	 * selects all elements in the combobox
+	 */
+	void selectAll();
+
+	/**
+	 * deselects all elements in the combobox
+	 */
+	void deselectAll();
 }

@@ -45,6 +45,8 @@ public interface ComboBoxMultiselectClientRpc extends ClientRpc {
 	 *            selected options from server
 	 * @param id
 	 *            Cell identification
+	 * @param refreshPage
+	 *            if page should be refreshed after setting selection
 	 */
-	void updateSelectedOptions(Set<OptionElement> selectedOptions, CellId id);
+	void updateSelectedOptions(Set<OptionElement> selectedOptions, CellId id, boolean refreshPage);
 }

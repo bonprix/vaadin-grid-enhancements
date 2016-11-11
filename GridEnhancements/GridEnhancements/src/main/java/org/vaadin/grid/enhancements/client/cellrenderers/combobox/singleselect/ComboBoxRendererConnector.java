@@ -88,6 +88,16 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<OptionE
 				public void clearFilter() {
 					org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxRendererConnector.ComboBoxRenderer.this.filter = "";
 				}
+
+				@Override
+				public void selectAll() {
+					// NOOP
+				}
+
+				@Override
+				public void deselectAll() {
+					// NOOP
+				}
 			});
 
 			return comboBox;

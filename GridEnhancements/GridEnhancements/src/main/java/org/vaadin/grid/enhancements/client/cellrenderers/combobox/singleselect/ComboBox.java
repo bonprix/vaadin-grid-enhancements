@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.vaadin.client.VConsole;
 
 import java.util.List;
 import java.util.Set;
@@ -258,14 +259,29 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 		}
 
 		@Override
-		public void clear() {
-			ComboBox.this.selector.setFocus(true);
-			ComboBox.this.eventHandler.clearFilter();
+		public void itemsSelected(Set<OptionElement> selectedObjects) {
+			// NOOP
 		}
 
 		@Override
-		public void itemsSelected(Set<OptionElement> selectedObjects) {
+		public void focus() {
+			// TODO
+		}
+
+		@Override
+		public void selectAll() {
 			// NOOP
+		}
+
+		@Override
+		public void deselectAll() {
+			// NOOP
+		}
+
+		@Override
+		public void setSkipBlur(boolean skipBlur) {
+			VConsole.error("setSkipBlur: " + skipBlur);
+			ComboBox.this.skipBlur = skipBlur;
 		}
 	};
 }

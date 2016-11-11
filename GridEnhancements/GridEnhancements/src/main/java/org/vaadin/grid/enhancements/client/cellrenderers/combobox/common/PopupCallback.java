@@ -28,15 +28,31 @@ public interface PopupCallback<T> {
 	void prevPage();
 
 	/**
-	 * Clear filters and changes
-	 */
-	void clear();
-
-	/**
 	 * Items selected (MultiSelectionMode)
 	 * 
 	 * @param selectedObjects
 	 *            Set of selected items
 	 */
 	void itemsSelected(Set<T> selectedObjects);
+
+	/**
+	 * focuses the textfield of the combobox
+	 */
+	void focus();
+
+	/**
+	 * selects all elements in the combobox
+	 */
+	void selectAll();
+
+	/**
+	 * deselects all elements in the combobox
+	 */
+	void deselectAll();
+
+	/**
+	 * set if the blur event of textfield should be skipped
+	 */
+	void setSkipBlur(boolean skipBlur);
+
 }

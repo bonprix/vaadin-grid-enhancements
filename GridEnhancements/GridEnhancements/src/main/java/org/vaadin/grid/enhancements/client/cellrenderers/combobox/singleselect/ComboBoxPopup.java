@@ -232,10 +232,6 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 	public void onKeyDown(KeyDownEvent event) {
 		switch (event	.getNativeEvent()
 						.getKeyCode()) {
-		case KeyCodes.KEY_ESCAPE:
-			this.callback.clear();
-			closePopup();
-			break;
 		case KeyCodes.KEY_DOWN:
 			if (this.list.getKeyboardSelectedRow() == this.list	.getVisibleItems()
 																.size()
