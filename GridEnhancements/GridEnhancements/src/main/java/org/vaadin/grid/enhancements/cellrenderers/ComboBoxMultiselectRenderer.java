@@ -269,7 +269,7 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 
 			Property<Set<BEANTYPE>> cell = getCellProperty(id);
 
-			HashSet<BEANTYPE> selectedBeans = new HashSet<BEANTYPE>();
+			Set<BEANTYPE> selectedBeans = new HashSet<BEANTYPE>();
 
 			for (BEANTYPE bean : ComboBoxMultiselectRenderer.this.container.getItemIds()) {
 				final Property<?> idProperty = ComboBoxMultiselectRenderer.this.container	.getItem(bean)
@@ -286,7 +286,7 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 			cell.setValue(selectedBeans);
 
 			// TODO
-			// fireItemEditEvent(itemId, row, columnPropertyId, selectedBeans);
+			fireItemEditEvent(itemId, row, columnPropertyId, selectedBeans);
 		}
 
 		private Property<Set<BEANTYPE>> getCellProperty(CellId id) {
@@ -335,6 +335,12 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 				selected.add(new OptionElement((Long) idProperty.getValue(), (String) captionProperty.getValue()));
 			}
 			ComboBoxMultiselectRenderer.this.selectedOptions = selected;
+			Property<Set<BEANTYPE>> cell = getCellProperty(id);
+
+			HashSet<BEANTYPE> selectedBeans = new HashSet<BEANTYPE>(
+					ComboBoxMultiselectRenderer.this.container.getItemIds());
+
+			cell.setValue(selectedBeans);
 			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateSelectedOptions(	ComboBoxMultiselectRenderer.this.selectedOptions,
 																					id, true);
 		}
@@ -343,6 +349,11 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 		public void deselectAll(CellId id) {
 			ComboBoxMultiselectRenderer.this.sortingNeeded = true;
 			ComboBoxMultiselectRenderer.this.selectedOptions = new HashSet<OptionElement>();
+			Property<Set<BEANTYPE>> cell = getCellProperty(id);
+
+			HashSet<BEANTYPE> selectedBeans = new HashSet<BEANTYPE>();
+
+			cell.setValue(selectedBeans);
 			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateSelectedOptions(	ComboBoxMultiselectRenderer.this.selectedOptions,
 																					id, true);
 		}

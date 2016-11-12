@@ -34,7 +34,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
-import com.vaadin.client.VConsole;
 
 /**
  * @author Mikael Grankvist - Vaadin Ltd
@@ -137,6 +136,8 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 	}
 
 	private void updateAndShowDropdown(List<OptionElement> items) {
+		this.skipBlur = false;
+
 		boolean focus = false;
 		if (this.popup != null) {
 			focus = this.popup.isJustClosed();
@@ -289,7 +290,6 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 
 	@Override
 	public void onBlur(BlurEvent event) {
-		VConsole.error("onBlur(..) skipBlur: " + this.skipBlur);
 		if (this.skipBlur) {
 			return;
 		}

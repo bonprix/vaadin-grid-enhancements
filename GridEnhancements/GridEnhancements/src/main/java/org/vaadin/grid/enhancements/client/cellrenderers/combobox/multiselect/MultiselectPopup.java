@@ -22,6 +22,10 @@ import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -34,15 +38,13 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
-import com.vaadin.client.VConsole;
 import com.vaadin.client.ui.VOverlay;
 
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-@SuppressWarnings("deprecation")
-public class MultiselectPopup extends VOverlay
-		implements FocusHandler, MouseMoveHandler, CellPreviewEvent.Handler<OptionElement> {
+public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMoveHandler, MouseOverHandler,
+		MouseOutHandler, CellPreviewEvent.Handler<OptionElement> {
 
 	private static final String SELECTED_ROW_CLASS = "gwt-MenuItem-selected";
 
@@ -95,7 +97,6 @@ public class MultiselectPopup extends VOverlay
 		this.optionList.setWidth("100%");
 		this.optionList.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
 		this.optionList.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
-		this.optionList.addHandler(this, FocusEvent.getType());
 	}
 
 	private Widget layout() {
@@ -144,7 +145,10 @@ public class MultiselectPopup extends VOverlay
 
 		// Add CellList listeners
 		this.handlers.add(this.optionList.addBitlessDomHandler(this, MouseMoveEvent.getType()));
+		this.handlers.add(this.optionList.addBitlessDomHandler(this, MouseOverEvent.getType()));
+		this.handlers.add(this.optionList.addBitlessDomHandler(this, MouseOutEvent.getType()));
 		this.handlers.add(this.optionList.addCellPreviewHandler(this));
+		this.handlers.add(this.optionList.addHandler(this, FocusEvent.getType()));
 	}
 
 	public void setNextPageEnabled(boolean nextPageEnabled) {
@@ -213,8 +217,6 @@ public class MultiselectPopup extends VOverlay
 		}
 
 		this.focusedPosition = newPosition;
-
-		VConsole.error("focusedPosition: " + this.focusedPosition);
 
 		this.optionList	.getRowElement(this.focusedPosition)
 						.addClassName(SELECTED_ROW_CLASS);
@@ -305,12 +307,19 @@ public class MultiselectPopup extends VOverlay
 			Element e = this.optionList.getRowElement(i);
 			if (e.equals(target)) {
 				focusSelectionViaPosition(i, true);
-				this.callback.setSkipBlur(true);
 				return;
 			}
 		}
+	}
 
+	@Override
+	public void onMouseOut(MouseOutEvent event) {
 		this.callback.setSkipBlur(false);
+	}
+
+	@Override
+	public void onMouseOver(MouseOverEvent event) {
+		this.callback.setSkipBlur(true);
 	}
 
 	@Override
