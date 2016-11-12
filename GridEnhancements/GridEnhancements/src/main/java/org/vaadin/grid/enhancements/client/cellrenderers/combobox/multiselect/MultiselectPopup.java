@@ -48,6 +48,9 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 
 	private static final String SELECTED_ROW_CLASS = "gwt-MenuItem-selected";
 
+	private final String selectAllText;
+	private final String deselectAllText;
+
 	private CellList<OptionElement> optionList;
 	private List<OptionElement> options;
 
@@ -63,10 +66,12 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 
 	int focusedPosition = -1;
 
-	public MultiselectPopup(List<OptionElement> options) {
+	public MultiselectPopup(List<OptionElement> options, String selectAllText, String deselectAllText) {
 		super(true);
 
 		this.options = options;
+		this.selectAllText = selectAllText;
+		this.deselectAllText = deselectAllText;
 
 		setStyleName("v-filterselect-suggestpopup");
 
@@ -78,14 +83,18 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 	}
 
 	private void initOptionList() {
-		DeselectAllOptionElement deselectAllOption = new DeselectAllOptionElement("clear");
-		if (!this.options.contains(deselectAllOption)) {
-			this.options.add(0, deselectAllOption);
+		if (withDeselectAllButton()) {
+			DeselectAllOptionElement deselectAllOption = new DeselectAllOptionElement(this.deselectAllText);
+			if (!this.options.contains(deselectAllOption)) {
+				this.options.add(0, deselectAllOption);
+			}
 		}
 
-		SelectAllOptionElement selectAllOption = new SelectAllOptionElement("select all");
-		if (!this.options.contains(selectAllOption)) {
-			this.options.add(0, selectAllOption);
+		if (withSelectAllButton()) {
+			SelectAllOptionElement selectAllOption = new SelectAllOptionElement(this.selectAllText);
+			if (!this.options.contains(selectAllOption)) {
+				this.options.add(0, selectAllOption);
+			}
 		}
 
 		this.optionList = new CellList<OptionElement>(new OptionCell());
@@ -97,6 +106,14 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 		this.optionList.setWidth("100%");
 		this.optionList.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
 		this.optionList.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
+	}
+
+	private boolean withDeselectAllButton() {
+		return this.deselectAllText != null;
+	}
+
+	private boolean withSelectAllButton() {
+		return this.selectAllText != null;
 	}
 
 	private Widget layout() {
@@ -113,6 +130,8 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 				MultiselectPopup.this.callback.prevPage();
 			}
 		});
+		this.up.addMouseOverHandler(this);
+		this.up.addMouseOutHandler(this);
 
 		this.down = new Button("");
 		this.down	.getElement()
@@ -124,6 +143,8 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 				MultiselectPopup.this.callback.nextPage();
 			}
 		});
+		this.down.addMouseOverHandler(this);
+		this.down.addMouseOutHandler(this);
 
 		// Add widgets to content panel
 		layout.add(this.up);

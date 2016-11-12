@@ -17,7 +17,6 @@ import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
-import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.renderers.Renderer;
 import org.vaadin.anna.gridactionrenderer.ActionGrid;
 import org.vaadin.anna.gridactionrenderer.GridAction;
@@ -28,7 +27,6 @@ import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.CheckBoxRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxMultiselectRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
 import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 import org.vaadin.teemusa.gridextensions.client.tableselection.TableSelectionState;
 import org.vaadin.teemusa.gridextensions.tableselection.TableSelectionModel;
@@ -124,29 +122,31 @@ public class DemoUI extends UI {
 
 		// ComboBox renderers
 		((GeneratedPropertyContainer) grid.getContainerDataSource()).addGeneratedProperty(	"_multi",
-																							new PropertyValueGenerator<OptionElement>() {
+																							new PropertyValueGenerator<DummyClass>() {
 
 																								@Override
-																								public OptionElement getValue(
+																								public DummyClass getValue(
 																										Item item,
 																										Object itemId,
 																										Object propertyId) {
-																									return new OptionElement();
+																									return new DummyClass();
 																								}
 
 																								@Override
-																								public Class<OptionElement> getType() {
-																									return OptionElement.class;
+																								public Class<DummyClass> getType() {
+																									return DummyClass.class;
 																								}
 																							});
 		grid.getColumn("_multi")
-			.setRenderer(new ComboBoxMultiselectRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name"));
+			.setRenderer(new ComboBoxMultiselectRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 10,
+					"input prompt2", "select all2", "clear2"));
 		grid.getColumn("_multi")
 			.setWidth(400);
 		grid.getColumn("multi")
 			.setWidth(150);
 		grid.getColumn("single")
-			.setRenderer(new ComboBoxRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name"));
+			.setRenderer(new ComboBoxRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 5,
+					"input prompt", "select all", "clear"));
 		grid.getColumn("single")
 			.setWidth(150);
 
@@ -180,26 +180,8 @@ public class DemoUI extends UI {
 
 		content.addComponent(layout);
 		content.setComponentAlignment(layout, Alignment.MIDDLE_CENTER);
-		content.addComponent(new Button("test", new Button.ClickListener() {
-
-			@Override
-			public void buttonClick(ClickEvent event) {
-				int i = 0;
-				for (Object object : grid	.getContainerDataSource()
-											.getItemIds()) {
-					DataSourceClass dataSourceClass = (DataSourceClass) object;
-					StringBuffer strBuffer = new StringBuffer();
-					strBuffer.append(i++ + ": ");
-					for (DummyClass dummyClass : dataSourceClass.getMulti()) {
-						strBuffer.append(dummyClass.getId());
-					}
-					System.out.println(strBuffer.toString());
-				}
-			}
-		}));
 
 		grid.setColumnOrder("_multi");
-
 	}
 
 	public class DummyClass {
@@ -251,6 +233,11 @@ public class DemoUI extends UI {
 				return 0;
 			}
 			return (int) (getId() ^ (getId() >>> 32));
+		}
+
+		@Override
+		public String toString() {
+			return getName();
 		}
 
 	}
@@ -306,20 +293,21 @@ public class DemoUI extends UI {
 	/**
 	 * Update change lable with the column and value of the latest edit
 	 */
-	private EditableRenderer.ItemEditListener itemEdit = new EditableRenderer.ItemEditListener() {
+	private EditableRenderer.ItemEditListener<DataSourceClass> itemEdit = new EditableRenderer.ItemEditListener<DataSourceClass>() {
 		@Override
-		public void itemEdited(EditableRenderer.ItemEditEvent event) {
+		public void itemEdited(EditableRenderer.ItemEditEvent<DataSourceClass> event) {
 			DemoUI.this.latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' "
-					+ event.getNewValue());
+					+ (EditableRenderer.Mode.SINGLE.equals(event.getMode()) ? event.getNewValue()
+							: event.getNewValues()));
 		}
 	};
 
 	/**
 	 * Same as itemEdit, but with the date value formatted.
 	 */
-	private EditableRenderer.ItemEditListener dateItemEdit = new EditableRenderer.ItemEditListener() {
+	private EditableRenderer.ItemEditListener<DataSourceClass> dateItemEdit = new EditableRenderer.ItemEditListener<DataSourceClass>() {
 		@Override
-		public void itemEdited(EditableRenderer.ItemEditEvent event) {
+		public void itemEdited(EditableRenderer.ItemEditEvent<DataSourceClass> event) {
 			DemoUI.this.latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' "
 					+ new SimpleDateFormat("dd-MM-yyyy").format(event.getNewValue()));
 		}

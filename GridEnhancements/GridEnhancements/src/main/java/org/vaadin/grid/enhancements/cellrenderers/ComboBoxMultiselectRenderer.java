@@ -30,7 +30,7 @@ import java.util.Set;
  *
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<OptionElement> {
+public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 
 	private static final String SELECTED_PROPERTY = "selected";
 
@@ -38,8 +38,11 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 	private final BeanItemContainer<BEANTYPE> container;
 	private Set<OptionElement> selectedOptions = null;
 
-	private int pageSize = 5;
+	private final int pageSize;
 	private int pages;
+	private final String inputPrompt;
+	private final String selectAllText;
+	private final String deselectAllText;
 
 	private String itemIdPropertyId;
 	private String itemCaptionPropertyId;
@@ -73,8 +76,9 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 	protected ArrayList<OptionElement> sortedOptions;
 
 	public ComboBoxMultiselectRenderer(final Class<BEANTYPE> clazz, List<BEANTYPE> selections, String itemIdPropertyId,
-			String itemCaptionPropertyId) {
-		super(OptionElement.class);
+			String itemCaptionPropertyId, int pageSize, String inputPrompt, String selectAllText,
+			String deselectAllText) {
+		super(clazz);
 
 		registerRpc(this.rpc);
 		// Add items to internal list so we don't expose ourselves to changes in
@@ -84,21 +88,15 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 
 		this.propertyContainer = new GeneratedPropertyContainer(this.container);
 
+		this.pageSize = pageSize;
 		this.pages = (int) Math.ceil((double) this.container.size() / this.pageSize);
+		this.inputPrompt = inputPrompt;
+		this.selectAllText = selectAllText;
+		this.deselectAllText = deselectAllText;
 
 		this.itemIdPropertyId = itemIdPropertyId;
 		this.itemCaptionPropertyId = itemCaptionPropertyId;
 
-	}
-
-	/**
-	 * Set the amount of items to be shown in the dropdown.
-	 *
-	 * @param pageSize
-	 *            Amount of items to show on page
-	 */
-	public void setPageSize(int pageSize) {
-		this.pageSize = pageSize;
 	}
 
 	@Override
@@ -114,7 +112,9 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 				return;
 			}
 
-			OptionsInfo info = new OptionsInfo(ComboBoxMultiselectRenderer.this.pages);
+			OptionsInfo info = new OptionsInfo(ComboBoxMultiselectRenderer.this.pages,
+					ComboBoxMultiselectRenderer.this.inputPrompt, ComboBoxMultiselectRenderer.this.selectAllText,
+					ComboBoxMultiselectRenderer.this.deselectAllText);
 			if (page == -1) {
 				page = ComboBoxMultiselectRenderer.this.container.indexOfId(getCellProperty(id).getValue())
 						/ ComboBoxMultiselectRenderer.this.pageSize;
@@ -181,7 +181,8 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 
 			int filteredPages = (int) Math.ceil((double) filteredResult.size()
 					/ ComboBoxMultiselectRenderer.this.pageSize);
-			OptionsInfo info = new OptionsInfo(filteredPages);
+			OptionsInfo info = new OptionsInfo(filteredPages, ComboBoxMultiselectRenderer.this.inputPrompt,
+					ComboBoxMultiselectRenderer.this.selectAllText, ComboBoxMultiselectRenderer.this.deselectAllText);
 
 			if (page == -1) {
 				page = filteredResult.indexOf(getCellProperty(id).getValue())
@@ -250,7 +251,8 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 
 			int filteredPages = (int) Math.ceil((double) filteredResult.size()
 					/ ComboBoxMultiselectRenderer.this.pageSize);
-			OptionsInfo info = new OptionsInfo(filteredPages);
+			OptionsInfo info = new OptionsInfo(filteredPages, ComboBoxMultiselectRenderer.this.inputPrompt,
+					ComboBoxMultiselectRenderer.this.selectAllText, ComboBoxMultiselectRenderer.this.deselectAllText);
 
 			if (filter != null) {
 				filterable.removeContainerFilter(filter);
@@ -285,7 +287,6 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 
 			cell.setValue(selectedBeans);
 
-			// TODO
 			fireItemEditEvent(itemId, row, columnPropertyId, selectedBeans);
 		}
 
@@ -326,6 +327,14 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 
 		@Override
 		public void selectAll(CellId id) {
+			Object itemId = getItemId(id.getRowId());
+			Object columnPropertyId = getColumn(id.getColumnId()).getPropertyId();
+
+			Item row = getParentGrid()	.getContainerDataSource()
+										.getItem(itemId);
+
+			Property<Set<BEANTYPE>> cell = getCellProperty(id);
+
 			ComboBoxMultiselectRenderer.this.sortingNeeded = true;
 			Set<OptionElement> selected = new HashSet<OptionElement>();
 			for (BEANTYPE bean : ComboBoxMultiselectRenderer.this.container.getItemIds()) {
@@ -335,25 +344,37 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<Opti
 				selected.add(new OptionElement((Long) idProperty.getValue(), (String) captionProperty.getValue()));
 			}
 			ComboBoxMultiselectRenderer.this.selectedOptions = selected;
-			Property<Set<BEANTYPE>> cell = getCellProperty(id);
 
 			HashSet<BEANTYPE> selectedBeans = new HashSet<BEANTYPE>(
 					ComboBoxMultiselectRenderer.this.container.getItemIds());
 
 			cell.setValue(selectedBeans);
+			fireItemEditEvent(itemId, row, columnPropertyId, selectedBeans);
+
 			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateSelectedOptions(	ComboBoxMultiselectRenderer.this.selectedOptions,
 																					id, true);
 		}
 
 		@Override
 		public void deselectAll(CellId id) {
+			// TODO make this for fireItem simpler and own function
+			Object itemId = getItemId(id.getRowId());
+			Object columnPropertyId = getColumn(id.getColumnId()).getPropertyId();
+
+			Item row = getParentGrid()	.getContainerDataSource()
+										.getItem(itemId);
+
+			Property<Set<BEANTYPE>> cell = getCellProperty(id);
+
 			ComboBoxMultiselectRenderer.this.sortingNeeded = true;
 			ComboBoxMultiselectRenderer.this.selectedOptions = new HashSet<OptionElement>();
-			Property<Set<BEANTYPE>> cell = getCellProperty(id);
 
 			HashSet<BEANTYPE> selectedBeans = new HashSet<BEANTYPE>();
 
 			cell.setValue(selectedBeans);
+
+			fireItemEditEvent(itemId, row, columnPropertyId, selectedBeans);
+
 			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateSelectedOptions(	ComboBoxMultiselectRenderer.this.selectedOptions,
 																					id, true);
 		}

@@ -54,6 +54,9 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 	private Timer t = null;
 	// Page starts as page 0
 	private int currentPage = 0;
+	private String inputPrompt;
+	private String selectAllText;
+	private String deselectAllText;
 
 	private int pages = 1;
 	private boolean skipFocus = false;
@@ -62,6 +65,7 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 	private boolean prevPage = false;
 
 	public MultiSelect() {
+
 		this.selector = new TextBox();
 		this.selector.addKeyDownHandler(this);
 		this.selector.addFocusHandler(this);
@@ -87,6 +91,18 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 	protected void onAttach() {
 		super.onAttach();
 		this.drop.setTabIndex(-1);
+	}
+
+	public void setInputPrompt(String inputPrompt) {
+		this.inputPrompt = inputPrompt;
+	}
+
+	public void setSelectAllText(String selectAllText) {
+		this.selectAllText = selectAllText;
+	}
+
+	public void setDeselectAllText(String deselectAllText) {
+		this.deselectAllText = deselectAllText;
 	}
 
 	public void updateSelection(List<OptionElement> selection) {
@@ -144,7 +160,7 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 			if (this.popup.isVisible())
 				this.popup.hide(true);
 		}
-		this.popup = new MultiselectPopup(items);
+		this.popup = new MultiselectPopup(items, this.selectAllText, this.deselectAllText);
 		this.popup.addCloseHandler(new CloseHandler<PopupPanel>() {
 			@Override
 			public void onClose(CloseEvent<PopupPanel> closeEvent) {
@@ -365,8 +381,7 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 	private String getTextFieldValue(Set<OptionElement> selection) {
 		if (selection.size() == 0) {
 			this.selector.addStyleName(PROMPT_STYLE);
-			// TODO
-			return "prompt text";
+			return this.inputPrompt;
 		}
 
 		StringBuffer stringBuffer = new StringBuffer();
@@ -381,7 +396,7 @@ public class MultiSelect extends Composite implements KeyDownHandler, FocusHandl
 					return -1;
 				}
 				return o1	.getName()
-							.compareToIgnoreCase(o2.getName());
+							.compareTo(o2.getName());
 			}
 		});
 

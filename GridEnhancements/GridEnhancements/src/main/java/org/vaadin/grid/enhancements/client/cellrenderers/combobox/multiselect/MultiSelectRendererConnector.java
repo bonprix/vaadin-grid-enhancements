@@ -124,6 +124,10 @@ public class MultiSelectRendererConnector extends AbstractRendererConnector<Opti
 						if (optionsInfo.getCurrentPage() != -1) {
 							multiSelect.setCurrentPage(optionsInfo.getCurrentPage());
 						}
+						multiSelect.setInputPrompt(optionsInfo.getInputPrompt());
+						multiSelect.setSelectAllText(optionsInfo.getSelectAllText());
+						multiSelect.setDeselectAllText(optionsInfo.getDeselectAllText());
+
 						multiSelect.updatePageAmount(optionsInfo.getPageAmount());
 						multiSelect.updateSelection(options);
 					}
