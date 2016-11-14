@@ -5,10 +5,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.DeselectAllOptionElement;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.PopupCallback;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.SelectAllOptionElement;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.DeselectAllOptionElement;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.SelectAllOptionElement;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.shared.impl.StringCase;
@@ -43,7 +43,7 @@ import com.vaadin.client.ui.VOverlay;
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMoveHandler, MouseOverHandler,
+public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, MouseMoveHandler, MouseOverHandler,
 		MouseOutHandler, CellPreviewEvent.Handler<OptionElement> {
 
 	private static final String SELECTED_ROW_CLASS = "gwt-MenuItem-selected";
@@ -51,7 +51,7 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 	private final String selectAllText;
 	private final String deselectAllText;
 
-	private CellList<OptionElement> optionList;
+	private CellList<OptionElement> optionsList;
 	private List<OptionElement> options;
 
 	private Button up, down;
@@ -64,9 +64,9 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 
 	private long lastAutoClosed;
 
-	int focusedPosition = -1;
+	private int focusedPosition = -1;
 
-	public MultiselectPopup(List<OptionElement> options, String selectAllText, String deselectAllText) {
+	public ComboBoxMultiselectPopup(List<OptionElement> options, String selectAllText, String deselectAllText) {
 		super(true);
 
 		this.options = options;
@@ -75,14 +75,14 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 
 		setStyleName("v-filterselect-suggestpopup");
 
-		initOptionList();
+		initOptionsList();
 
 		initHandlers();
 
 		add(layout());
 	}
 
-	private void initOptionList() {
+	private void initOptionsList() {
 		if (withDeselectAllButton()) {
 			DeselectAllOptionElement deselectAllOption = new DeselectAllOptionElement(this.deselectAllText);
 			if (!this.options.contains(deselectAllOption)) {
@@ -97,15 +97,15 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 			}
 		}
 
-		this.optionList = new CellList<OptionElement>(new OptionCell());
-		this.optionList.setStyleName("v-filterselect-suggestmenu");
-		this.optionList.setPageSize(this.options.size());
-		this.optionList.setRowCount(this.options.size(), true);
-		this.optionList.setRowData(0, this.options);
-		this.optionList.setVisibleRange(0, this.options.size());
-		this.optionList.setWidth("100%");
-		this.optionList.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
-		this.optionList.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
+		this.optionsList = new CellList<OptionElement>(new OptionCell());
+		this.optionsList.setStyleName("v-filterselect-suggestmenu");
+		this.optionsList.setPageSize(this.options.size());
+		this.optionsList.setRowCount(this.options.size(), true);
+		this.optionsList.setRowData(0, this.options);
+		this.optionsList.setVisibleRange(0, this.options.size());
+		this.optionsList.setWidth("100%");
+		this.optionsList.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
+		this.optionsList.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
 	}
 
 	private boolean withDeselectAllButton() {
@@ -127,7 +127,7 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 		this.up.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				MultiselectPopup.this.callback.prevPage();
+				ComboBoxMultiselectPopup.this.callback.prevPage();
 			}
 		});
 		this.up.addMouseOverHandler(this);
@@ -140,7 +140,7 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 		this.down.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				MultiselectPopup.this.callback.nextPage();
+				ComboBoxMultiselectPopup.this.callback.nextPage();
 			}
 		});
 		this.down.addMouseOverHandler(this);
@@ -148,7 +148,7 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 
 		// Add widgets to content panel
 		layout.add(this.up);
-		layout.add(this.optionList);
+		layout.add(this.optionsList);
 		layout.add(this.down);
 
 		return layout;
@@ -165,11 +165,11 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 		}
 
 		// Add CellList listeners
-		this.handlers.add(this.optionList.addBitlessDomHandler(this, MouseMoveEvent.getType()));
-		this.handlers.add(this.optionList.addBitlessDomHandler(this, MouseOverEvent.getType()));
-		this.handlers.add(this.optionList.addBitlessDomHandler(this, MouseOutEvent.getType()));
-		this.handlers.add(this.optionList.addCellPreviewHandler(this));
-		this.handlers.add(this.optionList.addHandler(this, FocusEvent.getType()));
+		this.handlers.add(this.optionsList.addBitlessDomHandler(this, MouseMoveEvent.getType()));
+		this.handlers.add(this.optionsList.addBitlessDomHandler(this, MouseOverEvent.getType()));
+		this.handlers.add(this.optionsList.addBitlessDomHandler(this, MouseOutEvent.getType()));
+		this.handlers.add(this.optionsList.addCellPreviewHandler(this));
+		this.handlers.add(this.optionsList.addHandler(this, FocusEvent.getType()));
 	}
 
 	public void setNextPageEnabled(boolean nextPageEnabled) {
@@ -221,7 +221,7 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 	}
 
 	public void focusSelectionLast(boolean focus) {
-		focusSelectionViaPosition(this.optionList	.getVisibleItems()
+		focusSelectionViaPosition(this.optionsList	.getVisibleItems()
 													.size()
 				- 1, focus);
 	}
@@ -231,15 +231,15 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 	}
 
 	public void focusSelectionViaPosition(int newPosition, boolean stealFocus) {
-		if (stealFocus && this.focusedPosition > -1 && this.focusedPosition < this.optionList	.getVisibleItems()
+		if (stealFocus && this.focusedPosition > -1 && this.focusedPosition < this.optionsList	.getVisibleItems()
 																								.size()) {
-			this.optionList	.getRowElement(this.focusedPosition)
+			this.optionsList.getRowElement(this.focusedPosition)
 							.removeClassName(SELECTED_ROW_CLASS);
 		}
 
 		this.focusedPosition = newPosition;
 
-		this.optionList	.getRowElement(this.focusedPosition)
+		this.optionsList.getRowElement(this.focusedPosition)
 						.addClassName(SELECTED_ROW_CLASS);
 
 	}
@@ -308,7 +308,7 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 			}
 
 			final CheckBox checkBox = new CheckBox();
-			checkBox.setValue(MultiselectPopup.this.currentSelections.contains(option));
+			checkBox.setValue(ComboBoxMultiselectPopup.this.currentSelections.contains(option));
 			sb.appendHtmlConstant(checkBox	.getElement()
 											.getString());
 			sb.appendHtmlConstant("<span>");
@@ -323,9 +323,9 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 		Element target = event	.getNativeEvent()
 								.getEventTarget()
 								.cast();
-		for (int i = 0; i < this.optionList	.getVisibleItems()
+		for (int i = 0; i < this.optionsList.getVisibleItems()
 											.size(); i++) {
-			Element e = this.optionList.getRowElement(i);
+			Element e = this.optionsList.getRowElement(i);
 			if (e.equals(target)) {
 				focusSelectionViaPosition(i, true);
 				return;
@@ -345,8 +345,8 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 
 	@Override
 	public void onFocus(FocusEvent event) {
-		if (MultiselectPopup.this.callback != null) {
-			MultiselectPopup.this.callback.focus();
+		if (ComboBoxMultiselectPopup.this.callback != null) {
+			ComboBoxMultiselectPopup.this.callback.focus();
 		}
 	}
 
@@ -377,14 +377,14 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 	}
 
 	public void updateElementCss() {
-		for (int i = 0; i < this.optionList.getRowCount(); i++) {
-			this.optionList	.getRowElement(i)
+		for (int i = 0; i < this.optionsList.getRowCount(); i++) {
+			this.optionsList.getRowElement(i)
 							.addClassName("gwt-MenuItem");
 		}
 	}
 
 	public boolean isLastElementFocused() {
-		return this.focusedPosition == this.optionList	.getVisibleItems()
+		return this.focusedPosition == this.optionsList	.getVisibleItems()
 														.size()
 				- 1;
 	}
@@ -435,7 +435,7 @@ public class MultiselectPopup extends VOverlay implements FocusHandler, MouseMov
 		}
 
 		for (int i = 0; i < this.options.size(); i++) {
-			this.optionList.redrawRow(i);
+			this.optionsList.redrawRow(i);
 			focusSelectionViaNativeKey(i, true);
 		}
 

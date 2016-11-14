@@ -1,4 +1,4 @@
-package org.vaadin.grid.enhancements.client.cellrenderers.combobox.common;
+package org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option;
 
 public class DeselectAllOptionElement extends OptionElement {
 

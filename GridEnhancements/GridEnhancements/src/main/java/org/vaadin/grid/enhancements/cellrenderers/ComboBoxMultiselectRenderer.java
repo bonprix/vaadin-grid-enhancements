@@ -11,8 +11,8 @@ import com.vaadin.shared.ui.combobox.FilteringMode;
 
 import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionsInfo;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiselectClientRpc;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiselectServerRpc;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiselectState;

@@ -1,13 +1,13 @@
 package org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -19,10 +19,8 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.view.client.ProvidesKey;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel;
-import com.google.gwt.view.client.SingleSelectionModel;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.vaadin.client.ui.VOverlay;
 
 import java.util.Date;
@@ -30,66 +28,46 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.PopupCallback;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
 
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDownHandler, SelectionChangeEvent.Handler {
+public class ComboBoxPopup extends VOverlay
+		implements FocusHandler, MouseMoveHandler, CellPreviewEvent.Handler<OptionElement> {
 
-	private final CellList<OptionElement> list;
-	private final SelectionModel<OptionElement> selectionModel;
-	private List<OptionElement> values;
+	private static final String SELECTED_ROW_CLASS = "gwt-MenuItem-selected";
+
+	private CellList<OptionElement> optionsList;
+	private List<OptionElement> options;
 
 	private Button up, down;
 	private Set<HandlerRegistration> handlers = new HashSet<HandlerRegistration>();
 
-	// TODO
-	private PopupCallback callback;
+	private PopupCallback<OptionElement> callback;
 
 	private long lastAutoClosed;
 
-	public ComboBoxPopup(List<OptionElement> values) {
+	private int focusedPosition = -1;
+
+	public ComboBoxPopup(List<OptionElement> options) {
 		super(true);
 
-		this.values = values;
-		addCloseHandler(this);
+		this.options = options;
 
-		CellList.Resources resources = GWT.create(CellList.Resources.class);
+		setStyleName("v-filterselect-suggestpopup");
 
-		this.list = new CellList<OptionElement>(new Cell(), resources, this.keyProvider);
-		this.list.setPageSize(values.size());
-		this.list.setRowCount(values.size(), true);
-		this.list.setRowData(0, values);
-		this.list.setVisibleRange(0, values.size());
-		this.list.setWidth("100%");
-		this.list.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
-		this.list.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
+		initOptionsList();
 
-		this.list.setStyleName("c-combobox-options");
+		initHandlers();
 
-		this.selectionModel = new SingleSelectionModel<OptionElement>(this.keyProvider);
-		this.list.setSelectionModel(this.selectionModel);
+		add(layout());
+	}
 
-		// Remove all handlers if any exist for any reason
-		if (!this.handlers.isEmpty()) {
-			for (HandlerRegistration handler : this.handlers) {
-				handler.removeHandler();
-			}
-		}
-
-		// Add CellList listeners
-		this.handlers.add(this.list.addBitlessDomHandler(this, MouseMoveEvent.getType()));
-		this.handlers.add(this.list.addHandler(this, KeyDownEvent.getType()));
-
-		// Add selection change handler
-		this.handlers.add(this.selectionModel.addSelectionChangeHandler(this));
-
-		setStyleName("c-combo-popup");
-
-		VerticalPanel content = new VerticalPanel();
-		content.setWidth("100%");
+	private Widget layout() {
+		VerticalPanel layout = new VerticalPanel();
+		layout.setWidth("100%");
 
 		this.up = new Button("");
 		this.up	.getElement()
@@ -114,28 +92,38 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 		});
 
 		// Add widgets to content panel
-		content.add(this.up);
-		content.add(this.list);
-		content.add(this.down);
+		layout.add(this.up);
+		layout.add(this.optionsList);
+		layout.add(this.down);
 
-		// Init content widget
-		add(content);
+		return layout;
 	}
 
-	/**
-	 * Get the selected object when in singleSelection mode
-	 *
-	 * @return Single selected object
-	 */
-	private OptionElement getSelectedObject() {
-		return ((SingleSelectionModel<OptionElement>) this.selectionModel).getSelectedObject();
+	private void initHandlers() {
+		addCloseHandler(this);
+
+		// Remove all handlers if any exist for any reason
+		if (!this.handlers.isEmpty()) {
+			for (HandlerRegistration handler : this.handlers) {
+				handler.removeHandler();
+			}
+		}
+
+		// Add CellList listeners
+		this.handlers.add(this.optionsList.addBitlessDomHandler(this, MouseMoveEvent.getType()));
+		this.handlers.add(this.optionsList.addCellPreviewHandler(this));
 	}
 
-	/**
-	 * Hide popup
-	 */
-	private void closePopup() {
-		ComboBoxPopup.this.hide();
+	private void initOptionsList() {
+		this.optionsList = new CellList<OptionElement>(new OptionCell());
+		this.optionsList.setStyleName("v-filterselect-suggestmenu");
+		this.optionsList.setPageSize(this.options.size());
+		this.optionsList.setRowCount(this.options.size(), true);
+		this.optionsList.setRowData(0, this.options);
+		this.optionsList.setVisibleRange(0, this.options.size());
+		this.optionsList.setWidth("100%");
+		this.optionsList.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
+		this.optionsList.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
 	}
 
 	public void setNextPageEnabled(boolean nextPageEnabled) {
@@ -148,21 +136,63 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 
 	/**
 	 * Move keyboard focus to the selected item if found in current options
+	 * 
+	 * @param nativeKeyCode
 	 *
-	 * @param selected
-	 *            Selected item to focus if available
+	 * @param stealFocus
+	 *            true to focus new row
 	 */
-	public void focusSelection(OptionElement selected, boolean stealFocus) {
-		if (this.values.contains(selected)) {
-			// Focus selected item
-			this.list.setKeyboardSelectedRow(this.values.indexOf(selected), stealFocus);
-		} else if (!this.values.isEmpty()) {
-			// Else focus first item if values exist
-			this.list.setKeyboardSelectedRow(0, stealFocus);
-		} else {
-			// Else move focus to list
-			this.list.setFocus(stealFocus);
+	public void focusSelectionViaNativeKey(int nativeKeyCode, boolean stealFocus) {
+		int newPosition = this.focusedPosition;
+
+		switch (nativeKeyCode) {
+		case KeyCodes.KEY_UP:
+			newPosition--;
+			break;
+		case KeyCodes.KEY_DOWN:
+			newPosition++;
+			break;
 		}
+
+		focusSelectionViaPosition(newPosition, stealFocus);
+	}
+
+	public void focusSelectionFirst(boolean focus) {
+		focusSelectionViaPosition(0, focus);
+	}
+
+	public void focusSelectionLast(boolean focus) {
+		focusSelectionViaPosition(this.optionsList	.getVisibleItems()
+													.size()
+				- 1, focus);
+	}
+
+	public void focusSelectionCurrent(boolean focus) {
+		focusSelectionViaPosition(this.focusedPosition, focus);
+	}
+
+	public void focusSelectionSelected(OptionElement selected, boolean focus) {
+		for (int i = 0; i < this.options.size(); i++) {
+			OptionElement option = this.options.get(i);
+			if (option.equals(selected)) {
+				focusSelectionViaPosition(i, true);
+				return;
+			}
+		}
+	}
+
+	public void focusSelectionViaPosition(int newPosition, boolean stealFocus) {
+		if (stealFocus && this.focusedPosition > -1 && this.focusedPosition < this.optionsList	.getVisibleItems()
+																								.size()) {
+			this.optionsList.getRowElement(this.focusedPosition)
+							.removeClassName(SELECTED_ROW_CLASS);
+		}
+
+		this.focusedPosition = newPosition;
+
+		this.optionsList.getRowElement(this.focusedPosition)
+						.addClassName(SELECTED_ROW_CLASS);
+
 	}
 
 	/**
@@ -204,52 +234,22 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 	/**
 	 * CellList cell content renderer implementation
 	 */
-	private class Cell extends AbstractCell<OptionElement> {
+	private class OptionCell extends AbstractCell<OptionElement> {
 
 		@Override
 		public void render(Context context, final OptionElement value, SafeHtmlBuilder sb) {
 			sb.appendHtmlConstant("<span>");
-			// TODO: add something for icons?
 			sb.appendEscaped(value.getName());
 			sb.appendHtmlConstant("</span>");
-
 		}
 	}
-
-	/**
-	 * CellList item key provider
-	 */
-	private ProvidesKey<OptionElement> keyProvider = new ProvidesKey<OptionElement>() {
-		public Object getKey(OptionElement item) {
-			// Always do a null check.
-			return (item == null) ? null : item.hashCode();
-		}
-	};
 
 	// --- Event handler implementations ---
 
 	@Override
-	public void onKeyDown(KeyDownEvent event) {
-		switch (event	.getNativeEvent()
-						.getKeyCode()) {
-		case KeyCodes.KEY_DOWN:
-			if (this.list.getKeyboardSelectedRow() == this.list	.getVisibleItems()
-																.size()
-					- 1 && this.down.isVisible()) {
-				this.callback.nextPage();
-			}
-			break;
-		case KeyCodes.KEY_UP:
-			if (this.list.getKeyboardSelectedRow() == 0 && this.up.isVisible()) {
-				this.callback.prevPage();
-			}
-			break;
-		case KeyCodes.KEY_TAB:
-			if (this.callback != null) {
-				this.callback.itemSelected(this.list.getVisibleItem(this.list.getKeyboardSelectedRow()));
-			}
-			closePopup();
-			break;
+	public void onFocus(FocusEvent event) {
+		if (ComboBoxPopup.this.callback != null) {
+			ComboBoxPopup.this.callback.focus();
 		}
 	}
 
@@ -258,20 +258,69 @@ public class ComboBoxPopup extends VOverlay implements MouseMoveHandler, KeyDown
 		Element target = event	.getNativeEvent()
 								.getEventTarget()
 								.cast();
-		for (int i = 0; i < this.list	.getVisibleItems()
-										.size(); i++) {
-			Element e = this.list.getRowElement(i);
+		for (int i = 0; i < this.optionsList.getVisibleItems()
+											.size(); i++) {
+			Element e = this.optionsList.getRowElement(i);
 			if (e.equals(target)) {
-				this.list.setKeyboardSelectedRow(i, true);
+				focusSelectionViaPosition(i, true);
 				break;
 			}
 		}
 	}
 
-	public void onSelectionChange(SelectionChangeEvent event) {
-		if (this.callback != null) {
-			this.callback.itemSelected(getSelectedObject());
+	@Override
+	public void onCellPreview(CellPreviewEvent<OptionElement> event) {
+
+		if (BrowserEvents.CLICK.equals(event.getNativeEvent()
+											.getType())) {
+			select(event.getValue());
+			event.setCanceled(true);
+			event	.getNativeEvent()
+					.preventDefault();
+			event	.getNativeEvent()
+					.stopPropagation();
 		}
-		closePopup();
 	}
+
+	public void selectCurrent() {
+		select(this.options.get(this.focusedPosition));
+	}
+
+	private void select(OptionElement option) {
+		this.callback.itemSelected(option);
+	}
+
+	public void updateElementCss() {
+		for (int i = 0; i < this.optionsList.getRowCount(); i++) {
+			this.optionsList.getRowElement(i)
+							.addClassName("gwt-MenuItem");
+		}
+	}
+
+	public boolean isLastElementFocused() {
+		return this.focusedPosition == this.optionsList	.getVisibleItems()
+														.size()
+				- 1;
+	}
+
+	public boolean isNextPageAvailable() {
+		return this.down.isVisible();
+	}
+
+	public void nextPage() {
+		this.callback.nextPage();
+	}
+
+	public boolean isFirstElementFocused() {
+		return this.focusedPosition == 0;
+	}
+
+	public boolean isPreviousPageAvailable() {
+		return this.up.isVisible();
+	}
+
+	public void prevPage() {
+		this.callback.prevPage();
+	}
+
 }

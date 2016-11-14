@@ -6,6 +6,8 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -21,63 +23,78 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
-import com.vaadin.client.VConsole;
-
 import java.util.List;
 import java.util.Set;
 
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.EventHandler;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.PopupCallback;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
 
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, HasChangeHandlers {
+public class ComboBox extends Composite implements KeyDownHandler, FocusHandler, BlurHandler, HasChangeHandlers {
+
+	private static final String PROMPT_STYLE = "v-filterselect-prompt";
+
+	private enum SelectionType {
+		FIRST_ELEMENT, LAST_ELEMENT, SELECTED_ELEMENT
+	}
 
 	private ComboBoxPopup popup = null;
 
 	private OptionElement selected;
 
-	private TextBox selector;
-	private Button drop;
+	private TextBox textBox;
+	private Button dropDownButton;
 
 	private EventHandler<OptionElement> eventHandler;
 
 	private Timer t = null;
 	// Page starts as page 0
 	private int currentPage = 0;
+	private String inputPrompt;
 
 	private int pages = 1;
+	private boolean skipFocus = false;
 	private boolean skipBlur = false;
 
+	private SelectionType selectionType = SelectionType.FIRST_ELEMENT;
+
 	public ComboBox() {
-		this.selector = new TextBox();
-		this.selector.addKeyDownHandler(this);
+		this.textBox = new TextBox();
+		this.textBox.setStyleName("c-combobox-input");
+		this.textBox.addKeyDownHandler(this);
+		this.textBox.addFocusHandler(this);
+		this.textBox.addBlurHandler(this);
 
-		this.selector	.getElement()
-						.getStyle()
-						.setProperty("padding", "0 16px");
-		this.selector.setStyleName("c-combobox-input");
-		this.selector.addBlurHandler(this);
-
-		this.drop = new Button();
-		this.drop.setStyleName("c-combobox-button");
-		this.drop.addClickHandler(this.dropDownClickHandler);
+		this.dropDownButton = new Button();
+		this.dropDownButton.setStyleName("c-combobox-button");
+		this.dropDownButton.addClickHandler(this.dropDownClickHandler);
 
 		FlowPanel content = new FlowPanel();
 		content.setStyleName("v-widget v-has-width v-filterselect v-filterselect-prompt");
 		content.setWidth("100%");
 
-		content.add(this.selector);
-		content.add(this.drop);
+		content.add(this.textBox);
+		content.add(this.dropDownButton);
 
 		initWidget(content);
 
 	}
 
+	@Override
+	protected void onAttach() {
+		super.onAttach();
+		this.dropDownButton.setTabIndex(-1);
+	}
+
+	public void setInputPrompt(String inputPrompt) {
+		this.inputPrompt = inputPrompt;
+	}
+
 	public void updateSelection(List<OptionElement> selection) {
-		openDropdown(selection);
+		updateAndShowDropdown(selection);
 	}
 
 	public void updatePageAmount(int pages) {
@@ -88,18 +105,18 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 		return this.selected;
 	}
 
+	public void setCurrentPage(int currentPage) {
+		this.currentPage = currentPage;
+	}
+
 	public void setSelected(OptionElement selected) {
 		OptionElement old = this.selected;
-		this.selector.setValue(selected.getName());
+		this.textBox.setValue(getTextFieldValue(selected));
 		this.selected = selected;
 
 		if (!old.equals(selected)) {
 			this.eventHandler.change(selected);
 		}
-	}
-
-	public void setCurrentPage(int currentPage) {
-		this.currentPage = currentPage;
 	}
 
 	public void setEventHandler(EventHandler<OptionElement> eventHandler) {
@@ -110,20 +127,15 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 		return addDomHandler(handler, ChangeEvent.getType());
 	}
 
-	public void setSelection(OptionElement selection) {
-		this.selected = selection;
-		this.selector.setValue(selection.getName());
-	}
-
 	public boolean isEnabled() {
-		return this.selector.isEnabled();
+		return this.textBox.isEnabled();
 	}
 
 	public void setEnabled(boolean enabled) {
-		this.selector.setEnabled(enabled);
+		this.textBox.setEnabled(enabled);
 	}
 
-	private void openDropdown(List<OptionElement> items) {
+	private void updateAndShowDropdown(List<OptionElement> items) {
 		boolean focus = false;
 		if (this.popup != null) {
 			focus = this.popup.isJustClosed();
@@ -156,7 +168,22 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 			}
 		});
 		this.skipBlur = true;
-		this.popup.focusSelection(this.selected, focus);
+
+		this.popup.updateElementCss();
+
+		switch (this.selectionType) {
+		case FIRST_ELEMENT:
+			this.popup.focusSelectionFirst(focus);
+			break;
+		case LAST_ELEMENT:
+			this.popup.focusSelectionLast(focus);
+			break;
+		case SELECTED_ELEMENT:
+			this.popup.focusSelectionSelected(this.selected, true);
+			break;
+		default:
+			break;
+		}
 	}
 
 	// -- Handlers --
@@ -165,6 +192,9 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 	public void onKeyDown(KeyDownEvent event) {
 
 		switch (event.getNativeKeyCode()) {
+		case KeyCodes.KEY_TAB:
+			this.skipBlur = false;
+			break;
 		case KeyCodes.KEY_ESCAPE:
 			event.preventDefault();
 			event.stopPropagation();
@@ -174,26 +204,64 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 			}
 			this.eventHandler.clearFilter();
 
-			this.selector.setValue(this.selected.getName());
+			this.textBox.setValue(getTextFieldValue(this.selected));
+			break;
+		case KeyCodes.KEY_ENTER:
+			event.preventDefault();
+			event.stopPropagation();
+			if (this.popup != null && this.popup.isVisible()) {
+				this.popup.selectCurrent();
+			}
+			break;
+		case KeyCodes.KEY_UP:
+			// check if popup is open
+			if (this.popup != null && this.popup.isAttached()) {
+				event.preventDefault();
+				event.stopPropagation();
+
+				// if first element in visible list is already selected
+				if (this.popup.isFirstElementFocused()) {
+					// and previous page is available
+					// open previous page
+					if (this.popup.isPreviousPageAvailable()) {
+						this.selectionType = SelectionType.LAST_ELEMENT;
+						this.popup.prevPage();
+					}
+					break;
+				}
+
+				// Focus popup if open else open popup with first page
+				this.popup.focusSelectionViaNativeKey(KeyCodes.KEY_UP, true);
+			}
 			break;
 		case KeyCodes.KEY_DOWN:
 			event.preventDefault();
 			event.stopPropagation();
 
-			// Focus popup if open else open popup with first page
+			// check if popup is open
 			if (this.popup != null && this.popup.isAttached()) {
-				this.popup.focusSelection(this.selected, true);
-			} else {
-				// Start from page with selection when opening.
-				this.currentPage = -1;
-				this.eventHandler.getPage(this.currentPage);
+
+				// if last element in visible list is already selected
+
+				if (this.popup.isLastElementFocused()) {
+					// and next page is available
+					// open next page
+					if (this.popup.isNextPageAvailable()) {
+						this.selectionType = SelectionType.FIRST_ELEMENT;
+						this.popup.nextPage();
+					}
+					break;
+				}
+
+				// Focus popup next element in popup
+				this.popup.focusSelectionViaNativeKey(KeyCodes.KEY_DOWN, true);
+				break;
 			}
-			break;
-		case KeyCodes.KEY_TAB:
-			if (this.popup != null && this.popup.isAttached()) {
-				this.popup.hide(true);
-			}
-			this.selector.setValue(this.selected.getName());
+
+			// Start from page with selection when opening.
+			this.currentPage = -1;
+			this.selectionType = SelectionType.SELECTED_ELEMENT;
+			this.eventHandler.getPage(this.currentPage);
 			break;
 		}
 
@@ -207,11 +275,24 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 				@Override
 				public void run() {
 					ComboBox.this.currentPage = 0;
-					ComboBox.this.eventHandler.filter(ComboBox.this.selector.getValue(), ComboBox.this.currentPage);
+					ComboBox.this.selectionType = SelectionType.FIRST_ELEMENT;
+					ComboBox.this.eventHandler.filter(ComboBox.this.textBox.getValue(), ComboBox.this.currentPage);
 					ComboBox.this.t = null;
 				}
 			};
 		this.t.schedule(300);
+	}
+
+	@Override
+	public void onFocus(FocusEvent event) {
+		if (this.skipFocus) {
+			this.skipFocus = false;
+			return;
+		}
+
+		if (ComboBox.this.popup == null || !ComboBox.this.popup.isAttached() || !ComboBox.this.popup.isJustClosed()) {
+			this.textBox.removeStyleDependentName(PROMPT_STYLE);
+		}
 	}
 
 	@Override
@@ -220,7 +301,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 			if (this.popup != null && this.popup.isAttached()) {
 				this.popup.hide();
 			}
-			this.selector.setValue(this.selected.getName());
+			this.textBox.setValue(getTextFieldValue(this.selected));
 			this.skipBlur = false;
 		}
 	}
@@ -236,7 +317,7 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 				ComboBox.this.currentPage = -1;
 				ComboBox.this.eventHandler.getPage(ComboBox.this.currentPage);
 			}
-			ComboBox.this.selector.setFocus(true);
+			ComboBox.this.textBox.setFocus(true);
 		}
 	};
 
@@ -244,8 +325,9 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 		@Override
 		public void itemSelected(OptionElement item) {
 			setSelected(item);
-			ComboBox.this.selector.setFocus(true);
+			ComboBox.this.textBox.setFocus(true);
 			ComboBox.this.eventHandler.clearFilter();
+			ComboBox.this.popup.hide();
 		}
 
 		@Override
@@ -265,7 +347,8 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 
 		@Override
 		public void focus() {
-			// TODO
+			ComboBox.this.skipFocus = true;
+			ComboBox.this.textBox.setFocus(true);
 		}
 
 		@Override
@@ -280,8 +363,17 @@ public class ComboBox extends Composite implements KeyDownHandler, BlurHandler, 
 
 		@Override
 		public void setSkipBlur(boolean skipBlur) {
-			VConsole.error("setSkipBlur: " + skipBlur);
 			ComboBox.this.skipBlur = skipBlur;
 		}
 	};
+
+	private String getTextFieldValue(OptionElement selection) {
+		if (selection == null) {
+			this.textBox.addStyleName(PROMPT_STYLE);
+			return this.inputPrompt;
+		}
+
+		this.textBox.removeStyleName(PROMPT_STYLE);
+		return selection.getName();
+	}
 }

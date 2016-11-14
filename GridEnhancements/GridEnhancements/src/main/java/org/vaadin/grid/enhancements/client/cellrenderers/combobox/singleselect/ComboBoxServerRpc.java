@@ -1,7 +1,7 @@
 package org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect;
 
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
 
 import com.vaadin.shared.communication.ServerRpc;
 

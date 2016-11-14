@@ -276,8 +276,8 @@ public class DemoUI extends UI {
 
 		// Populate data
 		for (int i = 0; i <= 30; ++i) {
-			container.addBean(new DataSourceClass("", "foo", i, i / 5.0d, new Date(), false, new DummyClass(),
-					new HashSet<DummyClass>() {
+			container.addBean(new DataSourceClass("0,1", "foo", i, i / 5.0d, new Date(), false,
+					new DummyClass(2L, "two"), new HashSet<DummyClass>() {
 						{
 							add(new DummyClass(1L, "one"));
 							add(new DummyClass(8L, "eight"));
@@ -289,7 +289,6 @@ public class DemoUI extends UI {
 	}
 
 	// --- ItemEditListeners ---
-
 	/**
 	 * Update change lable with the column and value of the latest edit
 	 */

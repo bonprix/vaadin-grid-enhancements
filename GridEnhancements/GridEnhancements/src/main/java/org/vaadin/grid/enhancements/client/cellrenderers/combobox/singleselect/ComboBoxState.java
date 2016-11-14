@@ -5,8 +5,7 @@ import com.vaadin.shared.communication.SharedState;
 /**
  * @author Mikael Grankvist - Vaadin Ltd
  */
-public class ComboBoxState<BEANTYPE> extends SharedState {
-
-	public BEANTYPE value = null;
+public class ComboBoxState extends SharedState {
+	private static final long serialVersionUID = -743434598228720003L;
 
 }

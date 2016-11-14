@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionsInfo;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxClientRpc;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxServerRpc;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxState;
@@ -210,13 +210,17 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 
 			BEANTYPE selectedBean = null;
 
-			for (BEANTYPE bean : ComboBoxRenderer.this.container.getItemIds()) {
-				final Property<?> idProperty = ComboBoxRenderer.this.container	.getItem(bean)
-																				.getItemProperty(ComboBoxRenderer.this.itemIdPropertyId);
-				if (newValue.getId()
-							.equals(idProperty.getValue())) {
-					selectedBean = bean;
+			if (newValue != null && newValue.getId() != null) {
+
+				for (BEANTYPE bean : ComboBoxRenderer.this.container.getItemIds()) {
+					final Property<?> idProperty = ComboBoxRenderer.this.container	.getItem(bean)
+																					.getItemProperty(ComboBoxRenderer.this.itemIdPropertyId);
+					if (newValue.getId()
+								.equals(idProperty.getValue())) {
+						selectedBean = bean;
+					}
 				}
+
 			}
 
 			cell.setValue(selectedBean);

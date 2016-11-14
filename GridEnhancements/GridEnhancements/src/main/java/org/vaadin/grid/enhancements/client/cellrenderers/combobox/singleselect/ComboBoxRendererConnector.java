@@ -18,8 +18,8 @@ import elemental.json.JsonObject;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.EventHandler;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionsInfo;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
 
 import java.util.List;
 import java.util.Set;
@@ -29,6 +29,7 @@ import java.util.Set;
  */
 @Connect(ComboBoxRenderer.class)
 public class ComboBoxRendererConnector extends AbstractRendererConnector<OptionElement> {
+	private static final long serialVersionUID = 1L;
 
 	ComboBoxServerRpc rpc = RpcProxy.create(ComboBoxServerRpc.class, this);
 
@@ -109,6 +110,8 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<OptionE
 			this.filter = "";
 
 			registerRpc(ComboBoxClientRpc.class, new ComboBoxClientRpc() {
+				private static final long serialVersionUID = 1L;
+
 				@Override
 				public void setCurrentPage(int page, CellId id) {
 					if (id.equals(getCellId(comboBox))) {
@@ -129,7 +132,6 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<OptionE
 			});
 
 			Element e = comboBox.getElement();
-			getState().value = selectedValue;
 
 			if (e.getPropertyString(ROW_KEY_PROPERTY) != getRowKey((JsonObject) cell.getRow())) {
 				e.setPropertyString(ROW_KEY_PROPERTY, getRowKey((JsonObject) cell.getRow()));
@@ -140,7 +142,7 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<OptionE
 				e.setPropertyString(COLUMN_ID_PROPERTY, getColumnId(getGrid().getColumn(cell.getColumnIndex())));
 			}
 
-			comboBox.setSelection(selectedValue);
+			comboBox.setSelected(selectedValue);
 
 			if (comboBox.isEnabled() != cell.getColumn()
 											.isEditable()) {

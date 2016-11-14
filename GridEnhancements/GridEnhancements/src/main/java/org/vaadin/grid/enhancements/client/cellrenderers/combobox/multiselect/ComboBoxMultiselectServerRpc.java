@@ -5,7 +5,7 @@ import com.vaadin.shared.communication.ServerRpc;
 import java.util.Set;
 
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionElement;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
 
 /**
  * Client to server rpc
