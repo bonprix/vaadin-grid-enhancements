@@ -79,6 +79,9 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 		content.add(this.textBox);
 		content.add(this.dropDownButton);
 
+		this.popup = new ComboBoxPopup();
+		this.popup.setOwner(this);
+
 		initWidget(content);
 
 	}
@@ -135,14 +138,16 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 		this.textBox.setEnabled(enabled);
 	}
 
-	private void updateAndShowDropdown(List<OptionElement> items) {
+	private void updateAndShowDropdown(List<OptionElement> options) {
 		boolean focus = false;
 		if (this.popup != null) {
 			focus = this.popup.isJustClosed();
 			if (this.popup.isVisible())
 				this.popup.hide(true);
 		}
-		this.popup = new ComboBoxPopup(items);
+
+		this.popup.setOptions(options);
+
 		this.popup.addCloseHandler(new CloseHandler<PopupPanel>() {
 			@Override
 			public void onClose(CloseEvent<PopupPanel> closeEvent) {

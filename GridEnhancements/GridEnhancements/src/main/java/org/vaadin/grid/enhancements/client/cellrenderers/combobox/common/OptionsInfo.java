@@ -19,8 +19,13 @@ public class OptionsInfo {
 	public OptionsInfo(int pageAmount, String inputPrompt, String selectAllText, String deselectAllText) {
 		this.pageAmount = pageAmount;
 		this.inputPrompt = inputPrompt;
-		this.setSelectAllText(selectAllText);
-		this.setDeselectAllText(deselectAllText);
+		this.selectAllText = selectAllText;
+		this.deselectAllText = deselectAllText;
+	}
+
+	public OptionsInfo(int pageAmount, String inputPrompt) {
+		this.pageAmount = pageAmount;
+		this.inputPrompt = inputPrompt;
 	}
 
 	public int getCurrentPage() {

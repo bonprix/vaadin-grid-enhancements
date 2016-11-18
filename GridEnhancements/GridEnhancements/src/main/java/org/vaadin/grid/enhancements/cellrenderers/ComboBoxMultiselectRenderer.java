@@ -44,8 +44,9 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 	private final String selectAllText;
 	private final String deselectAllText;
 
-	private String itemIdPropertyId;
-	private String itemCaptionPropertyId;
+	private final String originalItemProperty;
+	private final String itemIdPropertyId;
+	private final String itemCaptionPropertyId;
 	private FilteringMode filteringMode = FilteringMode.CONTAINS;
 
 	private Comparator<? super OptionElement> comparator = new Comparator<OptionElement>() {
@@ -77,7 +78,7 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 
 	public ComboBoxMultiselectRenderer(final Class<BEANTYPE> clazz, List<BEANTYPE> selections, String itemIdPropertyId,
 			String itemCaptionPropertyId, int pageSize, String inputPrompt, String selectAllText,
-			String deselectAllText) {
+			String deselectAllText, String originalItemProperty) {
 		super(clazz);
 
 		registerRpc(this.rpc);
@@ -96,7 +97,7 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 
 		this.itemIdPropertyId = itemIdPropertyId;
 		this.itemCaptionPropertyId = itemCaptionPropertyId;
-
+		this.originalItemProperty = originalItemProperty;
 	}
 
 	@Override
@@ -297,7 +298,7 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 			Item row = getParentGrid()	.getContainerDataSource()
 										.getItem(itemId);
 
-			return (Property<Set<BEANTYPE>>) row.getItemProperty("multi");
+			return (Property<Set<BEANTYPE>>) row.getItemProperty(ComboBoxMultiselectRenderer.this.originalItemProperty);
 		}
 
 		@Override

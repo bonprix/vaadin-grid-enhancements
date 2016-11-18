@@ -51,14 +51,16 @@ public class ComboBoxPopup extends VOverlay
 
 	private int focusedPosition = -1;
 
-	public ComboBoxPopup(List<OptionElement> options) {
-		super(true);
-
-		this.options = options;
+	public ComboBoxPopup() {
+		super(true, false, true);
 
 		setStyleName("v-filterselect-suggestpopup");
 
-		initOptionsList();
+		this.optionsList = new CellList<OptionElement>(new OptionCell());
+		this.optionsList.setStyleName("v-filterselect-suggestmenu");
+		this.optionsList.setWidth("100%");
+		this.optionsList.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
+		this.optionsList.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
 
 		initHandlers();
 
@@ -114,16 +116,13 @@ public class ComboBoxPopup extends VOverlay
 		this.handlers.add(this.optionsList.addCellPreviewHandler(this));
 	}
 
-	private void initOptionsList() {
-		this.optionsList = new CellList<OptionElement>(new OptionCell());
-		this.optionsList.setStyleName("v-filterselect-suggestmenu");
+	public void setOptions(List<OptionElement> options) {
+		this.options = options;
+
 		this.optionsList.setPageSize(this.options.size());
 		this.optionsList.setRowCount(this.options.size(), true);
 		this.optionsList.setRowData(0, this.options);
 		this.optionsList.setVisibleRange(0, this.options.size());
-		this.optionsList.setWidth("100%");
-		this.optionsList.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
-		this.optionsList.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
 	}
 
 	public void setNextPageEnabled(boolean nextPageEnabled) {

@@ -31,17 +31,13 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 	private final int pageSize;
 	private int pages;
 	private final String inputPrompt;
-	// TODO remove
-	private final String selectAllText;
-	private final String deselectAllText;
 
 	private String itemIdPropertyId;
 	private String itemCaptionPropertyId;
 	private FilteringMode filteringMode = FilteringMode.CONTAINS;
 
 	public ComboBoxRenderer(final Class<BEANTYPE> clazz, List<BEANTYPE> selections, String itemIdPropertyId,
-			String itemCaptionPropertyId, int pageSize, String inputPrompt, String selectAllText,
-			String deselectAllText) {
+			String itemCaptionPropertyId, int pageSize, String inputPrompt) {
 		super(clazz);
 
 		registerRpc(this.rpc);
@@ -53,8 +49,6 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 		this.pageSize = pageSize;
 		this.pages = (int) Math.ceil((double) this.container.size() / this.pageSize);
 		this.inputPrompt = inputPrompt;
-		this.selectAllText = selectAllText;
-		this.deselectAllText = deselectAllText;
 
 		this.itemIdPropertyId = itemIdPropertyId;
 		this.itemCaptionPropertyId = itemCaptionPropertyId;
@@ -69,8 +63,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 
 		@Override
 		public void getPage(int page, CellId id) {
-			OptionsInfo info = new OptionsInfo(ComboBoxRenderer.this.pages, ComboBoxRenderer.this.inputPrompt,
-					ComboBoxRenderer.this.selectAllText, ComboBoxRenderer.this.deselectAllText);
+			OptionsInfo info = new OptionsInfo(ComboBoxRenderer.this.pages, ComboBoxRenderer.this.inputPrompt);
 			if (page == -1) {
 				page = ComboBoxRenderer.this.container.indexOfId(getCellProperty(id).getValue())
 						/ ComboBoxRenderer.this.pageSize;
@@ -123,8 +116,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 
 			int filteredPages = (int) Math.ceil((double) filteredResult.size() / ComboBoxRenderer.this.pageSize);
 
-			OptionsInfo info = new OptionsInfo(filteredPages, ComboBoxRenderer.this.inputPrompt,
-					ComboBoxRenderer.this.selectAllText, ComboBoxRenderer.this.deselectAllText);
+			OptionsInfo info = new OptionsInfo(filteredPages, ComboBoxRenderer.this.inputPrompt);
 			if (page == -1) {
 				page = filteredResult.indexOf(getCellProperty(id).getValue()) / ComboBoxRenderer.this.pageSize;
 				// Inform which page we are sending.
@@ -188,8 +180,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 			List<OptionElement> filteredResult = convertBeansToOptionElements(ComboBoxRenderer.this.container.getItemIds());
 
 			int filteredPages = (int) Math.ceil((double) filteredResult.size() / ComboBoxRenderer.this.pageSize);
-			OptionsInfo info = new OptionsInfo(filteredPages, ComboBoxRenderer.this.inputPrompt,
-					ComboBoxRenderer.this.selectAllText, ComboBoxRenderer.this.deselectAllText);
+			OptionsInfo info = new OptionsInfo(filteredPages, ComboBoxRenderer.this.inputPrompt);
 
 			if (filter != null) {
 				filterable.removeContainerFilter(filter);
