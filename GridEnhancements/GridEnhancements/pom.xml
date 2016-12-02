@@ -4,7 +4,7 @@
 	<groupId>org.vaadin.grid.enhancements</groupId>
 	<artifactId>GridEnhancements</artifactId>
 	<packaging>jar</packaging>
-	<version>1.3-SNAPSHOT</version>
+	<version>1.3.1-bp</version>
 	<name>Grid enhancements Add-on</name>
 
 	<properties>
@@ -95,14 +95,14 @@
 		<dependency>
 			<groupId>com.vaadin</groupId>
 			<artifactId>grid-renderers-collection-addon</artifactId>
-            <!-- Bonprix fork version marked with x.xx-b -->
-			<version>0.94-b</version>
+            <!-- Bonprix fork version marked with x.xx.x-bp -->
+			<version>0.94.1-bp</version>
 		</dependency>
         <dependency>
             <groupId>org.vaadin.anna</groupId>
             <artifactId>gridactionrenderer</artifactId>
-            <!-- Bonprix fork version marked with x.xx-bp -->
-            <version>1.1-bp</version>
+            <!-- Bonprix fork version marked with x.xx.x-bp -->
+            <version>1.1.1-bp</version>
         </dependency>
 
 		<dependency>

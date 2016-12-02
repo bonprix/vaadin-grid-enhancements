@@ -138,7 +138,7 @@ public class DemoUI extends UI {
 																								}
 																							});
 		grid.getColumn("_multi")
-			.setRenderer(new ComboBoxMultiselectRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 10,
+			.setRenderer(new ComboBoxMultiselectRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 5,
 					"input prompt2", "select all2", "clear2", "multi"));
 		grid.getColumn("_multi")
 			.setWidth(400);

@@ -84,6 +84,8 @@ public class ComboBoxMultiselect extends Composite
 		content.add(this.textBox);
 		content.add(this.dropDownButton);
 
+		this.popup = new ComboBoxMultiselectPopup();
+
 		initWidget(content);
 	}
 
@@ -136,8 +138,8 @@ public class ComboBoxMultiselect extends Composite
 			return;
 		}
 
-		if (this.popup == null || !this.popup.isAttached()) {
-			this.textBox.setValue(getTextFieldValue(selection));
+		if (!this.popup.isShowing()) {
+			updateTextFieldValue(selection);
 		} else if (this.popup != null) {
 			this.popup.focusSelectionCurrent(true);
 		}
@@ -151,16 +153,11 @@ public class ComboBoxMultiselect extends Composite
 		this.textBox.setEnabled(enabled);
 	}
 
-	private void updateAndShowDropdown(List<OptionElement> items) {
+	private void updateAndShowDropdown(List<OptionElement> options) {
 		this.skipBlur = false;
 
-		boolean focus = false;
-		if (this.popup != null) {
-			focus = this.popup.isJustClosed();
-			if (this.popup.isVisible())
-				this.popup.hide(true);
-		}
-		this.popup = new ComboBoxMultiselectPopup(items, this.selectAllText, this.deselectAllText);
+		this.popup.setOptions(options, this.selectAllText, this.deselectAllText);
+
 		this.popup.addCloseHandler(new CloseHandler<PopupPanel>() {
 			@Override
 			public void onClose(CloseEvent<PopupPanel> closeEvent) {
@@ -190,9 +187,9 @@ public class ComboBoxMultiselect extends Composite
 		this.popup.updateElementCss();
 
 		if (this.prevPage) {
-			this.popup.focusSelectionLast(focus);
+			this.popup.focusSelectionLast(true);
 		} else {
-			this.popup.focusSelectionFirst(focus);
+			this.popup.focusSelectionFirst(true);
 		}
 
 	}
@@ -208,21 +205,20 @@ public class ComboBoxMultiselect extends Composite
 		case KeyCodes.KEY_ESCAPE:
 			event.preventDefault();
 			event.stopPropagation();
-			if (this.popup != null && this.popup.isVisible()) {
+			if (this.popup.isShowing()) {
 				this.popup.hide(true);
-				this.popup = null;
 			}
 			break;
 		case KeyCodes.KEY_ENTER:
 			event.preventDefault();
 			event.stopPropagation();
-			if (this.popup != null && this.popup.isVisible()) {
+			if (this.popup.isShowing()) {
 				this.popup.toggleSelectionOfCurrentFocus();
 			}
 			break;
 		case KeyCodes.KEY_UP:
 			// check if popup is open
-			if (this.popup != null && this.popup.isAttached()) {
+			if (this.popup.isShowing()) {
 				event.preventDefault();
 				event.stopPropagation();
 
@@ -246,7 +242,7 @@ public class ComboBoxMultiselect extends Composite
 			event.stopPropagation();
 
 			// check if popup is open
-			if (this.popup != null && this.popup.isAttached()) {
+			if (this.popup.isShowing()) {
 
 				// if last element in visible list is already selected
 
@@ -297,9 +293,8 @@ public class ComboBoxMultiselect extends Composite
 			return;
 		}
 
-		if (ComboBoxMultiselect.this.popup == null || !ComboBoxMultiselect.this.popup.isAttached()
-				|| !ComboBoxMultiselect.this.popup.isJustClosed()) {
-			this.textBox.removeStyleDependentName(PROMPT_STYLE);
+		if (!ComboBoxMultiselect.this.popup.isShowing() || !ComboBoxMultiselect.this.popup.isJustClosed()) {
+			removeStyleDependentName(PROMPT_STYLE);
 			ComboBoxMultiselect.this.textBox.setValue("");
 		}
 	}
@@ -310,20 +305,19 @@ public class ComboBoxMultiselect extends Composite
 			return;
 		}
 
-		if (this.popup != null && this.popup.isAttached()) {
+		if (this.popup.isShowing()) {
 			this.popup.hide();
 		}
-		this.textBox.setValue(getTextFieldValue(this.selected));
+		updateTextFieldValue(this.selected);
 		this.eventHandler.clearFilter();
 	}
 
 	private ClickHandler dropDownClickHandler = new ClickHandler() {
 		@Override
 		public void onClick(ClickEvent event) {
-			if (ComboBoxMultiselect.this.popup != null && ComboBoxMultiselect.this.popup.isAttached()) {
+			if (ComboBoxMultiselect.this.popup.isShowing()) {
 				ComboBoxMultiselect.this.popup.hide();
-				ComboBoxMultiselect.this.popup = null;
-			} else if (ComboBoxMultiselect.this.popup == null || !ComboBoxMultiselect.this.popup.isJustClosed()) {
+			} else if (!ComboBoxMultiselect.this.popup.isJustClosed()) {
 				// Start from page where selection is when opening.
 				ComboBoxMultiselect.this.currentPage = -1;
 				ComboBoxMultiselect.this.eventHandler.getPage(ComboBoxMultiselect.this.currentPage);
@@ -378,10 +372,11 @@ public class ComboBoxMultiselect extends Composite
 		}
 	};
 
-	private String getTextFieldValue(Set<OptionElement> selection) {
+	private void updateTextFieldValue(Set<OptionElement> selection) {
 		if (selection.size() == 0) {
-			this.textBox.addStyleName(PROMPT_STYLE);
-			return this.inputPrompt;
+			addStyleName(PROMPT_STYLE);
+			this.textBox.setValue(this.inputPrompt);
+			return;
 		}
 
 		StringBuffer stringBuffer = new StringBuffer();
@@ -409,7 +404,13 @@ public class ComboBoxMultiselect extends Composite
 			}
 			stringBuffer.append(comboBoxMultiselectOption.getName());
 		}
-		return stringBuffer.toString();
+
+		removeStyleName(PROMPT_STYLE);
+		this.textBox.setValue(stringBuffer.toString());
+	}
+
+	public ComboBoxMultiselectPopup getPopup() {
+		return this.popup;
 	}
 
 }

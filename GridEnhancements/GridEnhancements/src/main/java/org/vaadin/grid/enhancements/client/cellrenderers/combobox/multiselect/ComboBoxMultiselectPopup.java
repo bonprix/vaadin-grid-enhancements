@@ -48,8 +48,8 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 
 	private static final String SELECTED_ROW_CLASS = "gwt-MenuItem-selected";
 
-	private final String selectAllText;
-	private final String deselectAllText;
+	private String selectAllText;
+	private String deselectAllText;
 
 	private CellList<OptionElement> optionsList;
 	private List<OptionElement> options;
@@ -66,14 +66,10 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 
 	private int focusedPosition = -1;
 
-	public ComboBoxMultiselectPopup(List<OptionElement> options, String selectAllText, String deselectAllText) {
+	public ComboBoxMultiselectPopup() {
 		super(true);
 
-		this.options = options;
-		this.selectAllText = selectAllText;
-		this.deselectAllText = deselectAllText;
-
-		setStyleName("v-filterselect-suggestpopup");
+		setStyleName("v-filterselect-suggestpopup v-filterselect-suggestpopup-column");
 
 		initOptionsList();
 
@@ -83,26 +79,8 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 	}
 
 	private void initOptionsList() {
-		if (withDeselectAllButton()) {
-			DeselectAllOptionElement deselectAllOption = new DeselectAllOptionElement(this.deselectAllText);
-			if (!this.options.contains(deselectAllOption)) {
-				this.options.add(0, deselectAllOption);
-			}
-		}
-
-		if (withSelectAllButton()) {
-			SelectAllOptionElement selectAllOption = new SelectAllOptionElement(this.selectAllText);
-			if (!this.options.contains(selectAllOption)) {
-				this.options.add(0, selectAllOption);
-			}
-		}
-
 		this.optionsList = new CellList<OptionElement>(new OptionCell());
 		this.optionsList.setStyleName("v-filterselect-suggestmenu");
-		this.optionsList.setPageSize(this.options.size());
-		this.optionsList.setRowCount(this.options.size(), true);
-		this.optionsList.setRowData(0, this.options);
-		this.optionsList.setVisibleRange(0, this.options.size());
 		this.optionsList.setWidth("100%");
 		this.optionsList.setKeyboardPagingPolicy(HasKeyboardPagingPolicy.KeyboardPagingPolicy.INCREASE_RANGE);
 		this.optionsList.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
@@ -170,6 +148,31 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 		this.handlers.add(this.optionsList.addBitlessDomHandler(this, MouseOutEvent.getType()));
 		this.handlers.add(this.optionsList.addCellPreviewHandler(this));
 		this.handlers.add(this.optionsList.addHandler(this, FocusEvent.getType()));
+	}
+
+	public void setOptions(List<OptionElement> options, String selectAllText, String deselectAllText) {
+		this.options = options;
+		this.selectAllText = selectAllText;
+		this.deselectAllText = deselectAllText;
+
+		if (withDeselectAllButton()) {
+			DeselectAllOptionElement deselectAllOption = new DeselectAllOptionElement(this.deselectAllText);
+			if (!this.options.contains(deselectAllOption)) {
+				this.options.add(0, deselectAllOption);
+			}
+		}
+
+		if (withSelectAllButton()) {
+			SelectAllOptionElement selectAllOption = new SelectAllOptionElement(this.selectAllText);
+			if (!this.options.contains(selectAllOption)) {
+				this.options.add(0, selectAllOption);
+			}
+		}
+
+		this.optionsList.setPageSize(this.options.size());
+		this.optionsList.setRowCount(this.options.size(), true);
+		this.optionsList.setRowData(0, this.options);
+		this.optionsList.setVisibleRange(0, this.options.size());
 	}
 
 	public void setNextPageEnabled(boolean nextPageEnabled) {
@@ -285,11 +288,6 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 	public void onClose(CloseEvent<PopupPanel> event) {
 		if (event.isAutoClosed()) {
 			this.lastAutoClosed = (new Date()).getTime();
-		}
-		if (!this.handlers.isEmpty()) {
-			for (HandlerRegistration handler : this.handlers) {
-				handler.removeHandler();
-			}
 		}
 	}
 
@@ -412,6 +410,7 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 	public void toggleSelectionOfCurrentFocus() {
 		OptionElement focusedOption = this.options.get(this.focusedPosition);
 		toggleSelection(focusedOption);
+		updateElementCss();
 	}
 
 	private void toggleSelection(OptionElement option) {

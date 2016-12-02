@@ -1,5 +1,12 @@
 package org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect;
 
+import java.util.List;
+import java.util.Set;
+
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.EventHandler;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.PopupCallback;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
+
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -23,12 +30,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
-import java.util.List;
-import java.util.Set;
-
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.EventHandler;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.PopupCallback;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
 
 /**
  * @author Mikael Grankvist - Vaadin Ltd
@@ -80,7 +81,6 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 		content.add(this.dropDownButton);
 
 		this.popup = new ComboBoxPopup();
-		this.popup.setOwner(this);
 
 		initWidget(content);
 
@@ -114,7 +114,7 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 
 	public void setSelected(OptionElement selected) {
 		OptionElement old = this.selected;
-		this.textBox.setValue(getTextFieldValue(selected));
+		updateTextFieldValue(selected);
 		this.selected = selected;
 
 		if (!old.equals(selected)) {
@@ -139,12 +139,7 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 	}
 
 	private void updateAndShowDropdown(List<OptionElement> options) {
-		boolean focus = false;
-		if (this.popup != null) {
-			focus = this.popup.isJustClosed();
-			if (this.popup.isVisible())
-				this.popup.hide(true);
-		}
+		this.skipBlur = true;
 
 		this.popup.setOptions(options);
 
@@ -172,16 +167,15 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 				ComboBox.this.popup.setPopupPosition(ComboBox.this.getAbsoluteLeft(), top);
 			}
 		});
-		this.skipBlur = true;
 
 		this.popup.updateElementCss();
 
 		switch (this.selectionType) {
 		case FIRST_ELEMENT:
-			this.popup.focusSelectionFirst(focus);
+			this.popup.focusSelectionFirst(true);
 			break;
 		case LAST_ELEMENT:
-			this.popup.focusSelectionLast(focus);
+			this.popup.focusSelectionLast(true);
 			break;
 		case SELECTED_ELEMENT:
 			this.popup.focusSelectionSelected(this.selected, true);
@@ -203,24 +197,23 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 		case KeyCodes.KEY_ESCAPE:
 			event.preventDefault();
 			event.stopPropagation();
-			if (this.popup != null && this.popup.isVisible()) {
+			if (this.popup.isShowing()) {
 				this.popup.hide(true);
-				this.popup = null;
 			}
 			this.eventHandler.clearFilter();
 
-			this.textBox.setValue(getTextFieldValue(this.selected));
+			updateTextFieldValue(this.selected);
 			break;
 		case KeyCodes.KEY_ENTER:
 			event.preventDefault();
 			event.stopPropagation();
-			if (this.popup != null && this.popup.isVisible()) {
+			if (this.popup.isShowing()) {
 				this.popup.selectCurrent();
 			}
 			break;
 		case KeyCodes.KEY_UP:
 			// check if popup is open
-			if (this.popup != null && this.popup.isAttached()) {
+			if (this.popup.isShowing()) {
 				event.preventDefault();
 				event.stopPropagation();
 
@@ -244,7 +237,7 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 			event.stopPropagation();
 
 			// check if popup is open
-			if (this.popup != null && this.popup.isAttached()) {
+			if (this.popup.isAttached() && this.popup.isShowing()) {
 
 				// if last element in visible list is already selected
 
@@ -295,18 +288,18 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 			return;
 		}
 
-		if (ComboBox.this.popup == null || !ComboBox.this.popup.isAttached() || !ComboBox.this.popup.isJustClosed()) {
-			this.textBox.removeStyleDependentName(PROMPT_STYLE);
+		if (!ComboBox.this.popup.isShowing() || !ComboBox.this.popup.isJustClosed()) {
+			removeStyleDependentName(PROMPT_STYLE);
 		}
 	}
 
 	@Override
 	public void onBlur(BlurEvent event) {
 		if (!this.skipBlur) {
-			if (this.popup != null && this.popup.isAttached()) {
+			if (this.popup.isShowing()) {
 				this.popup.hide();
 			}
-			this.textBox.setValue(getTextFieldValue(this.selected));
+			updateTextFieldValue(this.selected);
 			this.skipBlur = false;
 		}
 	}
@@ -314,10 +307,9 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 	private ClickHandler dropDownClickHandler = new ClickHandler() {
 		@Override
 		public void onClick(ClickEvent event) {
-			if (ComboBox.this.popup != null && ComboBox.this.popup.isAttached()) {
+			if (ComboBox.this.popup.isShowing()) {
 				ComboBox.this.popup.hide();
-				ComboBox.this.popup = null;
-			} else if (ComboBox.this.popup == null || !ComboBox.this.popup.isJustClosed()) {
+			} else if (!ComboBox.this.popup.isJustClosed()) {
 				// Start from page where selection is when opening.
 				ComboBox.this.currentPage = -1;
 				ComboBox.this.eventHandler.getPage(ComboBox.this.currentPage);
@@ -372,13 +364,18 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 		}
 	};
 
-	private String getTextFieldValue(OptionElement selection) {
+	private void updateTextFieldValue(OptionElement selection) {
 		if (selection == null) {
-			this.textBox.addStyleName(PROMPT_STYLE);
-			return this.inputPrompt;
+			addStyleName(PROMPT_STYLE);
+			this.textBox.setValue(this.inputPrompt);
+			return;
 		}
 
-		this.textBox.removeStyleName(PROMPT_STYLE);
-		return selection.getName();
+		removeStyleName(PROMPT_STYLE);
+		this.textBox.setValue(selection.getName());
+	}
+
+	public ComboBoxPopup getPopup() {
+		return this.popup;
 	}
 }

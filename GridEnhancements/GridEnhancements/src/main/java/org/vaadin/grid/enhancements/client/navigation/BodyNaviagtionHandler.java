@@ -13,60 +13,72 @@ import com.vaadin.client.widget.grid.events.GridKeyDownEvent;
 
 public class BodyNaviagtionHandler implements BodyKeyDownHandler {
 
-    @Override
-    public void onKeyDown(GridKeyDownEvent event) {
-        switch (event.getNativeKeyCode()) {
-            case KeyCodes.KEY_ENTER:
-                if (isCellContainingComponent(event.getFocusedCell())) {
-                    // Don't propagate enter to component
-                    event.preventDefault();
-                    event.stopPropagation();
+	@Override
+	public void onKeyDown(GridKeyDownEvent event) {
+		switch (event.getNativeKeyCode()) {
+		case KeyCodes.KEY_ENTER:
+			if (isCellContainingComponent(event.getFocusedCell())) {
+				// Don't propagate enter to component
+				event.preventDefault();
+				event.stopPropagation();
 
-                    final Element componentElement = extractComponentElement(event.getFocusedCell());
+				final Element componentElement = extractComponentElement(event.getFocusedCell());
 
-                    // Run focus as deferred command so the Navigation handler doesn't catch the event.
-                    Scheduler.get().scheduleDeferred(new Command() {
+				// Run focus as deferred command so the Navigation handler
+				// doesn't catch the event.
+				Scheduler	.get()
+							.scheduleDeferred(new Command() {
 
-                        @Override
-                        public void execute() {
-                            WidgetUtil.focus(componentElement);
-                            NavigationUtil.focusInputField(componentElement);
-                        }
-                    });
+								@Override
+								public void execute() {
+									WidgetUtil.focus(componentElement);
+									NavigationUtil.focusInputField(componentElement);
+								}
+							});
 
-                }
-                break;
-        }
-    }
+			}
+			break;
+		}
+	}
 
-    private Element extractComponentElement(CellReference cell) {
-        // Only check recursively if we are looking at a table
-        if (cell.getElement().getNodeName().equals("TD")) {
-            return NavigationUtil.getInputElement(cell.getElement().getChildNodes());
-        }
-        return null;
-    }
+	private Element extractComponentElement(CellReference cell) {
+		// Only check recursively if we are looking at a table
+		if (cell.getElement()
+				.getNodeName()
+				.equals("TD")) {
+			return NavigationUtil.getInputElement(cell	.getElement()
+														.getChildNodes());
+		}
+		return null;
+	}
 
-    private boolean isCellContainingComponent(CellReference cell) {
-        // Only check recursively if we are looking at a table
-        if (cell.getElement().getNodeName().equals("TD")) {
-            return containsInput(cell.getElement().getChildNodes());
-        }
-        return false;
-    }
+	private boolean isCellContainingComponent(CellReference cell) {
+		// Only check recursively if we are looking at a table
+		if (cell.getElement()
+				.getNodeName()
+				.equals("TD")) {
+			return containsInput(cell	.getElement()
+										.getChildNodes());
+		}
+		return false;
+	}
 
-    private boolean containsInput(NodeList<Node> nodes) {
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Node node = nodes.getItem(i);
-            if (node.getNodeName().equals("INPUT") || node.getNodeName().equals("BUTTON")) {
-                return true;
-            } else if (node.getChildNodes().getLength() > 0) {
-                if (containsInput(node.getChildNodes())) {
-                    return true;
-                }
-            }
-        }
+	private boolean containsInput(NodeList<Node> nodes) {
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Node node = nodes.getItem(i);
+			if (node.getNodeName()
+					.equals("INPUT")
+					|| node	.getNodeName()
+							.equals("BUTTON")) {
+				return true;
+			} else if (node	.getChildNodes()
+							.getLength() > 0) {
+				if (containsInput(node.getChildNodes())) {
+					return true;
+				}
+			}
+		}
 
-        return false;
-    }
+		return false;
+	}
 }

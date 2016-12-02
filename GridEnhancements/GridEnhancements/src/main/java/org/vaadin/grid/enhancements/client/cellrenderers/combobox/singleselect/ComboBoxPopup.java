@@ -54,7 +54,7 @@ public class ComboBoxPopup extends VOverlay
 	public ComboBoxPopup() {
 		super(true, false, true);
 
-		setStyleName("v-filterselect-suggestpopup");
+		setStyleName("v-filterselect-suggestpopup v-filterselect-suggestpopup-column");
 
 		this.optionsList = new CellList<OptionElement>(new OptionCell());
 		this.optionsList.setStyleName("v-filterselect-suggestmenu");
@@ -222,11 +222,6 @@ public class ComboBoxPopup extends VOverlay
 	public void onClose(CloseEvent<PopupPanel> event) {
 		if (event.isAutoClosed()) {
 			this.lastAutoClosed = (new Date()).getTime();
-		}
-		if (!this.handlers.isEmpty()) {
-			for (HandlerRegistration handler : this.handlers) {
-				handler.removeHandler();
-			}
 		}
 	}
 

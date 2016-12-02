@@ -101,6 +101,9 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<OptionE
 				}
 			});
 
+			comboBox.getPopup()
+					.setOwner(getGrid());
+
 			return comboBox;
 		}
 

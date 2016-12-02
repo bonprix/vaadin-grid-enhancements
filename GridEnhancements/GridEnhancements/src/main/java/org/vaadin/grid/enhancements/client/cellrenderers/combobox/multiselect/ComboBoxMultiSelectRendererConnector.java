@@ -42,23 +42,23 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 
 		@Override
 		public ComboBoxMultiselect createWidget() {
-			final ComboBoxMultiselect comboBox = GWT.create(ComboBoxMultiselect.class);
+			final ComboBoxMultiselect comboBoxMultiselect = GWT.create(ComboBoxMultiselect.class);
 
-			comboBox.addDomHandler(new ClickHandler() {
+			comboBoxMultiselect.addDomHandler(new ClickHandler() {
 				@Override
 				public void onClick(ClickEvent event) {
 					event.stopPropagation();
 				}
 			}, ClickEvent.getType());
 
-			comboBox.addDomHandler(new MouseDownHandler() {
+			comboBoxMultiselect.addDomHandler(new MouseDownHandler() {
 				@Override
 				public void onMouseDown(MouseDownEvent event) {
 					event.stopPropagation();
 				}
 			}, MouseDownEvent.getType());
 
-			comboBox.setEventHandler(new EventHandler<OptionElement>() {
+			comboBoxMultiselect.setEventHandler(new EventHandler<OptionElement>() {
 				@Override
 				public void change(OptionElement item) {
 					// NOOP
@@ -66,16 +66,19 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 
 				@Override
 				public void change(Set<OptionElement> item) {
-					ComboBoxMultiSelectRendererConnector.this.rpc.onValueSetChange(getCellId(comboBox), item);
+					ComboBoxMultiSelectRendererConnector.this.rpc.onValueSetChange(	getCellId(comboBoxMultiselect),
+																					item);
 				}
 
 				@Override
 				public void getPage(int pageNumber) {
 					if (!org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiSelectRendererConnector.MultiSelectRenderer.this.filter.isEmpty()) {
 						ComboBoxMultiSelectRendererConnector.this.rpc.getFilterPage(org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiSelectRendererConnector.MultiSelectRenderer.this.filter,
-																					pageNumber, getCellId(comboBox));
+																					pageNumber,
+																					getCellId(comboBoxMultiselect));
 					} else {
-						ComboBoxMultiSelectRendererConnector.this.rpc.getPage(pageNumber, getCellId(comboBox));
+						ComboBoxMultiSelectRendererConnector.this.rpc.getPage(	pageNumber,
+																				getCellId(comboBoxMultiselect));
 					}
 				}
 
@@ -83,7 +86,7 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 				public void filter(String filterValue, int pageNumber) {
 					org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiSelectRendererConnector.MultiSelectRenderer.this.filter = filterValue;
 					ComboBoxMultiSelectRendererConnector.this.rpc.getFilterPage(filterValue, pageNumber,
-																				getCellId(comboBox));
+																				getCellId(comboBoxMultiselect));
 				}
 
 				@Override
@@ -94,16 +97,19 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 
 				@Override
 				public void selectAll() {
-					ComboBoxMultiSelectRendererConnector.this.rpc.selectAll(getCellId(comboBox));
+					ComboBoxMultiSelectRendererConnector.this.rpc.selectAll(getCellId(comboBoxMultiselect));
 				}
 
 				@Override
 				public void deselectAll() {
-					ComboBoxMultiSelectRendererConnector.this.rpc.deselectAll(getCellId(comboBox));
+					ComboBoxMultiSelectRendererConnector.this.rpc.deselectAll(getCellId(comboBoxMultiselect));
 				}
 			});
 
-			return comboBox;
+			comboBoxMultiselect	.getPopup()
+								.setOwner(getGrid());
+
+			return comboBoxMultiselect;
 		}
 
 		@Override
