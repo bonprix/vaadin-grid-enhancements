@@ -306,12 +306,16 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 			Set<BEANTYPE> value = getCellProperty(id).getValue();
 
 			Set<OptionElement> selected = new HashSet<OptionElement>();
-			for (BEANTYPE bean : ComboBoxMultiselectRenderer.this.container.getItemIds()) {
-				if (value.contains(bean)) {
-					Item item = ComboBoxMultiselectRenderer.this.container.getItem(bean);
-					final Property<?> idProperty = item.getItemProperty(ComboBoxMultiselectRenderer.this.itemIdPropertyId);
-					final Property<?> captionProperty = item.getItemProperty(ComboBoxMultiselectRenderer.this.itemCaptionPropertyId);
-					selected.add(new OptionElement((Long) idProperty.getValue(), (String) captionProperty.getValue()));
+
+			if (value != null) {
+				for (BEANTYPE bean : ComboBoxMultiselectRenderer.this.container.getItemIds()) {
+					if (value.contains(bean)) {
+						Item item = ComboBoxMultiselectRenderer.this.container.getItem(bean);
+						final Property<?> idProperty = item.getItemProperty(ComboBoxMultiselectRenderer.this.itemIdPropertyId);
+						final Property<?> captionProperty = item.getItemProperty(ComboBoxMultiselectRenderer.this.itemCaptionPropertyId);
+						selected.add(new OptionElement((Long) idProperty.getValue(),
+								(String) captionProperty.getValue()));
+					}
 				}
 			}
 
