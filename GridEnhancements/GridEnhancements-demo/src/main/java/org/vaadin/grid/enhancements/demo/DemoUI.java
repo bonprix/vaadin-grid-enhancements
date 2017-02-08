@@ -18,6 +18,9 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.Renderer;
+import com.vaadin.ui.renderers.ClickableRenderer.RendererClickEvent;
+import com.vaadin.ui.renderers.ClickableRenderer.RendererClickListener;
+
 import org.vaadin.anna.gridactionrenderer.ActionGrid;
 import org.vaadin.anna.gridactionrenderer.GridAction;
 import org.vaadin.anna.gridactionrenderer.GridActionRenderer;
@@ -162,6 +165,7 @@ public class DemoUI extends UI {
 				((EditableRenderer) renderer).addItemEditListener(this.dateItemEdit);
 			} else {
 				((EditableRenderer) renderer).addItemEditListener(this.itemEdit);
+				((EditableRenderer) renderer).addClickListener(this.click);
 			}
 		}
 
@@ -298,6 +302,18 @@ public class DemoUI extends UI {
 			DemoUI.this.latestChangeLabel.setValue("Latest change: '" + event.getColumnPropertyId() + "' "
 					+ (EditableRenderer.Mode.SINGLE.equals(event.getMode()) ? event.getNewValue()
 							: event.getNewValues()));
+		}
+	};
+
+	// --- ClickListeners ---
+	/**
+	 * Update change lable with the column and value of the latest edit
+	 */
+	private RendererClickListener click = new RendererClickListener() {
+
+		@Override
+		public void click(RendererClickEvent event) {
+			System.out.println("cliecked");
 		}
 	};
 
