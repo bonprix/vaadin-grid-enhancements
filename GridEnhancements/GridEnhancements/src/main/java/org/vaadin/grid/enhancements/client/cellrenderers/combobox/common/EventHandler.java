@@ -29,8 +29,10 @@ public interface EventHandler<BEANTYPE> {
 	 * 
 	 * @param pageNumber
 	 *            Number of page to request options for
+	 * @param skipBlur
+	 *            if skipBlur should be skipped and popup shouldnt be hidden
 	 */
-	void getPage(int pageNumber);
+	void getPage(int pageNumber, boolean skipBlur);
 
 	/**
 	 * Filter options with given filter String and show page number
@@ -39,8 +41,10 @@ public interface EventHandler<BEANTYPE> {
 	 *            Filter String
 	 * @param pageNumber
 	 *            Options page number
+	 * @param skipBlur
+	 *            if skipBlur should be skipped and popup shouldnt be hidden
 	 */
-	void filter(String filterValue, int pageNumber);
+	void filter(String filterValue, int pageNumber, boolean skipBlur);
 
 	/**
 	 * Clear any existing filter value

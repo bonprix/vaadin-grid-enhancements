@@ -48,6 +48,7 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 	private final String itemIdPropertyId;
 	private final String itemCaptionPropertyId;
 	private FilteringMode filteringMode = FilteringMode.CONTAINS;
+	private String lastFilterString;
 
 	private Comparator<? super OptionElement> comparator = new Comparator<OptionElement>() {
 
@@ -108,7 +109,9 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 	private ComboBoxMultiselectServerRpc rpc = new ComboBoxMultiselectServerRpc() {
 
 		@Override
-		public void getPage(int page, CellId id) {
+		public void getPage(int page, boolean skipBlur, CellId id) {
+			ComboBoxMultiselectRenderer.this.lastFilterString = null;
+
 			if (ComboBoxMultiselectRenderer.this.selectedOptions == null) {
 				return;
 			}
@@ -143,7 +146,7 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 				ComboBoxMultiselectRenderer.this.sortingNeeded = false;
 			}
 			List<OptionElement> options = ComboBoxMultiselectRenderer.this.sortedOptions.subList(fromIndex, toIndex);
-			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateOptions(info, options, id);
+			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateOptions(info, options, skipBlur, id);
 		}
 
 		private ArrayList<OptionElement> convertBeansToComboBoxMultiselectOptions(Collection<BEANTYPE> elements) {
@@ -158,13 +161,15 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 		}
 
 		@Override
-		public void getFilterPage(String filterString, int page, CellId id) {
+		public void getFilterPage(String filterString, int page, boolean skipBlur, CellId id) {
+			ComboBoxMultiselectRenderer.this.lastFilterString = filterString;
+
 			if (ComboBoxMultiselectRenderer.this.selectedOptions == null) {
 				return;
 			}
 
 			if (filterString.isEmpty()) {
-				getPage(-1, id);
+				getPage(-1, skipBlur, id);
 				return;
 			}
 
@@ -204,7 +209,7 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 
 			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateOptions(	info,
 																			filteredResult.subList(fromIndex, toIndex),
-																			id);
+																			skipBlur, id);
 		}
 
 		/**
@@ -240,7 +245,7 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 		}
 
 		@Override
-		public void filter(CellId id, String filterString) {
+		public void filter(CellId id, String filterString, boolean skipBlur) {
 			Filterable filterable = (Filterable) ComboBoxMultiselectRenderer.this.container;
 			Filter filter = buildFilter(filterString, ComboBoxMultiselectRenderer.this.filteringMode);
 
@@ -259,7 +264,7 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 				filterable.removeContainerFilter(filter);
 			}
 
-			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateOptions(info, filteredResult, id);
+			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateOptions(info, filteredResult, skipBlur, id);
 		}
 
 		@Override
@@ -341,6 +346,15 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 			Property<Set<BEANTYPE>> cell = getCellProperty(id);
 
 			ComboBoxMultiselectRenderer.this.sortingNeeded = true;
+
+			Filterable filterable = (Filterable) ComboBoxMultiselectRenderer.this.container;
+			Filter filter = buildFilter(ComboBoxMultiselectRenderer.this.lastFilterString,
+										ComboBoxMultiselectRenderer.this.filteringMode);
+
+			if (filter != null) {
+				filterable.addContainerFilter(filter);
+			}
+
 			Set<OptionElement> selected = new HashSet<OptionElement>();
 			for (BEANTYPE bean : ComboBoxMultiselectRenderer.this.container.getItemIds()) {
 				Item item = ComboBoxMultiselectRenderer.this.container.getItem(bean);
@@ -348,10 +362,14 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 				final Property<?> captionProperty = item.getItemProperty(ComboBoxMultiselectRenderer.this.itemCaptionPropertyId);
 				selected.add(new OptionElement((Long) idProperty.getValue(), (String) captionProperty.getValue()));
 			}
-			ComboBoxMultiselectRenderer.this.selectedOptions = selected;
+			ComboBoxMultiselectRenderer.this.selectedOptions.addAll(selected);
 
-			HashSet<BEANTYPE> selectedBeans = new HashSet<BEANTYPE>(
-					ComboBoxMultiselectRenderer.this.container.getItemIds());
+			Set<BEANTYPE> selectedBeans = cell.getValue();
+			selectedBeans.addAll(ComboBoxMultiselectRenderer.this.container.getItemIds());
+
+			if (filter != null) {
+				filterable.removeContainerFilter(filter);
+			}
 
 			cell.setValue(selectedBeans);
 			fireItemEditEvent(itemId, row, columnPropertyId, selectedBeans);
@@ -372,13 +390,33 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 			Property<Set<BEANTYPE>> cell = getCellProperty(id);
 
 			ComboBoxMultiselectRenderer.this.sortingNeeded = true;
-			ComboBoxMultiselectRenderer.this.selectedOptions = new HashSet<OptionElement>();
 
-			HashSet<BEANTYPE> selectedBeans = new HashSet<BEANTYPE>();
+			Filterable filterable = (Filterable) ComboBoxMultiselectRenderer.this.container;
+			Filter filter = buildFilter(ComboBoxMultiselectRenderer.this.lastFilterString,
+										ComboBoxMultiselectRenderer.this.filteringMode);
+
+			if (filter != null) {
+				filterable.addContainerFilter(filter);
+			}
+
+			Set<OptionElement> selected = new HashSet<OptionElement>();
+			for (BEANTYPE bean : ComboBoxMultiselectRenderer.this.container.getItemIds()) {
+				Item item = ComboBoxMultiselectRenderer.this.container.getItem(bean);
+				final Property<?> idProperty = item.getItemProperty(ComboBoxMultiselectRenderer.this.itemIdPropertyId);
+				final Property<?> captionProperty = item.getItemProperty(ComboBoxMultiselectRenderer.this.itemCaptionPropertyId);
+				selected.add(new OptionElement((Long) idProperty.getValue(), (String) captionProperty.getValue()));
+			}
+			ComboBoxMultiselectRenderer.this.selectedOptions.removeAll(selected);
+
+			Set<BEANTYPE> selectedBeans = cell.getValue();
+			selectedBeans.removeAll(ComboBoxMultiselectRenderer.this.container.getItemIds());
+
+			if (filter != null) {
+				filterable.removeContainerFilter(filter);
+			}
 
 			cell.setValue(selectedBeans);
-
-			fireItemEditEvent(itemId, row, columnPropertyId, selectedBeans);
+			fireItemEditEvent(itemId, row, columnPropertyId, cell.getValue());
 
 			getRpcProxy(ComboBoxMultiselectClientRpc.class).updateSelectedOptions(	ComboBoxMultiselectRenderer.this.selectedOptions,
 																					id, true);

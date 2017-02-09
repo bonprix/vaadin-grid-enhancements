@@ -364,13 +364,16 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 					return;
 				}
 			}
-			final OptionElement option = event.getValue();
-			toggleSelection(option);
+
 			event.setCanceled(true);
 			event	.getNativeEvent()
 					.preventDefault();
 			event	.getNativeEvent()
 					.stopPropagation();
+
+			final OptionElement option = event.getValue();
+			toggleSelection(option);
+
 		}
 	}
 

@@ -52,6 +52,9 @@ public interface PopupCallback<T> {
 
 	/**
 	 * set if the blur event of textfield should be skipped
+	 * 
+	 * @param skipBlur
+	 *            if skipBlur should be skipped and popup shouldnt be hidden
 	 */
 	void setSkipBlur(boolean skipBlur);
 

@@ -6,6 +6,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.vaadin.client.MouseEventDetailsBuilder;
 import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.connectors.AbstractRendererConnector;
 import com.vaadin.client.connectors.GridConnector;
@@ -14,6 +15,8 @@ import com.vaadin.client.renderers.Renderer;
 import com.vaadin.client.widget.grid.RendererCellReference;
 import com.vaadin.client.widgets.Grid;
 import com.vaadin.shared.ui.Connect;
+import com.vaadin.shared.ui.grid.renderers.RendererClickRpc;
+
 import elemental.json.JsonObject;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxMultiselectRenderer;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
@@ -48,6 +51,10 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 				@Override
 				public void onClick(ClickEvent event) {
 					event.stopPropagation();
+					Element e = comboBoxMultiselect.getElement();
+					getRpcProxy(RendererClickRpc.class).click(	e.getPropertyString(ROW_KEY_PROPERTY),
+																e.getPropertyString(COLUMN_ID_PROPERTY),
+																MouseEventDetailsBuilder.buildMouseEventDetails(event.getNativeEvent()));
 				}
 			}, ClickEvent.getType());
 
@@ -71,21 +78,21 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 				}
 
 				@Override
-				public void getPage(int pageNumber) {
+				public void getPage(int pageNumber, boolean skipBlur) {
 					if (!org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiSelectRendererConnector.MultiSelectRenderer.this.filter.isEmpty()) {
 						ComboBoxMultiSelectRendererConnector.this.rpc.getFilterPage(org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiSelectRendererConnector.MultiSelectRenderer.this.filter,
-																					pageNumber,
+																					pageNumber, skipBlur,
 																					getCellId(comboBoxMultiselect));
 					} else {
-						ComboBoxMultiSelectRendererConnector.this.rpc.getPage(	pageNumber,
+						ComboBoxMultiSelectRendererConnector.this.rpc.getPage(	pageNumber, skipBlur,
 																				getCellId(comboBoxMultiselect));
 					}
 				}
 
 				@Override
-				public void filter(String filterValue, int pageNumber) {
+				public void filter(String filterValue, int pageNumber, boolean skipBlur) {
 					org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiSelectRendererConnector.MultiSelectRenderer.this.filter = filterValue;
-					ComboBoxMultiSelectRendererConnector.this.rpc.getFilterPage(filterValue, pageNumber,
+					ComboBoxMultiSelectRendererConnector.this.rpc.getFilterPage(filterValue, pageNumber, skipBlur,
 																				getCellId(comboBoxMultiselect));
 				}
 
@@ -128,7 +135,8 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 				}
 
 				@Override
-				public void updateOptions(OptionsInfo optionsInfo, List<OptionElement> options, CellId id) {
+				public void updateOptions(OptionsInfo optionsInfo, List<OptionElement> options, boolean skipBlur,
+						CellId id) {
 					if (id.equals(getCellId(multiSelect))) {
 						if (optionsInfo.getCurrentPage() != -1) {
 							multiSelect.setCurrentPage(optionsInfo.getCurrentPage());
@@ -138,7 +146,7 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 						multiSelect.setDeselectAllText(optionsInfo.getDeselectAllText());
 
 						multiSelect.updatePageAmount(optionsInfo.getPageAmount());
-						multiSelect.updateSelection(options);
+						multiSelect.updateSelection(options, skipBlur);
 					}
 				}
 

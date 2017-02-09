@@ -19,10 +19,12 @@ public interface ComboBoxMultiselectServerRpc extends ServerRpc {
 	 *
 	 * @param page
 	 *            Items for page (-1 will send page with current selection)
+	 * @param skipBlur
+	 *            if bluring and hiding popup should be skipped
 	 * @param id
 	 *            Cell identification
 	 */
-	void getPage(int page, CellId id);
+	void getPage(int page, boolean skipBlur, CellId id);
 
 	/**
 	 * Get filtered results.
@@ -31,10 +33,12 @@ public interface ComboBoxMultiselectServerRpc extends ServerRpc {
 	 *            Filter string for items
 	 * @param page
 	 *            Page items to show
+	 * @param skipBlur
+	 *            if bluring and hiding popup should be skipped
 	 * @param id
 	 *            Cell identification
 	 */
-	void getFilterPage(String filter, int page, CellId id);
+	void getFilterPage(String filter, int page, boolean skipBlur, CellId id);
 
 	/**
 	 * Selection event for combobox
@@ -51,10 +55,12 @@ public interface ComboBoxMultiselectServerRpc extends ServerRpc {
 	 * 
 	 * @param id
 	 *            Cell identification
+	 * @param skipBlur
+	 *            if bluring and hiding popup should be skipped
 	 * @param filter
 	 *            string to filter the elements
 	 */
-	void filter(CellId id, String filter);
+	void filter(CellId id, String filter, boolean skipBlur);
 
 	/**
 	 * workaround to load the value of the correct property

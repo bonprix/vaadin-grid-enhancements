@@ -126,6 +126,7 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 		this.eventHandler = eventHandler;
 	}
 
+	@Override
 	public HandlerRegistration addChangeHandler(ChangeHandler handler) {
 		return addDomHandler(handler, ChangeEvent.getType());
 	}
@@ -159,6 +160,7 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 					.getStyle()
 					.setZIndex(1000);
 		this.popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
+			@Override
 			public void setPosition(int offsetWidth, int offsetHeight) {
 				int top = ComboBox.this.getAbsoluteTop() + ComboBox.this.getOffsetHeight();
 				if (top + ComboBox.this.getOffsetHeight() > Window.getClientHeight()) {
@@ -259,7 +261,7 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 			// Start from page with selection when opening.
 			this.currentPage = -1;
 			this.selectionType = SelectionType.SELECTED_ELEMENT;
-			this.eventHandler.getPage(this.currentPage);
+			this.eventHandler.getPage(this.currentPage, false);
 			break;
 		}
 
@@ -274,7 +276,8 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 				public void run() {
 					ComboBox.this.currentPage = 0;
 					ComboBox.this.selectionType = SelectionType.FIRST_ELEMENT;
-					ComboBox.this.eventHandler.filter(ComboBox.this.textBox.getValue(), ComboBox.this.currentPage);
+					ComboBox.this.eventHandler.filter(	ComboBox.this.textBox.getValue(), ComboBox.this.currentPage,
+														false);
 					ComboBox.this.t = null;
 				}
 			};
@@ -312,7 +315,7 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 			} else if (!ComboBox.this.popup.isJustClosed()) {
 				// Start from page where selection is when opening.
 				ComboBox.this.currentPage = -1;
-				ComboBox.this.eventHandler.getPage(ComboBox.this.currentPage);
+				ComboBox.this.eventHandler.getPage(ComboBox.this.currentPage, false);
 			}
 			ComboBox.this.textBox.setFocus(true);
 		}
@@ -329,12 +332,12 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 
 		@Override
 		public void nextPage() {
-			ComboBox.this.eventHandler.getPage(++ComboBox.this.currentPage);
+			ComboBox.this.eventHandler.getPage(++ComboBox.this.currentPage, false);
 		}
 
 		@Override
 		public void prevPage() {
-			ComboBox.this.eventHandler.getPage(--ComboBox.this.currentPage);
+			ComboBox.this.eventHandler.getPage(--ComboBox.this.currentPage, false);
 		}
 
 		@Override

@@ -165,6 +165,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 					break;
 				}
 			}
+
 			return filter;
 		}
 

@@ -107,8 +107,8 @@ public class ComboBoxMultiselect extends Composite
 		this.deselectAllText = deselectAllText;
 	}
 
-	public void updateSelection(List<OptionElement> selection) {
-		updateAndShowDropdown(selection);
+	public void updateSelection(List<OptionElement> selection, boolean skipBlur) {
+		updateAndShowDropdown(selection, skipBlur);
 	}
 
 	public void updatePageAmount(int pages) {
@@ -127,6 +127,7 @@ public class ComboBoxMultiselect extends Composite
 		this.eventHandler = eventHandler;
 	}
 
+	@Override
 	public HandlerRegistration addChangeHandler(ChangeHandler handler) {
 		return addDomHandler(handler, ChangeEvent.getType());
 	}
@@ -134,7 +135,8 @@ public class ComboBoxMultiselect extends Composite
 	public void setSelection(Set<OptionElement> selection, boolean refreshPage) {
 		this.selected = selection;
 		if (refreshPage) {
-			this.eventHandler.getPage(0);
+			ComboBoxMultiselect.this.textBox.setValue("");
+			this.eventHandler.filter("", 0, true);
 			return;
 		}
 
@@ -153,8 +155,8 @@ public class ComboBoxMultiselect extends Composite
 		this.textBox.setEnabled(enabled);
 	}
 
-	private void updateAndShowDropdown(List<OptionElement> options) {
-		this.skipBlur = false;
+	private void updateAndShowDropdown(List<OptionElement> options, boolean skipBlur) {
+		this.skipBlur = skipBlur;
 
 		this.popup.setOptions(options, this.selectAllText, this.deselectAllText);
 
@@ -176,6 +178,7 @@ public class ComboBoxMultiselect extends Composite
 		this.popup.setCurrentSelection(this.selected);
 
 		this.popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
+			@Override
 			public void setPosition(int offsetWidth, int offsetHeight) {
 				int top = ComboBoxMultiselect.this.getAbsoluteTop() + ComboBoxMultiselect.this.getOffsetHeight();
 				if (top + ComboBoxMultiselect.this.getOffsetHeight() > Window.getClientHeight()) {
@@ -184,6 +187,7 @@ public class ComboBoxMultiselect extends Composite
 				ComboBoxMultiselect.this.popup.setPopupPosition(ComboBoxMultiselect.this.getAbsoluteLeft(), top);
 			}
 		});
+
 		this.popup.updateElementCss();
 
 		if (this.prevPage) {
@@ -264,7 +268,7 @@ public class ComboBoxMultiselect extends Composite
 			// Start from page with selection when opening.
 			this.currentPage = -1;
 			this.prevPage = false;
-			this.eventHandler.getPage(this.currentPage);
+			this.eventHandler.getPage(this.currentPage, false);
 			break;
 		}
 
@@ -279,7 +283,7 @@ public class ComboBoxMultiselect extends Composite
 				public void run() {
 					ComboBoxMultiselect.this.currentPage = 0;
 					ComboBoxMultiselect.this.eventHandler.filter(	ComboBoxMultiselect.this.textBox.getValue(),
-																	ComboBoxMultiselect.this.currentPage);
+																	ComboBoxMultiselect.this.currentPage, false);
 					ComboBoxMultiselect.this.t = null;
 				}
 			};
@@ -320,7 +324,7 @@ public class ComboBoxMultiselect extends Composite
 			} else if (!ComboBoxMultiselect.this.popup.isJustClosed()) {
 				// Start from page where selection is when opening.
 				ComboBoxMultiselect.this.currentPage = -1;
-				ComboBoxMultiselect.this.eventHandler.getPage(ComboBoxMultiselect.this.currentPage);
+				ComboBoxMultiselect.this.eventHandler.getPage(ComboBoxMultiselect.this.currentPage, false);
 			}
 
 			ComboBoxMultiselect.this.textBox.setFocus(true);
@@ -335,12 +339,12 @@ public class ComboBoxMultiselect extends Composite
 
 		@Override
 		public void nextPage() {
-			ComboBoxMultiselect.this.eventHandler.getPage(++ComboBoxMultiselect.this.currentPage);
+			ComboBoxMultiselect.this.eventHandler.getPage(++ComboBoxMultiselect.this.currentPage, false);
 		}
 
 		@Override
 		public void prevPage() {
-			ComboBoxMultiselect.this.eventHandler.getPage(--ComboBoxMultiselect.this.currentPage);
+			ComboBoxMultiselect.this.eventHandler.getPage(--ComboBoxMultiselect.this.currentPage, false);
 		}
 
 		@Override

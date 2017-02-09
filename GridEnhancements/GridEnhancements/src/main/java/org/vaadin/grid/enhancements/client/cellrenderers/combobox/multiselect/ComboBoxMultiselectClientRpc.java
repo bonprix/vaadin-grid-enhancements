@@ -36,7 +36,7 @@ public interface ComboBoxMultiselectClientRpc extends ClientRpc {
 	 * @param id
 	 *            Cell identification
 	 */
-	void updateOptions(OptionsInfo optionsInfo, List<OptionElement> options, CellId id);
+	void updateOptions(OptionsInfo optionsInfo, List<OptionElement> options, boolean skipBlur, CellId id);
 
 	/**
 	 * workaround to send the selected options to client
