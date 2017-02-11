@@ -4,3 +4,6 @@
 [submodule "GridActionRenderer"]
 	path = GridActionRenderer
 	url = https://github.com/bonprix/GridActionRenderer
+[submodule "GridExtensionPack"]
+	path = GridExtensionPack
+	url = http://github.com/bonprix/GridExtensionPack.git
