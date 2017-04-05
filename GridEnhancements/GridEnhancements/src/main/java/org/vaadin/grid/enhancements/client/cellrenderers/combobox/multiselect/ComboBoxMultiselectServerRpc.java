@@ -4,7 +4,7 @@ import com.vaadin.shared.communication.ServerRpc;
 
 import java.util.Set;
 
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
+import org.vaadin.grid.cellrenderers.client.editable.common.CellId;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
 
 /**
@@ -55,10 +55,10 @@ public interface ComboBoxMultiselectServerRpc extends ServerRpc {
 	 * 
 	 * @param id
 	 *            Cell identification
-	 * @param skipBlur
-	 *            if bluring and hiding popup should be skipped
 	 * @param filter
 	 *            string to filter the elements
+	 * @param skipBlur
+	 *            if bluring and hiding popup should be skipped
 	 */
 	void filter(CellId id, String filter, boolean skipBlur);
 
@@ -74,6 +74,7 @@ public interface ComboBoxMultiselectServerRpc extends ServerRpc {
 	 * sets the sorting is needed for next popup opening
 	 * 
 	 * @param sortingNeeded
+	 *            if sorting is needed
 	 */
 	void setSortingNeeded(boolean sortingNeeded);
 

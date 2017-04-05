@@ -51,7 +51,7 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 
 	private EventHandler<OptionElement> eventHandler;
 
-	private Timer t = null;
+	private Timer timerFilter = null;
 	// Page starts as page 0
 	private int currentPage = 0;
 	private String inputPrompt;
@@ -117,7 +117,7 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 		updateTextFieldValue(selected);
 		this.selected = selected;
 
-		if (!old.equals(selected)) {
+		if (selected != null && !selected.equals(old)) {
 			this.eventHandler.change(selected);
 		}
 	}
@@ -137,6 +137,7 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 
 	public void setEnabled(boolean enabled) {
 		this.textBox.setEnabled(enabled);
+		this.dropDownButton.setEnabled(enabled);
 	}
 
 	private void updateAndShowDropdown(List<OptionElement> options) {
@@ -156,9 +157,9 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 		this.popup.setNextPageEnabled(this.currentPage < this.pages - 1);
 
 		this.popup.setWidth(getOffsetWidth() + "px");
-		this.popup	.getElement()
-					.getStyle()
-					.setZIndex(1000);
+		this.popup.getElement()
+			.getStyle()
+			.setZIndex(1000);
 		this.popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
 			@Override
 			public void setPosition(int offsetWidth, int offsetHeight) {
@@ -260,7 +261,11 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 
 			// Start from page with selection when opening.
 			this.currentPage = -1;
-			this.selectionType = SelectionType.SELECTED_ELEMENT;
+			if (this.selected == null || this.selected.getId() == null) {
+				this.selectionType = SelectionType.FIRST_ELEMENT;
+			} else {
+				this.selectionType = SelectionType.SELECTED_ELEMENT;
+			}
 			this.eventHandler.getPage(this.currentPage, false);
 			break;
 		}
@@ -270,18 +275,19 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 			return;
 		}
 
-		if (this.t == null)
-			this.t = new Timer() {
+		if (this.timerFilter == null) {
+			this.timerFilter = new Timer() {
 				@Override
 				public void run() {
 					ComboBox.this.currentPage = 0;
 					ComboBox.this.selectionType = SelectionType.FIRST_ELEMENT;
 					ComboBox.this.eventHandler.filter(	ComboBox.this.textBox.getValue(), ComboBox.this.currentPage,
 														false);
-					ComboBox.this.t = null;
+					ComboBox.this.timerFilter = null;
 				}
 			};
-		this.t.schedule(300);
+		}
+		this.timerFilter.schedule(300);
 	}
 
 	@Override
@@ -292,7 +298,7 @@ public class ComboBox extends Composite implements KeyDownHandler, FocusHandler,
 		}
 
 		if (!ComboBox.this.popup.isShowing() || !ComboBox.this.popup.isJustClosed()) {
-			removeStyleDependentName(PROMPT_STYLE);
+			removeStyleName(PROMPT_STYLE);
 		}
 	}
 

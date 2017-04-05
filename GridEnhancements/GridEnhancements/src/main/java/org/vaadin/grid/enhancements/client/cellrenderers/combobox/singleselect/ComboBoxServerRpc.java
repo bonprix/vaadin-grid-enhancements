@@ -1,6 +1,6 @@
 package org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect;
 
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
+import org.vaadin.grid.cellrenderers.client.editable.common.CellId;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
 
 import com.vaadin.shared.communication.ServerRpc;
@@ -44,5 +44,20 @@ public interface ComboBoxServerRpc extends ServerRpc {
 	 */
 	void onValueChange(CellId id, OptionElement newValue);
 
+	/**
+	 * 
+	 * @param id
+	 *            Cell identification
+	 * @param filter
+	 *            string of textinputfield
+	 */
 	void filter(CellId id, String filter);
+
+	/**
+	 * workaround to set the combobox enabled/disabled
+	 * 
+	 * @param id
+	 *            Cell identification
+	 */
+	void onRender(CellId id);
 }

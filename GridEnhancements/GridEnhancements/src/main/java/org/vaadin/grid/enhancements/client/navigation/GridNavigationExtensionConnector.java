@@ -1,12 +1,15 @@
 package org.vaadin.grid.enhancements.client.navigation;
 
+import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
+
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.vaadin.client.ServerConnector;
 import com.vaadin.client.connectors.GridConnector;
 import com.vaadin.client.extensions.AbstractExtensionConnector;
 import com.vaadin.client.widgets.Grid;
 import com.vaadin.shared.ui.Connect;
-import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 
 /**
  * @author Mikael Grankvist - Vaadin
@@ -14,12 +17,13 @@ import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 @Connect(GridNavigationExtension.class)
 public class GridNavigationExtensionConnector extends AbstractExtensionConnector {
 
-    @Override
-    protected void extend(ServerConnector target) {
+	@Override
+	protected void extend(ServerConnector target) {
 
-        Grid grid = ((GridConnector) target).getWidget();
-
-        grid.addBodyKeyDownHandler(new BodyNaviagtionHandler());
-        grid.addDomHandler(new NavigationHandler(grid), KeyDownEvent.getType());
-    }
+		Grid grid = ((GridConnector) target).getWidget();
+		GridFocusHandler gridFocusHandler = new GridFocusHandler(grid);
+		grid.addDomHandler(gridFocusHandler, FocusEvent.getType());
+		grid.addDomHandler(new GridClickHandler(grid, gridFocusHandler), ClickEvent.getType());
+		grid.addDomHandler(new NavigationHandler(grid, gridFocusHandler), KeyDownEvent.getType());
+	}
 }

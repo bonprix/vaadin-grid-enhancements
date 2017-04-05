@@ -12,6 +12,7 @@ public class OptionsInfo {
 	private String inputPrompt = "type here";
 	private String selectAllText = null;
 	private String deselectAllText = null;
+	private boolean nullSelectionAllowed = true;
 
 	public OptionsInfo() {
 	}
@@ -23,9 +24,10 @@ public class OptionsInfo {
 		this.deselectAllText = deselectAllText;
 	}
 
-	public OptionsInfo(int pageAmount, String inputPrompt) {
+	public OptionsInfo(int pageAmount, String inputPrompt, boolean nullSelectionAllowed) {
 		this.pageAmount = pageAmount;
 		this.inputPrompt = inputPrompt;
+		this.nullSelectionAllowed = nullSelectionAllowed;
 	}
 
 	public int getCurrentPage() {
@@ -90,5 +92,13 @@ public class OptionsInfo {
 
 	public void setDeselectAllText(String deselectAllText) {
 		this.deselectAllText = deselectAllText;
+	}
+
+	public boolean isNullSelectionAllowed() {
+		return this.nullSelectionAllowed;
+	}
+
+	public void setNullSelectionAllowed(boolean nullSelectionAllowed) {
+		this.nullSelectionAllowed = nullSelectionAllowed;
 	}
 }

@@ -1,3 +1,7 @@
+.v-filterselect-suggestpopup .gwt-MenuItem {
+	min-height: 26px;
+}
+
 .v-filterselect-suggestpopup .gwt-MenuItem-selected {
     background-color: #7A96A7;
     background-image: -webkit-linear-gradient(top, #88a2b1 2%, #648092 98%);

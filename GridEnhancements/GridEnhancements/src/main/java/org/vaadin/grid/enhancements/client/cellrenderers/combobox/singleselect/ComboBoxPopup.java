@@ -72,8 +72,8 @@ public class ComboBoxPopup extends VOverlay
 		layout.setWidth("100%");
 
 		this.up = new Button("");
-		this.up	.getElement()
-				.removeAttribute("type");
+		this.up.getElement()
+			.removeAttribute("type");
 		this.up.setStyleName("c-combo-popup-prevpage");
 		this.up.addClickHandler(new ClickHandler() {
 			@Override
@@ -83,8 +83,8 @@ public class ComboBoxPopup extends VOverlay
 		});
 
 		this.down = new Button("");
-		this.down	.getElement()
-					.removeAttribute("type");
+		this.down.getElement()
+			.removeAttribute("type");
 		this.down.setStyleName("c-combo-popup-nextpage");
 		this.down.addClickHandler(new ClickHandler() {
 			@Override
@@ -137,7 +137,7 @@ public class ComboBoxPopup extends VOverlay
 	 * Move keyboard focus to the selected item if found in current options
 	 * 
 	 * @param nativeKeyCode
-	 *
+	 *            native key code of selection
 	 * @param stealFocus
 	 *            true to focus new row
 	 */
@@ -161,9 +161,8 @@ public class ComboBoxPopup extends VOverlay
 	}
 
 	public void focusSelectionLast(boolean focus) {
-		focusSelectionViaPosition(this.optionsList	.getVisibleItems()
-													.size()
-				- 1, focus);
+		focusSelectionViaPosition(this.optionsList.getVisibleItems()
+			.size() - 1, focus);
 	}
 
 	public void focusSelectionCurrent(boolean focus) {
@@ -181,16 +180,16 @@ public class ComboBoxPopup extends VOverlay
 	}
 
 	public void focusSelectionViaPosition(int newPosition, boolean stealFocus) {
-		if (stealFocus && this.focusedPosition > -1 && this.focusedPosition < this.optionsList	.getVisibleItems()
-																								.size()) {
+		if (stealFocus && this.focusedPosition > -1 && this.focusedPosition < this.optionsList.getVisibleItems()
+			.size()) {
 			this.optionsList.getRowElement(this.focusedPosition)
-							.removeClassName(SELECTED_ROW_CLASS);
+				.removeClassName(SELECTED_ROW_CLASS);
 		}
 
 		this.focusedPosition = newPosition;
 
 		this.optionsList.getRowElement(this.focusedPosition)
-						.addClassName(SELECTED_ROW_CLASS);
+			.addClassName(SELECTED_ROW_CLASS);
 
 	}
 
@@ -249,11 +248,11 @@ public class ComboBoxPopup extends VOverlay
 
 	@Override
 	public void onMouseMove(MouseMoveEvent event) {
-		Element target = event	.getNativeEvent()
-								.getEventTarget()
-								.cast();
+		Element target = event.getNativeEvent()
+			.getEventTarget()
+			.cast();
 		for (int i = 0; i < this.optionsList.getVisibleItems()
-											.size(); i++) {
+			.size(); i++) {
 			Element e = this.optionsList.getRowElement(i);
 			if (e.equals(target)) {
 				focusSelectionViaPosition(i, true);
@@ -266,13 +265,13 @@ public class ComboBoxPopup extends VOverlay
 	public void onCellPreview(CellPreviewEvent<OptionElement> event) {
 
 		if (BrowserEvents.CLICK.equals(event.getNativeEvent()
-											.getType())) {
+			.getType())) {
 			select(event.getValue());
 			event.setCanceled(true);
-			event	.getNativeEvent()
-					.preventDefault();
-			event	.getNativeEvent()
-					.stopPropagation();
+			event.getNativeEvent()
+				.preventDefault();
+			event.getNativeEvent()
+				.stopPropagation();
 		}
 	}
 
@@ -287,14 +286,13 @@ public class ComboBoxPopup extends VOverlay
 	public void updateElementCss() {
 		for (int i = 0; i < this.optionsList.getRowCount(); i++) {
 			this.optionsList.getRowElement(i)
-							.addClassName("gwt-MenuItem");
+				.addClassName("gwt-MenuItem");
 		}
 	}
 
 	public boolean isLastElementFocused() {
-		return this.focusedPosition == this.optionsList	.getVisibleItems()
-														.size()
-				- 1;
+		return this.focusedPosition == this.optionsList.getVisibleItems()
+			.size() - 1;
 	}
 
 	public boolean isNextPageAvailable() {

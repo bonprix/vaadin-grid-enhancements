@@ -4,7 +4,7 @@ import com.vaadin.shared.communication.ClientRpc;
 
 import java.util.List;
 
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
+import org.vaadin.grid.cellrenderers.client.editable.common.CellId;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionsInfo;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
 
@@ -36,4 +36,14 @@ public interface ComboBoxClientRpc extends ClientRpc {
 	 *            Cell identification
 	 */
 	void updateOptions(OptionsInfo optionsInfo, List<OptionElement> options, CellId id);
+
+	/**
+	 * Sends enabled value from evaluation
+	 * 
+	 * @param enabled
+	 *            if component is enabled
+	 * @param id
+	 *            Cell identification
+	 */
+	void setEnabled(boolean enabled, CellId id);
 }

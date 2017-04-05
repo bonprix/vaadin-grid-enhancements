@@ -10,7 +10,6 @@ import java.util.Set;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.EventHandler;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.PopupCallback;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
-
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -52,7 +51,8 @@ public class ComboBoxMultiselect extends Composite
 
 	private EventHandler<OptionElement> eventHandler;
 
-	private Timer t = null;
+	private Timer timerFilter = null;
+	private Timer timerJustFocused = null;
 	// Page starts as page 0
 	private int currentPage = 0;
 	private String inputPrompt;
@@ -61,6 +61,7 @@ public class ComboBoxMultiselect extends Composite
 
 	private int pages = 1;
 	private boolean skipFocus = false;
+	private boolean justFocused = false;
 	private boolean skipBlur = false;
 
 	private boolean prevPage = false;
@@ -132,10 +133,14 @@ public class ComboBoxMultiselect extends Composite
 		return addDomHandler(handler, ChangeEvent.getType());
 	}
 
-	public void setSelection(Set<OptionElement> selection, boolean refreshPage) {
+	public void setSelection(Set<OptionElement> selection, boolean refreshPage, boolean enabled) {
 		this.selected = selection;
+
+		this.textBox.setEnabled(enabled);
+		this.dropDownButton.setEnabled(enabled);
+
 		if (refreshPage) {
-			ComboBoxMultiselect.this.textBox.setValue("");
+			this.textBox.setValue("");
 			this.eventHandler.filter("", 0, true);
 			return;
 		}
@@ -172,9 +177,9 @@ public class ComboBoxMultiselect extends Composite
 		this.popup.setNextPageEnabled(this.currentPage < this.pages - 1);
 
 		this.popup.setWidth(getOffsetWidth() + "px");
-		this.popup	.getElement()
-					.getStyle()
-					.setZIndex(1000);
+		this.popup.getElement()
+			.getStyle()
+			.setZIndex(1000);
 		this.popup.setCurrentSelection(this.selected);
 
 		this.popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
@@ -277,17 +282,17 @@ public class ComboBoxMultiselect extends Composite
 			return;
 		}
 
-		if (this.t == null)
-			this.t = new Timer() {
+		if (this.timerFilter == null)
+			this.timerFilter = new Timer() {
 				@Override
 				public void run() {
 					ComboBoxMultiselect.this.currentPage = 0;
 					ComboBoxMultiselect.this.eventHandler.filter(	ComboBoxMultiselect.this.textBox.getValue(),
 																	ComboBoxMultiselect.this.currentPage, false);
-					ComboBoxMultiselect.this.t = null;
+					ComboBoxMultiselect.this.timerFilter = null;
 				}
 			};
-		this.t.schedule(300);
+		this.timerFilter.schedule(300);
 	}
 
 	@Override
@@ -297,9 +302,19 @@ public class ComboBoxMultiselect extends Composite
 			return;
 		}
 
-		if (!ComboBoxMultiselect.this.popup.isShowing() || !ComboBoxMultiselect.this.popup.isJustClosed()) {
-			removeStyleDependentName(PROMPT_STYLE);
+		if (!ComboBoxMultiselect.this.popup.isShowing() || !ComboBoxMultiselect.this.popup.isJustClosed()
+				|| getStyleName().contains(PROMPT_STYLE)) {
+			removeStyleName(PROMPT_STYLE);
 			ComboBoxMultiselect.this.textBox.setValue("");
+			this.justFocused = true;
+			if (this.timerFilter == null)
+				this.timerFilter = new Timer() {
+					@Override
+					public void run() {
+						ComboBoxMultiselect.this.justFocused = false;
+					}
+				};
+			this.timerFilter.schedule(300);
 		}
 	}
 
@@ -377,6 +392,11 @@ public class ComboBoxMultiselect extends Composite
 	};
 
 	private void updateTextFieldValue(Set<OptionElement> selection) {
+		if (this.justFocused) {
+			this.justFocused = false;
+			return;
+		}
+
 		if (selection.size() == 0) {
 			addStyleName(PROMPT_STYLE);
 			this.textBox.setValue(this.inputPrompt);
@@ -394,8 +414,8 @@ public class ComboBoxMultiselect extends Composite
 				if (o1.getName() == null) {
 					return -1;
 				}
-				return o1	.getName()
-							.compareTo(o2.getName());
+				return o1.getName()
+					.compareTo(o2.getName());
 			}
 		});
 

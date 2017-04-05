@@ -99,8 +99,8 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 		layout.setWidth("100%");
 
 		this.up = new Button("");
-		this.up	.getElement()
-				.removeAttribute("type");
+		this.up.getElement()
+			.removeAttribute("type");
 		this.up.setStyleName("c-combo-popup-prevpage");
 		this.up.addClickHandler(new ClickHandler() {
 			@Override
@@ -112,8 +112,8 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 		this.up.addMouseOutHandler(this);
 
 		this.down = new Button("");
-		this.down	.getElement()
-					.removeAttribute("type");
+		this.down.getElement()
+			.removeAttribute("type");
 		this.down.setStyleName("c-combo-popup-nextpage");
 		this.down.addClickHandler(new ClickHandler() {
 			@Override
@@ -187,7 +187,7 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 	 * Move keyboard focus to the selected item if found in current options
 	 * 
 	 * @param nativeKeyCode
-	 *
+	 *            native key code of selection
 	 * @param stealFocus
 	 *            true to focus new row
 	 */
@@ -224,9 +224,8 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 	}
 
 	public void focusSelectionLast(boolean focus) {
-		focusSelectionViaPosition(this.optionsList	.getVisibleItems()
-													.size()
-				- 1, focus);
+		focusSelectionViaPosition(this.optionsList.getVisibleItems()
+			.size() - 1, focus);
 	}
 
 	public void focusSelectionCurrent(boolean focus) {
@@ -234,16 +233,16 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 	}
 
 	public void focusSelectionViaPosition(int newPosition, boolean stealFocus) {
-		if (stealFocus && this.focusedPosition > -1 && this.focusedPosition < this.optionsList	.getVisibleItems()
-																								.size()) {
+		if (stealFocus && this.focusedPosition > -1 && this.focusedPosition < this.optionsList.getVisibleItems()
+			.size()) {
 			this.optionsList.getRowElement(this.focusedPosition)
-							.removeClassName(SELECTED_ROW_CLASS);
+				.removeClassName(SELECTED_ROW_CLASS);
 		}
 
 		this.focusedPosition = newPosition;
 
 		this.optionsList.getRowElement(this.focusedPosition)
-						.addClassName(SELECTED_ROW_CLASS);
+			.addClassName(SELECTED_ROW_CLASS);
 
 	}
 
@@ -251,6 +250,7 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 	 * Set the current selection set for multiselection mode
 	 *
 	 * @param currentSelections
+	 *            current selections of combobox
 	 */
 	public void setCurrentSelection(Set<OptionElement> currentSelections) {
 		// Lock selection event so we don't send change events
@@ -274,6 +274,7 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 	 * Remove popup callback
 	 *
 	 * @param callback
+	 *            ComboBox callback
 	 */
 	public void removePopupCallback(PopupCallback<OptionElement> callback) {
 		this.callback = null;
@@ -307,8 +308,8 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 
 			final CheckBox checkBox = new CheckBox();
 			checkBox.setValue(ComboBoxMultiselectPopup.this.currentSelections.contains(option));
-			sb.appendHtmlConstant(checkBox	.getElement()
-											.getString());
+			sb.appendHtmlConstant(checkBox.getElement()
+				.getString());
 			sb.appendHtmlConstant("<span>");
 			sb.appendEscaped(option.getName());
 			sb.appendHtmlConstant("</span>");
@@ -318,11 +319,11 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 	// --- Event handler implementations ---
 	@Override
 	public void onMouseMove(MouseMoveEvent event) {
-		Element target = event	.getNativeEvent()
-								.getEventTarget()
-								.cast();
+		Element target = event.getNativeEvent()
+			.getEventTarget()
+			.cast();
 		for (int i = 0; i < this.optionsList.getVisibleItems()
-											.size(); i++) {
+			.size(); i++) {
 			Element e = this.optionsList.getRowElement(i);
 			if (e.equals(target)) {
 				focusSelectionViaPosition(i, true);
@@ -352,12 +353,12 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 	public void onCellPreview(CellPreviewEvent<OptionElement> event) {
 
 		if (BrowserEvents.CLICK.equals(event.getNativeEvent()
-											.getType())) {
+			.getType())) {
 			// Do not handle selection for clicks into CheckBoxes
 			// as the selectionEventManager already does this.
-			Element target = event	.getNativeEvent()
-									.getEventTarget()
-									.cast();
+			Element target = event.getNativeEvent()
+				.getEventTarget()
+				.cast();
 			if ("input".equals(StringCase.toLower(target.getTagName()))) {
 				final InputElement input = target.cast();
 				if ("checkbox".equals(StringCase.toLower(input.getType()))) {
@@ -366,10 +367,10 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 			}
 
 			event.setCanceled(true);
-			event	.getNativeEvent()
-					.preventDefault();
-			event	.getNativeEvent()
-					.stopPropagation();
+			event.getNativeEvent()
+				.preventDefault();
+			event.getNativeEvent()
+				.stopPropagation();
 
 			final OptionElement option = event.getValue();
 			toggleSelection(option);
@@ -380,14 +381,13 @@ public class ComboBoxMultiselectPopup extends VOverlay implements FocusHandler, 
 	public void updateElementCss() {
 		for (int i = 0; i < this.optionsList.getRowCount(); i++) {
 			this.optionsList.getRowElement(i)
-							.addClassName("gwt-MenuItem");
+				.addClassName("gwt-MenuItem");
 		}
 	}
 
 	public boolean isLastElementFocused() {
-		return this.focusedPosition == this.optionsList	.getVisibleItems()
-														.size()
-				- 1;
+		return this.focusedPosition == this.optionsList.getVisibleItems()
+			.size() - 1;
 	}
 
 	public boolean isNextPageAvailable() {

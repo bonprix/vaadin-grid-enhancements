@@ -5,7 +5,7 @@ import com.vaadin.shared.communication.ClientRpc;
 import java.util.List;
 import java.util.Set;
 
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
+import org.vaadin.grid.cellrenderers.client.editable.common.CellId;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionsInfo;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
 
@@ -33,6 +33,8 @@ public interface ComboBoxMultiselectClientRpc extends ClientRpc {
 	 *            Total amount of pages
 	 * @param options
 	 *            Options for current page
+	 * @param skipBlur
+	 *            if bluring and hiding popup should be skipped
 	 * @param id
 	 *            Cell identification
 	 */
@@ -47,6 +49,8 @@ public interface ComboBoxMultiselectClientRpc extends ClientRpc {
 	 *            Cell identification
 	 * @param refreshPage
 	 *            if page should be refreshed after setting selection
+	 * @param enabled
+	 *            if comboBoxMultiselect should be enabled
 	 */
-	void updateSelectedOptions(Set<OptionElement> selectedOptions, CellId id, boolean refreshPage);
+	void updateSelectedOptions(Set<OptionElement> selectedOptions, CellId id, boolean refreshPage, boolean enabled);
 }

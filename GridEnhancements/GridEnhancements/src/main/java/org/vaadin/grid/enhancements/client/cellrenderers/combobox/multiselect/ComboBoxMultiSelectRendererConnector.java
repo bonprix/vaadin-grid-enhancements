@@ -1,5 +1,15 @@
 package org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect;
 
+import java.util.List;
+import java.util.Set;
+
+import org.vaadin.grid.cellrenderers.client.editable.common.CellId;
+import org.vaadin.grid.cellrenderers.client.editable.common.EditableRendererClientUtil;
+import org.vaadin.grid.enhancements.cellrenderers.ComboBoxMultiselectRenderer;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.EventHandler;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionsInfo;
+import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -9,23 +19,13 @@ import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.vaadin.client.MouseEventDetailsBuilder;
 import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.connectors.AbstractRendererConnector;
-import com.vaadin.client.connectors.GridConnector;
 import com.vaadin.client.renderers.ClickableRenderer;
 import com.vaadin.client.renderers.Renderer;
 import com.vaadin.client.widget.grid.RendererCellReference;
-import com.vaadin.client.widgets.Grid;
 import com.vaadin.shared.ui.Connect;
 import com.vaadin.shared.ui.grid.renderers.RendererClickRpc;
 
 import elemental.json.JsonObject;
-import org.vaadin.grid.enhancements.cellrenderers.ComboBoxMultiselectRenderer;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.CellId;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.EventHandler;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.OptionsInfo;
-import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.OptionElement;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Mikael Grankvist - Vaadin Ltd
@@ -38,9 +38,6 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 
 	public class MultiSelectRenderer extends ClickableRenderer<OptionElement, ComboBoxMultiselect> {
 
-		private static final String ROW_KEY_PROPERTY = "rowKey";
-		private static final String COLUMN_ID_PROPERTY = "columnId";
-
 		private String filter = "";
 
 		@Override
@@ -52,9 +49,10 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 				public void onClick(ClickEvent event) {
 					event.stopPropagation();
 					Element e = comboBoxMultiselect.getElement();
-					getRpcProxy(RendererClickRpc.class).click(	e.getPropertyString(ROW_KEY_PROPERTY),
-																e.getPropertyString(COLUMN_ID_PROPERTY),
-																MouseEventDetailsBuilder.buildMouseEventDetails(event.getNativeEvent()));
+					getRpcProxy(RendererClickRpc.class)
+						.click(	e.getPropertyString(EditableRendererClientUtil.ROW_KEY_PROPERTY),
+								e.getPropertyString(EditableRendererClientUtil.COLUMN_ID_PROPERTY),
+								MouseEventDetailsBuilder.buildMouseEventDetails(event.getNativeEvent()));
 				}
 			}, ClickEvent.getType());
 
@@ -73,27 +71,30 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 
 				@Override
 				public void change(Set<OptionElement> item) {
-					ComboBoxMultiSelectRendererConnector.this.rpc.onValueSetChange(	getCellId(comboBoxMultiselect),
-																					item);
+					ComboBoxMultiSelectRendererConnector.this.rpc
+						.onValueSetChange(EditableRendererClientUtil.getCellId(comboBoxMultiselect), item);
 				}
 
 				@Override
 				public void getPage(int pageNumber, boolean skipBlur) {
-					if (!org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiSelectRendererConnector.MultiSelectRenderer.this.filter.isEmpty()) {
-						ComboBoxMultiSelectRendererConnector.this.rpc.getFilterPage(org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiSelectRendererConnector.MultiSelectRenderer.this.filter,
-																					pageNumber, skipBlur,
-																					getCellId(comboBoxMultiselect));
+					if (!org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiSelectRendererConnector.MultiSelectRenderer.this.filter
+						.isEmpty()) {
+						ComboBoxMultiSelectRendererConnector.this.rpc
+							.getFilterPage(	org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiSelectRendererConnector.MultiSelectRenderer.this.filter,
+											pageNumber, skipBlur,
+											EditableRendererClientUtil.getCellId(comboBoxMultiselect));
 					} else {
-						ComboBoxMultiSelectRendererConnector.this.rpc.getPage(	pageNumber, skipBlur,
-																				getCellId(comboBoxMultiselect));
+						ComboBoxMultiSelectRendererConnector.this.rpc
+							.getPage(pageNumber, skipBlur, EditableRendererClientUtil.getCellId(comboBoxMultiselect));
 					}
 				}
 
 				@Override
 				public void filter(String filterValue, int pageNumber, boolean skipBlur) {
 					org.vaadin.grid.enhancements.client.cellrenderers.combobox.multiselect.ComboBoxMultiSelectRendererConnector.MultiSelectRenderer.this.filter = filterValue;
-					ComboBoxMultiSelectRendererConnector.this.rpc.getFilterPage(filterValue, pageNumber, skipBlur,
-																				getCellId(comboBoxMultiselect));
+					ComboBoxMultiSelectRendererConnector.this.rpc
+						.getFilterPage(	filterValue, pageNumber, skipBlur,
+										EditableRendererClientUtil.getCellId(comboBoxMultiselect));
 				}
 
 				@Override
@@ -104,17 +105,54 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 
 				@Override
 				public void selectAll() {
-					ComboBoxMultiSelectRendererConnector.this.rpc.selectAll(getCellId(comboBoxMultiselect));
+					ComboBoxMultiSelectRendererConnector.this.rpc
+						.selectAll(EditableRendererClientUtil.getCellId(comboBoxMultiselect));
 				}
 
 				@Override
 				public void deselectAll() {
-					ComboBoxMultiSelectRendererConnector.this.rpc.deselectAll(getCellId(comboBoxMultiselect));
+					ComboBoxMultiSelectRendererConnector.this.rpc
+						.deselectAll(EditableRendererClientUtil.getCellId(comboBoxMultiselect));
 				}
 			});
 
-			comboBoxMultiselect	.getPopup()
-								.setOwner(getGrid());
+			comboBoxMultiselect.getPopup()
+				.setOwner(EditableRendererClientUtil.getGridFromParent(getParent()));
+
+			registerRpc(ComboBoxMultiselectClientRpc.class, new ComboBoxMultiselectClientRpc() {
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public void setCurrentPage(int page, CellId id) {
+					if (id.equals(EditableRendererClientUtil.getCellId(comboBoxMultiselect))) {
+						comboBoxMultiselect.setCurrentPage(page);
+					}
+				}
+
+				@Override
+				public void updateOptions(OptionsInfo optionsInfo, List<OptionElement> options, boolean skipBlur,
+						CellId id) {
+					if (id.equals(EditableRendererClientUtil.getCellId(comboBoxMultiselect))) {
+						if (optionsInfo.getCurrentPage() != -1) {
+							comboBoxMultiselect.setCurrentPage(optionsInfo.getCurrentPage());
+						}
+						comboBoxMultiselect.setInputPrompt(optionsInfo.getInputPrompt());
+						comboBoxMultiselect.setSelectAllText(optionsInfo.getSelectAllText());
+						comboBoxMultiselect.setDeselectAllText(optionsInfo.getDeselectAllText());
+
+						comboBoxMultiselect.updatePageAmount(optionsInfo.getPageAmount());
+						comboBoxMultiselect.updateSelection(options, skipBlur);
+					}
+				}
+
+				@Override
+				public void updateSelectedOptions(Set<OptionElement> selectedOptions, CellId id, boolean refreshPage,
+						boolean enabled) {
+					if (id.equals(EditableRendererClientUtil.getCellId(comboBoxMultiselect))) {
+						comboBoxMultiselect.setSelection(selectedOptions, refreshPage, enabled);
+					}
+				}
+			});
 
 			return comboBoxMultiselect;
 		}
@@ -124,71 +162,25 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 				final ComboBoxMultiselect multiSelect) {
 			this.filter = "";
 
-			registerRpc(ComboBoxMultiselectClientRpc.class, new ComboBoxMultiselectClientRpc() {
-				private static final long serialVersionUID = 1L;
-
-				@Override
-				public void setCurrentPage(int page, CellId id) {
-					if (id.equals(getCellId(multiSelect))) {
-						multiSelect.setCurrentPage(page);
-					}
-				}
-
-				@Override
-				public void updateOptions(OptionsInfo optionsInfo, List<OptionElement> options, boolean skipBlur,
-						CellId id) {
-					if (id.equals(getCellId(multiSelect))) {
-						if (optionsInfo.getCurrentPage() != -1) {
-							multiSelect.setCurrentPage(optionsInfo.getCurrentPage());
-						}
-						multiSelect.setInputPrompt(optionsInfo.getInputPrompt());
-						multiSelect.setSelectAllText(optionsInfo.getSelectAllText());
-						multiSelect.setDeselectAllText(optionsInfo.getDeselectAllText());
-
-						multiSelect.updatePageAmount(optionsInfo.getPageAmount());
-						multiSelect.updateSelection(options, skipBlur);
-					}
-				}
-
-				@Override
-				public void updateSelectedOptions(Set<OptionElement> selectedOptions, CellId id, boolean refreshPage) {
-					if (id.equals(getCellId(multiSelect))) {
-						multiSelect.setSelection(selectedOptions, refreshPage);
-					}
-				}
-			});
-
 			Element e = multiSelect.getElement();
 
-			if (e.getPropertyString(ROW_KEY_PROPERTY) != getRowKey((JsonObject) cell.getRow())) {
-				e.setPropertyString(ROW_KEY_PROPERTY, getRowKey((JsonObject) cell.getRow()));
+			EditableRendererClientUtil
+				.setElementProperties(	e, getRowKey((JsonObject) cell.getRow()),
+										EditableRendererClientUtil.getGridFromParent(getParent()),
+										getColumnId(EditableRendererClientUtil.getGridFromParent(getParent())
+											.getColumn(cell.getColumnIndex())));
+
+			if (!cell.getColumn()
+				.isEditable()
+					|| !cell.getGrid()
+						.isEnabled()) {
+				multiSelect.setEnabled(false);
+				return;
 			}
-			// Generics issue, need a correctly typed column.
 
-			if (e.getPropertyString(COLUMN_ID_PROPERTY) != getColumnId(getGrid().getColumn(cell.getColumnIndex()))) {
-				e.setPropertyString(COLUMN_ID_PROPERTY, getColumnId(getGrid().getColumn(cell.getColumnIndex())));
-			}
-
-			ComboBoxMultiSelectRendererConnector.this.rpc.onRender(new CellId(e.getPropertyString(ROW_KEY_PROPERTY),
-					e.getPropertyString(COLUMN_ID_PROPERTY)));
-
-			if (multiSelect.isEnabled() != cell	.getColumn()
-												.isEditable()) {
-				multiSelect.setEnabled(cell	.getColumn()
-											.isEditable());
-			}
-		}
-
-		/**
-		 * Create cell identification for current ComboBox on row and column.
-		 *
-		 * @param comboBox
-		 *            ComboBox to get cell identification for
-		 * @return CellId for ComboBox
-		 */
-		private CellId getCellId(ComboBoxMultiselect comboBox) {
-			Element e = comboBox.getElement();
-			return new CellId(e.getPropertyString(ROW_KEY_PROPERTY), e.getPropertyString(COLUMN_ID_PROPERTY));
+			ComboBoxMultiSelectRendererConnector.this.rpc
+				.onRender(new CellId(e.getPropertyString(EditableRendererClientUtil.ROW_KEY_PROPERTY),
+						e.getPropertyString(EditableRendererClientUtil.COLUMN_ID_PROPERTY)));
 		}
 
 	}
@@ -206,10 +198,6 @@ public class ComboBoxMultiSelectRendererConnector extends AbstractRendererConnec
 	@Override
 	public MultiSelectRenderer getRenderer() {
 		return (MultiSelectRenderer) super.getRenderer();
-	}
-
-	private Grid<JsonObject> getGrid() {
-		return ((GridConnector) getParent()).getWidget();
 	}
 
 }

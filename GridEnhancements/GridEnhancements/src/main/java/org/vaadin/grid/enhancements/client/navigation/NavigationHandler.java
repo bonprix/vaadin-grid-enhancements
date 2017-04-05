@@ -1,30 +1,36 @@
 package org.vaadin.grid.enhancements.client.navigation;
 
-import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.user.client.Timer;
 import com.vaadin.client.WidgetUtil;
+import com.vaadin.client.widget.escalator.Cell;
 import com.vaadin.client.widget.grid.CellReference;
 import com.vaadin.client.widgets.Grid;
 
 public class NavigationHandler implements KeyDownHandler {
 
-	Grid grid;
+	protected final Grid grid;
+	protected final GridFocusHandler gridFocusHandler;
 
-	public NavigationHandler(Grid grid) {
+	protected boolean secondTimeTabWithoutShift = false;
+	protected boolean secondTimeTabWithShift = false;
+
+	public NavigationHandler(Grid grid, GridFocusHandler gridFocusHandler) {
 		this.grid = grid;
+		this.gridFocusHandler = gridFocusHandler;
 	}
 
 	@Override
-	public void onKeyDown(KeyDownEvent keyDownEvent) {
-
-		Element focusedElement = WidgetUtil.getFocusedElement();
+	public void onKeyDown(final KeyDownEvent keyDownEvent) {
+		final Element focusedElement = WidgetUtil.getFocusedElement();
 		if (!(focusedElement.getNodeName()
-							.equals("INPUT")
-				|| focusedElement	.getNodeName()
-									.equals("BUTTON"))) {
+			.equals("INPUT")
+				|| focusedElement.getNodeName()
+					.equals("BUTTON"))) {
 			return;
 		}
 
@@ -34,10 +40,11 @@ public class NavigationHandler implements KeyDownHandler {
 			focusedElement.blur();
 			cellReference = this.grid.getCellReference(focusedElement.getParentElement());
 			int rows = this.grid.getDataSource()
-								.size();
+				.size();
 			if (cellReference.getRowIndex() + 1 < rows) {
-				NavigationUtil.focusCell(this.grid, cellReference.getRowIndex() + 1, cellReference.getColumnIndex());
-				focusInputField();
+				NavigationUtil.focusCell(	this.grid, cellReference.getRowIndex() + 1, cellReference.getColumnIndex(),
+											this.gridFocusHandler);
+				NavigationUtil.focusInputField(this.grid);
 			}
 			break;
 		case KeyCodes.KEY_ESCAPE:
@@ -47,7 +54,8 @@ public class NavigationHandler implements KeyDownHandler {
 			// blur input element se we get a value change
 			focusedElement.blur();
 			cellReference = this.grid.getCellReference(focusedElement.getParentElement());
-			NavigationUtil.focusCell(this.grid, cellReference.getRowIndex(), cellReference.getColumnIndex());
+			NavigationUtil.focusCell(	this.grid, cellReference.getRowIndex(), cellReference.getColumnIndex(),
+										this.gridFocusHandler);
 
 			break;
 		case KeyCodes.KEY_UP:
@@ -57,12 +65,23 @@ public class NavigationHandler implements KeyDownHandler {
 			// blur input element se we get a value change
 			focusedElement.blur();
 			cellReference = this.grid.getCellReference(focusedElement.getParentElement());
-			if (cellReference.getRowIndex() > 0) {
-				// move up one row
-				NavigationUtil.focusCell(this.grid, cellReference.getRowIndex() - 1, cellReference.getColumnIndex());
-				focusInputField();
-			} else {
-				// refocus element in case we can't move up
+
+			int cellRowIndex = cellReference.getRowIndex() - 1;
+			while (cellReference.getRowIndex() > 0) {
+				// move down one row
+				NavigationUtil.focusCell(	this.grid, cellRowIndex, cellReference.getColumnIndex(),
+											this.gridFocusHandler);
+				Cell cell = NavigationUtil.getFocusedCell(this.grid);
+				if (NavigationUtil.isDisabled(cell.getElement())) {
+					cellRowIndex--;
+					continue;
+				}
+				NavigationUtil.focusInputField(this.grid);
+				break;
+			}
+
+			if (cellReference.getRowIndex() <= 0) {
+				// refocus element in case we can't move down
 				focusedElement.focus();
 			}
 			break;
@@ -73,60 +92,144 @@ public class NavigationHandler implements KeyDownHandler {
 			// blur input element se we get a value change
 			focusedElement.blur();
 			cellReference = this.grid.getCellReference(focusedElement.getParentElement());
-			if (cellReference.getRowIndex() + 1 < this.grid	.getDataSource()
-															.size()) {
+
+			cellRowIndex = cellReference.getRowIndex() + 1;
+			while (cellRowIndex < this.grid.getDataSource()
+				.size()) {
 				// move down one row
-				NavigationUtil.focusCell(this.grid, cellReference.getRowIndex() + 1, cellReference.getColumnIndex());
-				focusInputField();
-			} else {
+				NavigationUtil.focusCell(	this.grid, cellRowIndex, cellReference.getColumnIndex(),
+											this.gridFocusHandler);
+				Cell cell = NavigationUtil.getFocusedCell(this.grid);
+				if (NavigationUtil.isDisabled(cell.getElement())) {
+					cellRowIndex++;
+					continue;
+				}
+				NavigationUtil.focusInputField(this.grid);
+				break;
+			}
+
+			if (cellRowIndex >= this.grid.getDataSource()
+				.size()) {
 				// refocus element in case we can't move down
 				focusedElement.focus();
 			}
 			break;
 		case KeyCodes.KEY_TAB:
+			final boolean shiftKeyDown = keyDownEvent.isShiftKeyDown();
+			// check if we are in a buttons field
+			if (focusedElement.getNodeName()
+				.equalsIgnoreCase("button")) {
+				Node element;
+				if (shiftKeyDown) {
+					element = focusedElement.getPreviousSibling();
+				} else {
+					element = focusedElement.getNextSibling();
+				}
+				if (element != null && element.getNodeName()
+					.equalsIgnoreCase("button")) {
+					// if previous element is a button too
+					// let the browser handle the change
+					break;
+				}
+			}
+
 			cellReference = this.grid.getCellReference(getCellElement(focusedElement));
 			final Element tdElement = cellReference.getElement();
 
-			// If first or last cell in grid stop default and keep focus
-			if ((keyDownEvent.isShiftKeyDown() && NavigationUtil.isFirstCell(cellReference, tdElement))
-					|| (!keyDownEvent.isShiftKeyDown()
-							&& NavigationUtil.isLastCell(cellReference, this.grid, tdElement))) {
-				keyDownEvent.preventDefault();
-				keyDownEvent.stopPropagation();
-			} else if (keyDownEvent.isShiftKeyDown()) {
-				// If we have a previous sibling to focus then focus normally.
-				if (NavigationUtil.hasPreviousInputElement(tdElement)) {
+			if (shiftKeyDown) {
+				focusedElement.blur();
+
+				if (NavigationUtil.isFirstCell(cellReference, tdElement, shiftKeyDown) && this.secondTimeTabWithShift) {
+					this.gridFocusHandler.setSkipFocus(true);
+					this.secondTimeTabWithShift = false;
 					break;
 				}
 
-				focusedElement.blur();
-				Element firstEdtiableElement = NavigationUtil.getLastEditableElement(tdElement);
-				CellReference editableCellReference = this.grid.getCellReference(firstEdtiableElement);
+				this.secondTimeTabWithShift = false;
 
-				// Prevent default and move one row up and to the last column
+				// Prevent default
+				// we have to handle the changes by ourself
 				keyDownEvent.preventDefault();
 				keyDownEvent.stopPropagation();
-				// Step up one row and to the last column
-				NavigationUtil.focusCell(	this.grid, cellReference.getRowIndex() - 1,
-											editableCellReference.getColumnIndex());
-				focusInputField();
-			} else if (!keyDownEvent.isShiftKeyDown()) {
-				// If we have a previous sibling to focus then focus normally.
-				if (NavigationUtil.hasNextInputElement(tdElement)) {
+
+				new Timer() {
+					@Override
+					public void run() {
+
+						if (NavigationUtil.isFirstCell(cellReference, tdElement, shiftKeyDown)) {
+							focusedElement.focus();
+							NavigationHandler.this.secondTimeTabWithShift = true;
+							return;
+						}
+
+						final int cnt = NavigationUtil.getPreviousInputElementCounter(tdElement, shiftKeyDown);
+
+						if (cnt == -1) {
+							// no steppable element found in this row
+							// Step down one row and to the first column
+							NavigationUtil.focusLastEditableElementFromFirstElementOfRow(	NavigationHandler.this.grid,
+																							cellReference.getRowIndex()
+																									- 1,
+																							NavigationHandler.this.gridFocusHandler,
+																							shiftKeyDown);
+							return;
+						}
+
+						// focus previous cell in row
+						NavigationHandler.this.gridFocusHandler.setShiftKeyDown(true);
+						NavigationUtil.focusCell(	NavigationHandler.this.grid, cellReference.getRowIndex(),
+													NavigationHandler.this.grid.getCellReference(tdElement)
+														.getColumnIndex() - cnt,
+													NavigationHandler.this.gridFocusHandler);
+					}
+				}.schedule(100);
+			} else {
+				focusedElement.blur();
+
+				if (NavigationUtil.isLastCell(cellReference, NavigationHandler.this.grid, tdElement, shiftKeyDown)
+						&& this.secondTimeTabWithoutShift) {
+					this.secondTimeTabWithoutShift = false;
 					break;
 				}
 
-				focusedElement.blur();
-				Element firstEdtiableElement = NavigationUtil.getFirstEditableElement(tdElement);
-				CellReference editableCellReference = this.grid.getCellReference(firstEdtiableElement);
+				this.secondTimeTabWithoutShift = false;
 
-				// Prevent default and move one row down and to the first column
+				// Prevent default
+				// we have to handle the changes by ourself
 				keyDownEvent.preventDefault();
 				keyDownEvent.stopPropagation();
-				// Step down one row and to the first column
-				NavigationUtil.focusCell(	this.grid, cellReference.getRowIndex() + 1,
-											editableCellReference.getColumnIndex());
-				focusInputField();
+
+				new Timer() {
+					@Override
+					public void run() {
+						if (NavigationUtil.isLastCell(	cellReference, NavigationHandler.this.grid, tdElement,
+														shiftKeyDown)) {
+							focusedElement.focus();
+							NavigationHandler.this.secondTimeTabWithoutShift = true;
+							return;
+						}
+						final int cnt = NavigationUtil.getNextInputElementCounter(tdElement, shiftKeyDown);
+
+						if (cnt == -1) {
+							// no steppable element found in this row
+							// Step down one row and to the first column
+							NavigationUtil.focusFirstEditableElementFromFirstElementOfRow(	NavigationHandler.this.grid,
+																							cellReference.getRowIndex()
+																									+ 1,
+																							NavigationHandler.this.gridFocusHandler,
+																							shiftKeyDown);
+							return;
+						}
+
+						// focus next cell in row
+						NavigationUtil.focusCell(	NavigationHandler.this.grid, cellReference.getRowIndex(),
+													NavigationHandler.this.grid.getCellReference(tdElement)
+														.getColumnIndex() + cnt,
+													NavigationHandler.this.gridFocusHandler);
+					}
+				}.schedule(100);
+
+				break;
 			}
 			break;
 		}
@@ -143,32 +246,13 @@ public class NavigationHandler implements KeyDownHandler {
 		if (!focusedElement.hasParentElement()) {
 			return focusedElement;
 		}
-		if (focusedElement	.getParentElement()
-							.getNodeName()
-							.equals("TD")) {
+		if (focusedElement.getParentElement()
+			.getNodeName()
+			.equals("TD")) {
 			return focusedElement.getParentElement();
 		}
 
 		return getCellElement(focusedElement.getParentElement());
-	}
-
-	private void focusInputField() {
-		// We need to delay cell focus for 2 animation frames so that the
-		// escalator has time to populate the new cell.
-		AnimationScheduler	.get()
-							.requestAnimationFrame(new AnimationScheduler.AnimationCallback() {
-								@Override
-								public void execute(double timestamp) {
-									AnimationScheduler	.get()
-														.requestAnimationFrame(new AnimationScheduler.AnimationCallback() {
-															@Override
-															public void execute(double timestamp) {
-																NavigationUtil.focusInputField(NavigationUtil	.getFocusedCell(NavigationHandler.this.grid)
-																												.getElement());
-															}
-														});
-								}
-							});
 	}
 
 }
