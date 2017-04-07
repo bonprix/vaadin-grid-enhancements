@@ -393,6 +393,8 @@ public final class NavigationUtil {
 
 	public static void focusLastEditableElementFromFirstElementOfRow(Grid grid, int rowIndex,
 			GridFocusHandler gridFocusHandler, boolean shiftKeyDown) {
+		gridFocusHandler.setShiftKeyDown(true);
+
 		NavigationUtil.focusCell(grid, rowIndex, grid.getColumnCount() - 1, gridFocusHandler);
 		TableCellElement element = NavigationUtil.getFocusedCell(grid)
 			.getElement();

@@ -6,6 +6,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.Timer;
+import com.vaadin.client.VConsole;
 import com.vaadin.client.WidgetUtil;
 import com.vaadin.client.widget.escalator.Cell;
 import com.vaadin.client.widget.grid.CellReference;
@@ -157,6 +158,7 @@ public class NavigationHandler implements KeyDownHandler {
 						if (cnt == -1) {
 							// no steppable element found in this row
 							// Step down one row and to the first column
+							VConsole.error("cnt == -1");
 							NavigationUtil.focusLastEditableElementFromFirstElementOfRow(	NavigationHandler.this.grid,
 																							cellReference.getRowIndex()
 																									- 1,

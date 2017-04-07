@@ -252,7 +252,7 @@ public class DemoUI extends UI {
 		content.setComponentAlignment(layout, Alignment.MIDDLE_CENTER);
 
 		grid.setColumns("multi", "calc", "km", "bar", "actions", "single", "today", "yes", "foo", "_multi");
-		grid.setColumnOrder("multi", "calc", "km", "bar", "actions", "single", "today", "yes", "foo", "_multi");
+		grid.setColumnOrder("multi", "calc", "km", "bar", "single", "today", "yes", "foo", "_multi", "actions");
 	}
 
 	private LinkedList<DummyClass> getItemList() {
