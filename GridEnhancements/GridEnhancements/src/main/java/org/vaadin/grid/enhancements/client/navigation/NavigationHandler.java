@@ -36,17 +36,6 @@ public class NavigationHandler implements KeyDownHandler {
 
 		final CellReference cellReference;
 		switch (keyDownEvent.getNativeKeyCode()) {
-		case KeyCodes.KEY_ENTER:
-			focusedElement.blur();
-			cellReference = this.grid.getCellReference(focusedElement.getParentElement());
-			int rows = this.grid.getDataSource()
-				.size();
-			if (cellReference.getRowIndex() + 1 < rows) {
-				NavigationUtil.focusCell(	this.grid, cellReference.getRowIndex() + 1, cellReference.getColumnIndex(),
-											this.gridFocusHandler);
-				NavigationUtil.focusInputField(this.grid);
-			}
-			break;
 		case KeyCodes.KEY_ESCAPE:
 			keyDownEvent.preventDefault();
 			keyDownEvent.stopPropagation();
@@ -85,6 +74,7 @@ public class NavigationHandler implements KeyDownHandler {
 				focusedElement.focus();
 			}
 			break;
+		case KeyCodes.KEY_ENTER:
 		case KeyCodes.KEY_DOWN:
 			keyDownEvent.preventDefault();
 			keyDownEvent.stopPropagation();
