@@ -16,7 +16,7 @@ public class GridClickHandler implements ClickHandler {
 
 	@Override
 	public void onClick(ClickEvent event) {
-		this.gridFocusHandler.setWasClickEvent(true);
+		this.gridFocusHandler.cancelFocusTimer();
 	}
 
 }

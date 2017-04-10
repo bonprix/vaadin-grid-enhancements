@@ -3,7 +3,6 @@ package org.vaadin.grid.enhancements.client.navigation;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.user.client.Timer;
-import com.vaadin.client.VConsole;
 import com.vaadin.client.widgets.Grid;
 
 public class GridFocusHandler implements FocusHandler {
@@ -46,7 +45,6 @@ public class GridFocusHandler implements FocusHandler {
 																				currentThis,
 																				GridFocusHandler.this.shiftKeyDown);
 						}
-						VConsole.error("shiftKeyDown: " + GridFocusHandler.this.shiftKeyDown);
 						NavigationUtil.focusInputField(GridFocusHandler.this.grid, GridFocusHandler.this.shiftKeyDown);
 						GridFocusHandler.this.shiftKeyDown = false;
 					} else {
@@ -74,7 +72,9 @@ public class GridFocusHandler implements FocusHandler {
 		this.mouseClickEvent = mouseClickEvent;
 	}
 
-	public void setWasClickEvent(boolean wasClickEvent) {
-		this.focusTimer.cancel();
+	public void cancelFocusTimer() {
+		if (this.focusTimer != null) {
+			this.focusTimer.cancel();
+		}
 	}
 }
