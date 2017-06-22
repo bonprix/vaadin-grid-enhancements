@@ -39,6 +39,7 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<OptionE
 	public class ComboBoxRenderer extends ClickableRenderer<OptionElement, ComboBox> {
 
 		private String filter = "";
+		private boolean enabledValueChange = true;
 
 		@Override
 		public ComboBox createWidget() {
@@ -66,8 +67,10 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<OptionE
 			comboBox.setEventHandler(new EventHandler<OptionElement>() {
 				@Override
 				public void change(OptionElement item) {
-					ComboBoxRendererConnector.this.rpc.onValueChange(	EditableRendererClientUtil.getCellId(comboBox),
-																		item);
+					if (org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxRendererConnector.ComboBoxRenderer.this.enabledValueChange) {
+						ComboBoxRendererConnector.this.rpc.onValueChange(	EditableRendererClientUtil.getCellId(comboBox),
+																			item);
+					}
 				}
 
 				@Override
@@ -159,7 +162,9 @@ public class ComboBoxRendererConnector extends AbstractRendererConnector<OptionE
 										getColumnId(EditableRendererClientUtil.getGridFromParent(getParent())
 											.getColumn(cell.getColumnIndex())));
 
+			this.enabledValueChange = false;
 			comboBox.setSelected(selectedValue);
+			this.enabledValueChange = true;
 
 			if (!cell.getColumn()
 				.isEditable()

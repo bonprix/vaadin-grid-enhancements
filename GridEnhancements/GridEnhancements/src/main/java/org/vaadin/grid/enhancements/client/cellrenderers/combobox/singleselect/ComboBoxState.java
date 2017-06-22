@@ -8,4 +8,5 @@ import com.vaadin.shared.communication.SharedState;
 public class ComboBoxState extends SharedState {
 	private static final long serialVersionUID = -743434598228720003L;
 
+	public boolean showOnlyNotUsed = false;
 }

@@ -1,9 +1,11 @@
 package org.vaadin.grid.enhancements.cellrenderers;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-
 import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.cellrenderers.client.editable.common.CellId;
 import org.vaadin.grid.cellrenderers.editable.common.EditableRendererEnabled;
@@ -16,9 +18,12 @@ import org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.C
 
 import com.vaadin.data.Container.Filter;
 import com.vaadin.data.Container.Filterable;
+import com.vaadin.data.Container.Indexed;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
+import com.vaadin.data.util.AbstractInMemoryContainer;
 import com.vaadin.data.util.BeanItemContainer;
+import com.vaadin.data.util.GeneratedPropertyContainer;
 import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.shared.ui.combobox.FilteringMode;
 
@@ -44,12 +49,15 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 
 	private BEANTYPE nullSelectionElement;
 
-	public ComboBoxRenderer(final Class<BEANTYPE> clazz, List<BEANTYPE> selections, String itemIdPropertyId,
+	public ComboBoxRenderer(final Class<BEANTYPE> clazz, final List<BEANTYPE> selections, String itemIdPropertyId,
 			String itemCaptionPropertyId, int pageSize, String inputPrompt, boolean nullSelectionAllowed,
-			EditableRendererEnabled editableRendererEnabled) {
+			boolean showOnlyNotUsed, EditableRendererEnabled editableRendererEnabled) {
 		super(clazz);
 
 		registerRpc(this.rpc);
+
+		getState().showOnlyNotUsed = showOnlyNotUsed;
+
 		// Add items to internal list so we don't expose ourselves to changes in
 		// the given list
 		this.container = new BeanItemContainer<BEANTYPE>(clazz);
@@ -90,24 +98,87 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 
 		@Override
 		public void getPage(int page, CellId id) {
-			OptionsInfo info = new OptionsInfo(ComboBoxRenderer.this.pages, ComboBoxRenderer.this.inputPrompt,
-					ComboBoxRenderer.this.nullSelectionAllowed);
+			List<BEANTYPE> elements = ComboBoxRenderer.this.container.getItemIds();
+
+			if (getState().showOnlyNotUsed) {
+				elements = getShowOnlyNotUsed(id);
+			}
+
+			OptionsInfo info = new OptionsInfo(roundUp(elements.size(), ComboBoxRenderer.this.pageSize),
+					ComboBoxRenderer.this.inputPrompt, ComboBoxRenderer.this.nullSelectionAllowed);
 			if (page == -1) {
-				page = ComboBoxRenderer.this.container.indexOfId(getCellProperty(id).getValue())
-						/ ComboBoxRenderer.this.pageSize;
+				page = elements.indexOf(getCellProperty(id).getValue()) / ComboBoxRenderer.this.pageSize;
 			}
 			info.setCurrentPage(page);
 
 			// Get start id for page
 			int fromIndex = ComboBoxRenderer.this.pageSize * page;
-			int toIndex = fromIndex + ComboBoxRenderer.this.pageSize > ComboBoxRenderer.this.container.size()
-					? ComboBoxRenderer.this.container.size() : fromIndex + ComboBoxRenderer.this.pageSize;
+			int toIndex = fromIndex + ComboBoxRenderer.this.pageSize > elements.size() ? elements.size()
+					: fromIndex + ComboBoxRenderer.this.pageSize;
 
-			List<BEANTYPE> elements = ComboBoxRenderer.this.container.getItemIds()
-				.subList(fromIndex, toIndex);
+			elements = elements.subList(fromIndex, toIndex);
 
 			ArrayList<OptionElement> options = convertBeansToOptionElements(false, elements);
 			getRpcProxy(ComboBoxClientRpc.class).updateOptions(info, options, id);
+		}
+
+		private int roundUp(int num, int divisor) {
+			return (num + divisor - 1) / divisor;
+		}
+
+		private List<BEANTYPE> getShowOnlyNotUsed(CellId id) {
+			List<BEANTYPE> onlyNotUsed = new ArrayList<BEANTYPE>(ComboBoxRenderer.this.container.getItemIds());
+
+			Object columnPropertyId = getColumn(id.getColumnId()).getPropertyId();
+
+			Object itemId = getItemId(id.getRowId());
+
+			Indexed indexed = getParentGrid().getContainerDataSource();
+
+			Item item = indexed.getItem(itemId);
+			item.getItemProperty(columnPropertyId)
+				.getValue();
+
+			Collection<?> allItemIds = indexed.getItemIds();
+			if (getState().showOnlyNotUsed) {
+				if (indexed instanceof GeneratedPropertyContainer) {
+					indexed = ((GeneratedPropertyContainer) indexed).getWrappedContainer();
+				}
+
+				if (indexed instanceof AbstractInMemoryContainer) {
+					try {
+						Method m = AbstractInMemoryContainer.class.getDeclaredMethod("getAllItemIds");
+						m.setAccessible(true);
+						allItemIds = (List<Object>) m.invoke(indexed);
+					} catch (NoSuchMethodException e) {
+						e.printStackTrace();
+					} catch (SecurityException e) {
+						e.printStackTrace();
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+					} catch (IllegalArgumentException e) {
+						e.printStackTrace();
+					} catch (InvocationTargetException e) {
+						e.printStackTrace();
+					}
+				} else {
+					System.err
+						.println("Can't filter in combobox correctly with show only not used with not AbstractInMemoryContainer in grid");
+				}
+			}
+
+			for (Object otherItemId : allItemIds) {
+				Item otherItem = getParentGrid().getContainerDataSource()
+					.getItem(otherItemId);
+
+				if (!otherItem.equals(item)) {
+					Property<BEANTYPE> itemProperty = otherItem.getItemProperty(columnPropertyId);
+					BEANTYPE value = itemProperty.getValue();
+					onlyNotUsed.remove(value);
+				}
+			}
+
+			return onlyNotUsed;
 		}
 
 		private ArrayList<OptionElement> convertBeansToOptionElements(boolean filterExists, List<BEANTYPE> elements) {
@@ -142,9 +213,13 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 				filterable.addContainerFilter(filter);
 			}
 
-			List<OptionElement> filteredResult = convertBeansToOptionElements(	filterExists,
-																				ComboBoxRenderer.this.container
-																					.getItemIds());
+			List<BEANTYPE> elements = ComboBoxRenderer.this.container.getItemIds();
+
+			if (getState().showOnlyNotUsed) {
+				elements = getShowOnlyNotUsed(id);
+			}
+
+			List<OptionElement> filteredResult = convertBeansToOptionElements(filterExists, elements);
 
 			int filteredPages = (int) Math.ceil((double) filteredResult.size() / ComboBoxRenderer.this.pageSize);
 
@@ -205,6 +280,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 		@Override
 		public void filter(CellId id, String filterString) {
 			Filterable filterable = (Filterable) ComboBoxRenderer.this.container;
+
 			Filter filter = buildFilter(filterString, ComboBoxRenderer.this.filteringMode);
 
 			boolean filterExists = filter != null;
@@ -212,9 +288,13 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 				filterable.addContainerFilter(filter);
 			}
 
-			List<OptionElement> filteredResult = convertBeansToOptionElements(	filterExists,
-																				ComboBoxRenderer.this.container
-																					.getItemIds());
+			List<BEANTYPE> elements = ComboBoxRenderer.this.container.getItemIds();
+
+			if (getState().showOnlyNotUsed) {
+				elements = getShowOnlyNotUsed(id);
+			}
+
+			List<OptionElement> filteredResult = convertBeansToOptionElements(filterExists, elements);
 
 			int filteredPages = (int) Math.ceil((double) filteredResult.size() / ComboBoxRenderer.this.pageSize);
 			OptionsInfo info = new OptionsInfo(filteredPages, ComboBoxRenderer.this.inputPrompt,
@@ -276,6 +356,12 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 
 			return (Property<BEANTYPE>) row.getItemProperty(columnPropertyId);
 		}
+
 	};
+
+	public void replaceBeans(List<BEANTYPE> beans) {
+		this.container.removeAllItems();
+		this.container.addAll(beans);
+	}
 
 }

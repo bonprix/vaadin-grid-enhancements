@@ -190,7 +190,7 @@ public class DemoUI extends UI {
 			.setWidth(150);
 		grid.getColumn("single")
 			.setRenderer(new ComboBoxRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 5,
-					"input prompt", true, new EditableRendererEnabled<DataSourceClass>() {
+					"input prompt", true, false, new EditableRendererEnabled<DataSourceClass>() {
 
 						@Override
 						public boolean isEnabled(DataSourceClass bean) {
