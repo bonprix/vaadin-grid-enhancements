@@ -6,6 +6,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.cellrenderers.client.editable.common.CellId;
 import org.vaadin.grid.cellrenderers.editable.common.EditableRendererEnabled;
@@ -42,6 +45,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 
 	private String itemIdPropertyId;
 	private String itemCaptionPropertyId;
+	private Consumer<BEANTYPE> itemCaptionGenerator;
 	private FilteringMode filteringMode = FilteringMode.CONTAINS;
 	private final boolean nullSelectionAllowed;
 
@@ -51,7 +55,9 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 
 	public ComboBoxRenderer(final Class<BEANTYPE> clazz, final List<BEANTYPE> selections, String itemIdPropertyId,
 			String itemCaptionPropertyId, int pageSize, String inputPrompt, boolean nullSelectionAllowed,
-			boolean showOnlyNotUsed, EditableRendererEnabled editableRendererEnabled) {
+			boolean showOnlyNotUsed, EditableRendererEnabled editableRendererEnabled
+			,final Consumer<BEANTYPE> itemCaptionGenerator
+			) {
 		super(clazz);
 
 		registerRpc(this.rpc);
@@ -84,7 +90,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 
 		this.itemIdPropertyId = itemIdPropertyId;
 		this.itemCaptionPropertyId = itemCaptionPropertyId;
-
+        this.itemCaptionGenerator = itemCaptionGenerator;
 		this.editableRendererEnabled = editableRendererEnabled;
 
 	}
@@ -185,6 +191,9 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 			ArrayList<OptionElement> options = new ArrayList<OptionElement>();
 
 			for (BEANTYPE bean : elements) {
+			    if(ComboBoxRenderer.this.itemCaptionGenerator != null)
+			        itemCaptionGenerator.accept(bean);
+			    
 				if (ComboBoxRenderer.this.nullSelectionAllowed && bean == ComboBoxRenderer.this.nullSelectionElement) {
 					options.add(new OptionElement(null, ""));
 					continue;

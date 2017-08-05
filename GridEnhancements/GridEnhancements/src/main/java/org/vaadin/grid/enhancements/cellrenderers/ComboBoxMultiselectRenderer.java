@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Grid renderer that renders a multiselect ComboBox element
@@ -49,6 +50,7 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 	private final String originalItemProperty;
 	private final String itemIdPropertyId;
 	private final String itemCaptionPropertyId;
+	private Consumer<BEANTYPE> itemCaptionGenerator;
 	private FilteringMode filteringMode = FilteringMode.CONTAINS;
 	private String lastFilterString;
 
@@ -83,7 +85,8 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 
 	public ComboBoxMultiselectRenderer(final Class<BEANTYPE> clazz, List<BEANTYPE> selections, String itemIdPropertyId,
 			String itemCaptionPropertyId, int pageSize, String inputPrompt, String selectAllText,
-			String deselectAllText, String originalItemProperty, EditableRendererEnabled editableRendererEnabled) {
+			String deselectAllText, String originalItemProperty, EditableRendererEnabled editableRendererEnabled,
+			Consumer<BEANTYPE> itemCaptionGenerator) {
 		super(clazz);
 
 		registerRpc(this.rpc);
@@ -102,6 +105,7 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 
 		this.itemIdPropertyId = itemIdPropertyId;
 		this.itemCaptionPropertyId = itemCaptionPropertyId;
+		this.itemCaptionGenerator = itemCaptionGenerator;
 		this.originalItemProperty = originalItemProperty;
 
 		this.editableRendererEnabled = editableRendererEnabled;
@@ -158,6 +162,9 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 		private ArrayList<OptionElement> convertBeansToComboBoxMultiselectOptions(Collection<BEANTYPE> elements) {
 			ArrayList<OptionElement> options = new ArrayList<OptionElement>();
 			for (BEANTYPE bean : elements) {
+			    if(ComboBoxMultiselectRenderer.this.itemCaptionGenerator != null)
+                    itemCaptionGenerator.accept(bean);
+			    
 				Item item = ComboBoxMultiselectRenderer.this.container.getItem(bean);
 				final Property<?> idProperty = item.getItemProperty(ComboBoxMultiselectRenderer.this.itemIdPropertyId);
 				final Property<?> captionProperty = item
