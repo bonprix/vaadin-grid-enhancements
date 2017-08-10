@@ -33,6 +33,7 @@ import com.vaadin.data.util.PropertyValueGenerator;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
+import com.vaadin.shared.ui.datefield.Resolution;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Grid;
@@ -150,7 +151,7 @@ public class DemoUI extends UI {
                     return bean.getFoo()
                         .equals("foo");
                 }
-            }));
+            }, Resolution.SECOND));
         grid.getColumn("today")
             .setWidth(150);
         grid.getColumn("yes")
