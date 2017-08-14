@@ -375,5 +375,33 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 		this.container.removeAllItems();
 		this.container.addAll(beans);
 	}
+	
+	 @Override
+	 public JsonValue encode(final BEANTYPE bean) {
+
+	    if (bean == null) {
+	         return encode(new OptionElement(), OptionElement.class);
+	    }
+	    else {
+	        OptionElement result;
+
+	        if (ComboBoxRenderer.this.itemCaptionGenerator != null) {
+	             this.itemCaptionGenerator.accept(bean);
+	        }
+
+	        if (ComboBoxRenderer.this.nullSelectionAllowed && bean == ComboBoxRenderer.this.nullSelectionElement) {
+	             result = new OptionElement(null, "");
+	        }
+	         else {
+	              final Item item = ComboBoxRenderer.this.container.getItem(bean);
+	              final Property<?> idProperty = item.getItemProperty(ComboBoxRenderer.this.itemIdPropertyId);
+	              final Property<?> captionProperty = item.getItemProperty(ComboBoxRenderer.this.itemCaptionPropertyId);
+	              result = new OptionElement((Long) idProperty.getValue(), (String) captionProperty.getValue());
+	         }
+
+	         return encode(result, OptionElement.class);
+	     }
+	       
+	 }
 
 }

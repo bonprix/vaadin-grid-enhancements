@@ -9,6 +9,8 @@ import com.vaadin.data.util.GeneratedPropertyContainer;
 import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.shared.ui.combobox.FilteringMode;
 
+import elemental.json.JsonValue;
+
 import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.cellrenderers.client.editable.common.CellId;
 import org.vaadin.grid.cellrenderers.editable.common.EditableRendererEnabled;
@@ -447,5 +449,25 @@ public class ComboBoxMultiselectRenderer<BEANTYPE> extends EditableRenderer<BEAN
 												ComboBoxMultiselectRenderer.this.editableRendererEnabled));
 		}
 	};
+	
+    @Override
+    public JsonValue encode(final BEANTYPE bean) {
+        if (bean == null) {
+            return encode(new OptionElement(), OptionElement.class);
+        }
+        else {
+            if(ComboBoxMultiselectRenderer.this.itemCaptionGenerator != null)
+                itemCaptionGenerator.accept(bean);
+            
+            Item item = ComboBoxMultiselectRenderer.this.container.getItem(bean);
+            final Property<?> idProperty = item.getItemProperty(ComboBoxMultiselectRenderer.this.itemIdPropertyId);
+            final Property<?> captionProperty = item
+                .getItemProperty(ComboBoxMultiselectRenderer.this.itemCaptionPropertyId);
+            OptionElement oElement =   new OptionElement((Long) idProperty.getValue(), (String) captionProperty.getValue());
+               
+            return encode(oElement, OptionElement.class);
+        }
+      
+    }
 
 }

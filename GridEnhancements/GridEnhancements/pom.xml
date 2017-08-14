@@ -96,7 +96,7 @@
 			<groupId>com.vaadin</groupId>
 			<artifactId>grid-renderers-collection-addon</artifactId>
             <!-- Bonprix fork version marked with x.xx.x-bp -->
-			<version>0.94.6-bp</version>
+			<version>0.94.7-bp-SNAPSHOT</version>
 		</dependency>
         <dependency>
             <groupId>org.vaadin.anna</groupId>
