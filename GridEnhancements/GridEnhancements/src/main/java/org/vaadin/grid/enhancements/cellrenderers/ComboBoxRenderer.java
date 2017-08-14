@@ -5,9 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.vaadin.grid.cellrenderers.EditableRenderer;
@@ -19,6 +17,7 @@ import org.vaadin.grid.enhancements.client.cellrenderers.combobox.common.option.
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxClientRpc;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxServerRpc;
 import org.vaadin.grid.enhancements.client.cellrenderers.combobox.singleselect.ComboBoxState;
+import org.vaadin.grid.enhancements.filter.ItemCaptionGeneratorFilter;
 
 import com.vaadin.data.Container.Filter;
 import com.vaadin.data.Container.Filterable;
@@ -48,7 +47,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 
 	private String itemIdPropertyId;
 	private String itemCaptionPropertyId;
-	private Consumer<BEANTYPE> itemCaptionGenerator;
+	private Function<BEANTYPE, String> itemCaptionGenerator;
 	private FilteringMode filteringMode = FilteringMode.CONTAINS;
 	private final boolean nullSelectionAllowed;
 
@@ -59,7 +58,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 	public ComboBoxRenderer(final Class<BEANTYPE> clazz, final List<BEANTYPE> selections, String itemIdPropertyId,
 			String itemCaptionPropertyId, int pageSize, String inputPrompt, boolean nullSelectionAllowed,
 			boolean showOnlyNotUsed, EditableRendererEnabled editableRendererEnabled
-			,final Consumer<BEANTYPE> itemCaptionGenerator
+			,final Function<BEANTYPE, String> itemCaptionGenerator
 			) {
 		super(clazz);
 
@@ -127,7 +126,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 
 			elements = elements.subList(fromIndex, toIndex);
 
-			ArrayList<OptionElement> options = convertBeansToOptionElements(false, elements);
+			ArrayList<OptionElement> options = convertBeansToOptionElements(elements);
 			getRpcProxy(ComboBoxClientRpc.class).updateOptions(info, options, id);
 		}
 
@@ -190,26 +189,16 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 			return onlyNotUsed;
 		}
 
-		private ArrayList<OptionElement> convertBeansToOptionElements(boolean filterExists, List<BEANTYPE> elements) {
+		private ArrayList<OptionElement> convertBeansToOptionElements(List<BEANTYPE> elements) {
 			ArrayList<OptionElement> options = new ArrayList<OptionElement>();
 
 			for (BEANTYPE bean : elements) {
-			    if(ComboBoxRenderer.this.itemCaptionGenerator != null)
-			        itemCaptionGenerator.accept(bean);
-			    
-				if (ComboBoxRenderer.this.nullSelectionAllowed && bean == ComboBoxRenderer.this.nullSelectionElement) {
-					options.add(new OptionElement(null, ""));
-					continue;
-				}
-				Item item = ComboBoxRenderer.this.container.getItem(bean);
-				final Property<?> idProperty = item.getItemProperty(ComboBoxRenderer.this.itemIdPropertyId);
-				final Property<?> captionProperty = item.getItemProperty(ComboBoxRenderer.this.itemCaptionPropertyId);
-				options.add(new OptionElement((Long) idProperty.getValue(), (String) captionProperty.getValue()));
+			    options.add(getOptionElement(bean));
 			}
 			return options;
 		}
 
-		@Override
+        @Override
 		public void getFilterPage(String filterString, int page, CellId id) {
 			if (filterString.isEmpty()) {
 				getPage(-1, id);
@@ -231,7 +220,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 				elements = getShowOnlyNotUsed(id);
 			}
 
-			List<OptionElement> filteredResult = convertBeansToOptionElements(filterExists, elements);
+			List<OptionElement> filteredResult = convertBeansToOptionElements(elements);
 
 			int filteredPages = (int) Math.ceil((double) filteredResult.size() / ComboBoxRenderer.this.pageSize);
 
@@ -276,12 +265,20 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 				case OFF:
 					break;
 				case STARTSWITH:
-					filter = new SimpleStringFilter(ComboBoxRenderer.this.itemCaptionPropertyId, filterString, true,
+				    if (itemCaptionGenerator == null) {
+				        filter = new SimpleStringFilter(ComboBoxRenderer.this.itemCaptionPropertyId, filterString, true,
 							true);
+				    } else {
+				        filter = new ItemCaptionGeneratorFilter<BEANTYPE>(ComboBoxRenderer.this.itemCaptionGenerator, filterString, true, true, container);
+				    }
 					break;
 				case CONTAINS:
-					filter = new SimpleStringFilter(ComboBoxRenderer.this.itemCaptionPropertyId, filterString, true,
+				    if (itemCaptionGenerator == null) {
+				        filter = new SimpleStringFilter(ComboBoxRenderer.this.itemCaptionPropertyId, filterString, true,
 							false);
+				    } else {
+                        filter = new ItemCaptionGeneratorFilter<BEANTYPE>(ComboBoxRenderer.this.itemCaptionGenerator, filterString, true, true, container);
+                    }
 					break;
 				}
 			}
@@ -306,7 +303,7 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 				elements = getShowOnlyNotUsed(id);
 			}
 
-			List<OptionElement> filteredResult = convertBeansToOptionElements(filterExists, elements);
+			List<OptionElement> filteredResult = convertBeansToOptionElements(elements);
 
 			int filteredPages = (int) Math.ceil((double) filteredResult.size() / ComboBoxRenderer.this.pageSize);
 			OptionsInfo info = new OptionsInfo(filteredPages, ComboBoxRenderer.this.inputPrompt,
@@ -378,30 +375,30 @@ public class ComboBoxRenderer<BEANTYPE> extends EditableRenderer<BEANTYPE> {
 	
 	 @Override
 	 public JsonValue encode(final BEANTYPE bean) {
-
-	    if (bean == null) {
-	         return encode(new OptionElement(), OptionElement.class);
-	    }
-	    else {
-	        OptionElement result;
-
-	        if (ComboBoxRenderer.this.itemCaptionGenerator != null) {
-	             this.itemCaptionGenerator.accept(bean);
-	        }
-
-	        if (ComboBoxRenderer.this.nullSelectionAllowed && bean == ComboBoxRenderer.this.nullSelectionElement) {
-	             result = new OptionElement(null, "");
-	        }
-	         else {
-	              final Item item = ComboBoxRenderer.this.container.getItem(bean);
-	              final Property<?> idProperty = item.getItemProperty(ComboBoxRenderer.this.itemIdPropertyId);
-	              final Property<?> captionProperty = item.getItemProperty(ComboBoxRenderer.this.itemCaptionPropertyId);
-	              result = new OptionElement((Long) idProperty.getValue(), (String) captionProperty.getValue());
-	         }
-
-	         return encode(result, OptionElement.class);
-	     }
-	       
+	     return encode(getOptionElement(bean), OptionElement.class);
 	 }
+	 
+	 private OptionElement getOptionElement(BEANTYPE bean) {
+         if (bean == null) {
+             return new OptionElement();
+         }
+         
+         if (ComboBoxRenderer.this.nullSelectionAllowed && bean == ComboBoxRenderer.this.nullSelectionElement) {
+             return new OptionElement(null, "");   
+         }
+         
+         Item item = ComboBoxRenderer.this.container.getItem(bean);
+         final Property<?> idProperty = item.getItemProperty(ComboBoxRenderer.this.itemIdPropertyId);
+         
+         OptionElement optionElement = new OptionElement((Long) idProperty.getValue());
+         
+         if(ComboBoxRenderer.this.itemCaptionGenerator != null) {
+             optionElement.setName(ComboBoxRenderer.this.itemCaptionGenerator.apply(bean));
+         } else {
+             final Property<?> captionProperty = item.getItemProperty(ComboBoxRenderer.this.itemCaptionPropertyId);
+             optionElement.setName((String)captionProperty.getValue());
+         }
+         return optionElement;
+     }
 
 }
