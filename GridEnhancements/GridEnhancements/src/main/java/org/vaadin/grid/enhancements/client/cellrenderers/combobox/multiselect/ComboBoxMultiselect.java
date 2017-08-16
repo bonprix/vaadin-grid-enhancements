@@ -307,14 +307,14 @@ public class ComboBoxMultiselect extends Composite
 			removeStyleName(PROMPT_STYLE);
 			ComboBoxMultiselect.this.textBox.setValue("");
 			this.justFocused = true;
-			if (this.timerFilter == null)
-				this.timerFilter = new Timer() {
+			if (this.timerJustFocused == null)
+				this.timerJustFocused = new Timer() {
 					@Override
 					public void run() {
 						ComboBoxMultiselect.this.justFocused = false;
 					}
 				};
-			this.timerFilter.schedule(300);
+			this.timerJustFocused.schedule(300);
 		}
 	}
 
