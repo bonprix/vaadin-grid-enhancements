@@ -4,7 +4,7 @@
 	<groupId>org.vaadin.grid.enhancements</groupId>
 	<artifactId>GridEnhancements-demo</artifactId>
 	<packaging>war</packaging>
-	<version>1.3.12-bp-SNAPSHOT</version>
+	<version>1.3.13-bp-SNAPSHOT</version>
 	<name>Grid enhancements Add-on Demo</name>
 
 	<properties>
