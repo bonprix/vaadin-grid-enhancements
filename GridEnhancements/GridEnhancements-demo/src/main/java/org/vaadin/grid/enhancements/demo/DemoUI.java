@@ -17,9 +17,12 @@ import org.vaadin.grid.cellrenderers.EditableRenderer;
 import org.vaadin.grid.cellrenderers.editable.DateFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.TextFieldRenderer;
 import org.vaadin.grid.cellrenderers.editable.common.EditableRendererEnabled;
+import org.vaadin.grid.enhancements.CellFocusGrid;
+import org.vaadin.grid.enhancements.CellFocusGrid.CellFocusListener;
 import org.vaadin.grid.enhancements.cellrenderers.CheckBoxRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxMultiselectRenderer;
 import org.vaadin.grid.enhancements.cellrenderers.ComboBoxRenderer;
+import org.vaadin.grid.enhancements.events.CellFocusEvent;
 import org.vaadin.grid.enhancements.navigation.GridNavigationExtension;
 import org.vaadin.teemusa.gridextensions.client.tableselection.TableSelectionState;
 import org.vaadin.teemusa.gridextensions.tableselection.TableSelectionModel;
@@ -40,6 +43,7 @@ import com.vaadin.ui.Button;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.Notification;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
@@ -53,12 +57,12 @@ import com.vaadin.ui.renderers.Renderer;
 public class DemoUI extends UI {
 
     @WebServlet(
-        value = "/*",
-        asyncSupported = true)
+                value = "/*",
+                asyncSupported = true)
     @VaadinServletConfiguration(
-        productionMode = false,
-        ui = DemoUI.class,
-        widgetset = "org.vaadin.grid.enhancements.demo.DemoWidgetSet")
+                                productionMode = false,
+                                ui = DemoUI.class,
+                                widgetset = "org.vaadin.grid.enhancements.demo.DemoWidgetSet")
     public static class Servlet extends VaadinServlet {
     }
 
@@ -73,7 +77,7 @@ public class DemoUI extends UI {
             @Override
             public void click(final GridActionRenderer.GridActionClickEvent event) {
                 DemoUI.this.latestChangeLabel.setValue("Latest change: '" + event.getAction()
-                    .getDescription() + "'");
+                .getDescription() + "'");
             }
         };
         grid.setContainerDataSource(new GeneratedPropertyContainer(getDataSource()));
@@ -81,6 +85,9 @@ public class DemoUI extends UI {
         // Extend grid with navigation extension so we can navigate form input
         // to input
         GridNavigationExtension.extend(grid);
+
+        // Extend grid to enable cellfocuslisterner
+        initNavigation(grid);
 
         final TableSelectionModel tableSelect = new TableSelectionModel();
         grid.setSelectionModel(tableSelect);
@@ -106,66 +113,66 @@ public class DemoUI extends UI {
         // Add cell renderers
         // Custom action renderers
         grid.getColumn("actions")
-            .setRenderer(grid.getGridActionRenderer());
+        .setRenderer(grid.getGridActionRenderer());
         grid.getColumn("actions")
-            .setWidth(100);
+        .setWidth(100);
 
         // Field renderers
         grid.getColumn("foo")
-            .setRenderer(new TextFieldRenderer<String>(new EditableRendererEnabled<DataSourceClass>() {
+        .setRenderer(new TextFieldRenderer<String>(new EditableRendererEnabled<DataSourceClass>() {
 
-                @Override
-                public boolean isEnabled(final DataSourceClass bean) {
-                    return bean.getFoo()
+            @Override
+            public boolean isEnabled(final DataSourceClass bean) {
+                return bean.getFoo()
                         .equals("foo");
-                }
-            }));
+            }
+        }));
         grid.getColumn("foo")
-            .setExpandRatio(1);
+        .setExpandRatio(1);
         grid.getColumn("bar")
-            .setRenderer(new TextFieldRenderer<Integer>(new EditableRendererEnabled<DataSourceClass>() {
+        .setRenderer(new TextFieldRenderer<Integer>(new EditableRendererEnabled<DataSourceClass>() {
 
-                @Override
-                public boolean isEnabled(final DataSourceClass bean) {
-                    return bean.getFoo()
+            @Override
+            public boolean isEnabled(final DataSourceClass bean) {
+                return bean.getFoo()
                         .equals("foo");
-                }
-            }));
+            }
+        }));
         grid.getColumn("bar")
-            .setWidth(100);
+        .setWidth(100);
         grid.getColumn("km")
-            .setRenderer(new TextFieldRenderer<Double>(new EditableRendererEnabled<DataSourceClass>() {
+        .setRenderer(new TextFieldRenderer<Double>(new EditableRendererEnabled<DataSourceClass>() {
 
-                @Override
-                public boolean isEnabled(final DataSourceClass bean) {
-                    return bean.getFoo()
+            @Override
+            public boolean isEnabled(final DataSourceClass bean) {
+                return bean.getFoo()
                         .equals("foo");
-                }
-            }));
+            }
+        }));
         grid.getColumn("km")
-            .setWidth(100);
+        .setWidth(100);
         grid.getColumn("today")
-            .setRenderer(new DateFieldRenderer(new EditableRendererEnabled<DataSourceClass>() {
+        .setRenderer(new DateFieldRenderer(new EditableRendererEnabled<DataSourceClass>() {
 
-                @Override
-                public boolean isEnabled(final DataSourceClass bean) {
-                    return bean.getFoo()
+            @Override
+            public boolean isEnabled(final DataSourceClass bean) {
+                return bean.getFoo()
                         .equals("foo");
-                }
-            }, Resolution.SECOND));
+            }
+        }, Resolution.SECOND));
         grid.getColumn("today")
-            .setWidth(150);
+        .setWidth(150);
         grid.getColumn("yes")
-            .setRenderer(new CheckBoxRenderer(new EditableRendererEnabled<DataSourceClass>() {
+        .setRenderer(new CheckBoxRenderer(new EditableRendererEnabled<DataSourceClass>() {
 
-                @Override
-                public boolean isEnabled(final DataSourceClass bean) {
-                    return bean.getFoo()
+            @Override
+            public boolean isEnabled(final DataSourceClass bean) {
+                return bean.getFoo()
                         .equals("foo");
-                }
-            }));
+            }
+        }));
         grid.getColumn("yes")
-            .setWidth(65);
+        .setWidth(65);
 
         // ComboBox renderers
         ((GeneratedPropertyContainer) grid.getContainerDataSource()).addGeneratedProperty("_multi", new PropertyValueGenerator<DummyClass>() {
@@ -181,31 +188,31 @@ public class DemoUI extends UI {
             }
         });
         grid.getColumn("_multi")
-            .setRenderer(new ComboBoxMultiselectRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 5, "input prompt2", "select all2", "clear2",
-                    "multi", new EditableRendererEnabled<DataSourceClass>() {
+        .setRenderer(new ComboBoxMultiselectRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 5, "input prompt2", "select all2", "clear2",
+                "multi", new EditableRendererEnabled<DataSourceClass>() {
 
-                        @Override
-                        public boolean isEnabled(final DataSourceClass bean) {
-                            return bean.getFoo()
-                                .equals("foo");
-                        }
-                    }, null));
+            @Override
+            public boolean isEnabled(final DataSourceClass bean) {
+                return bean.getFoo()
+                        .equals("foo");
+            }
+        }, null));
         grid.getColumn("_multi")
-            .setWidth(400);
+        .setWidth(400);
         grid.getColumn("multi")
-            .setWidth(150);
+        .setWidth(150);
         grid.getColumn("single")
-            .setRenderer(new ComboBoxRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 5, "input prompt", true, false,
-                    new EditableRendererEnabled<DataSourceClass>() {
+        .setRenderer(new ComboBoxRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 5, "input prompt", true, false,
+                new EditableRendererEnabled<DataSourceClass>() {
 
-                        @Override
-                        public boolean isEnabled(final DataSourceClass bean) {
-                            return bean.getFoo()
-                                .equals("foo");
-                        }
-                    }, null));
+            @Override
+            public boolean isEnabled(final DataSourceClass bean) {
+                return bean.getFoo()
+                        .equals("foo");
+            }
+        }, null));
         grid.getColumn("single")
-            .setWidth(150);
+        .setWidth(150);
 
         ((GeneratedPropertyContainer) grid.getContainerDataSource()).addGeneratedProperty("_multiCaptionGen", new PropertyValueGenerator<DummyClass>() {
 
@@ -220,41 +227,41 @@ public class DemoUI extends UI {
             }
         });
         grid.getColumn("_multiCaptionGen")
-            .setRenderer(new ComboBoxMultiselectRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 5, "input prompt2", "select all2", "clear2",
-                    "multi", new EditableRendererEnabled<DataSourceClass>() {
+        .setRenderer(new ComboBoxMultiselectRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 5, "input prompt2", "select all2", "clear2",
+                "multi", new EditableRendererEnabled<DataSourceClass>() {
 
-                        @Override
-                        public boolean isEnabled(final DataSourceClass bean) {
-                            return bean.getFoo()
-                                .equals("foo");
-                        }
-                    }, new Function<DummyClass, String>() {
+            @Override
+            public boolean isEnabled(final DataSourceClass bean) {
+                return bean.getFoo()
+                        .equals("foo");
+            }
+        }, new Function<DummyClass, String>() {
 
-                        @Override
-                        public String apply(final DummyClass t) {
-                            return "GEN_" + t.getName();
-                        }
-                    }));
+            @Override
+            public String apply(final DummyClass t) {
+                return "GEN_" + t.getName();
+            }
+        }));
         grid.getColumn("_multiCaptionGen")
-            .setWidth(400);
+        .setWidth(400);
         grid.getColumn("singleCaptionGen")
-            .setRenderer(new ComboBoxRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 5, "input prompt", true, false,
-                    new EditableRendererEnabled<DataSourceClass>() {
+        .setRenderer(new ComboBoxRenderer<DummyClass>(DummyClass.class, getItemList(), "id", "name", 5, "input prompt", true, false,
+                new EditableRendererEnabled<DataSourceClass>() {
 
-                        @Override
-                        public boolean isEnabled(final DataSourceClass bean) {
-                            return bean.getFoo()
-                                .equals("foo");
-                        }
-                    }, new Function<DummyClass, String>() {
+            @Override
+            public boolean isEnabled(final DataSourceClass bean) {
+                return bean.getFoo()
+                        .equals("foo");
+            }
+        }, new Function<DummyClass, String>() {
 
-                        @Override
-                        public String apply(final DummyClass t) {
-                            return "GEN_" + t.getName();
-                        }
-                    }));
+            @Override
+            public String apply(final DummyClass t) {
+                return "GEN_" + t.getName();
+            }
+        }));
         grid.getColumn("singleCaptionGen")
-            .setWidth(150);
+        .setWidth(150);
         final GeneratedPropertyContainer container = (GeneratedPropertyContainer) grid.getContainerDataSource();
         container.addGeneratedProperty("calc", new PropertyValueGenerator<String>() {
 
@@ -279,7 +286,7 @@ public class DemoUI extends UI {
 
             // In the demo instance we want to show a formatted date
             if (renderer.getPresentationType()
-                .equals(Date.class)) {
+                    .equals(Date.class)) {
                 ((EditableRenderer) renderer).addItemEditListener(this.dateItemEdit);
             }
             else {
@@ -311,7 +318,25 @@ public class DemoUI extends UI {
         grid.setColumns("calc", "km", "bar", "actions", "single", "today", "yes", "foo", "_multi", "singleCaptionGen", "_multiCaptionGen");
         grid.setColumnOrder("calc", "km", "bar", "single", "_multi", "singleCaptionGen", "_multiCaptionGen", "today", "yes", "foo", "actions");
         grid.getColumn("calc")
-            .setHidden(true);
+        .setHidden(true);
+    }
+
+    private void initNavigation(final Grid grid) {
+        final CellFocusGrid nav = new CellFocusGrid(grid);
+
+        //         Cell focus change
+        nav.addCellFocusListener(new CellFocusListener() {
+            @Override
+            public void onEvent(final CellFocusEvent event) {
+                final int row = event.getRow();
+                final int col = event.getColumn();
+
+                Notification.show(row + ", " + col);
+            }
+        });
+        Notification.show("Added cell focus change listener");
+
+
     }
 
     private LinkedList<DummyClass> getItemList() {
@@ -395,7 +420,7 @@ public class DemoUI extends UI {
         @Override
         public void itemEdited(final EditableRenderer.ItemEditEvent<DataSourceClass> event) {
             DemoUI.this.latestChangeLabel
-                .setValue("Latest change: '" + event.getColumnPropertyId() + "' " + new SimpleDateFormat("dd-MM-yyyy").format(event.getNewValue()));
+            .setValue("Latest change: '" + event.getColumnPropertyId() + "' " + new SimpleDateFormat("dd-MM-yyyy").format(event.getNewValue()));
         }
     };
 
