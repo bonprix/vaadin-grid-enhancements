@@ -144,4 +144,11 @@ public class CellFocusGrid extends AbstractExtension {
         getState().hasRowFocusListener = true;
         this.hasRowFocusListener = true;
     }
+
+    public void removeCellFocusListener(final CellFocusListener listener) {
+        this.cellFocusListeners.removeListener(listener);
+        getState().hasFocusListener = false;
+        getState().hasRowFocusListener = false;
+        this.hasRowFocusListener = false;
+    }
 }
