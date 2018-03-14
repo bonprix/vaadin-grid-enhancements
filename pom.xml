@@ -4,7 +4,7 @@
 	<groupId>org.vaadin.grid.enhancements</groupId>
 	<artifactId>GridEnhancements-root</artifactId>
 	<packaging>pom</packaging>
-	<version>1.5-bp-bp</version>
+	<version>1.6-bp-SNAPSHOT</version>
 	<name>Grid enhancements Add-on Root</name>
 
 	<modules>
