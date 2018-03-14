@@ -2,34 +2,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.vaadin.grid.enhancements</groupId>
-	<artifactId>Enhancements-root</artifactId>
+	<artifactId>GridEnhancements-root</artifactId>
 	<packaging>pom</packaging>
-	<version>1.5-SNAPSHOT</version>
-	<name>Grid enhancements Add-on Super Root Project</name>
+	<version>1.3.14-bp-SNAPSHOT</version>
+	<name>Grid enhancements Add-on Root</name>
 
 	<modules>
-		<!-- GridEnhancements add-on and demo -->
 		<module>GridEnhancements</module>
+		<module>GridEnhancements-demo</module>
 	</modules>
 
-	<scm>
-		<url>git://github.com/bonprix/vaadin-grid-enhancements.git</url>
-		<connection>scm:git:ssh://git@github.com/bonprix/vaadin-grid-enhancements.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/bonprix/vaadin-grid-enhancements.git</developerConnection>
-	  	<tag>vaadin-excel-exporter-root-1.0.0-SNAPSHOT</tag>
-  	</scm>
-
-	<distributionManagement>
-		<repository>
-			<id>bp_artifactory</id>
-			<name>bp_artifactory-releases</name>
-			<url>http://digistyle.bonprix.net/artifactory/libs-release-local</url>
-		</repository>
-		<snapshotRepository>
-			<id>bp_artifactory</id>
-			<name>bp_artifactory-snapshots</name>
-			<url>http://digistyle.bonprix.net/artifactory/libs-snapshot-local</url>
-		</snapshotRepository>
-	</distributionManagement>
 
 </project>
