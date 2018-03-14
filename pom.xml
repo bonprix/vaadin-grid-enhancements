@@ -11,9 +11,9 @@
 		<profile>
 			<modules>
 				<!-- Only add the grid-renderers-collection add-on module -->
-				<!-- <module>grid-renderers-collection-addon/grid-renderers-collection-addon</module> -->
+				<module>grid-renderers-collection-addon/grid-renderers-collection-addon</module>
 				<!-- Only add the gridactionrenderer add-on module -->
-				<!-- <module>GridActionRenderer/gridactionrenderer-addon</module> -->
+				<module>GridActionRenderer/gridactionrenderer-addon</module>
 			</modules>
 		</profile>
 	</profiles>
