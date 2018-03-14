@@ -4,7 +4,7 @@
 	<groupId>org.vaadin.grid.enhancements</groupId>
 	<artifactId>GridEnhancements</artifactId>
 	<packaging>jar</packaging>
-	<version>1.6-bp-SNAPSHOT</version>
+	<version>1.6-bp</version>
 	<name>Grid enhancements Add-on</name>
 
 	<properties>
