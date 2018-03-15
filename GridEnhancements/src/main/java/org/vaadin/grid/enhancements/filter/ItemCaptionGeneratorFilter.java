@@ -22,7 +22,7 @@ import com.vaadin.data.Item;
 import com.vaadin.data.util.BeanItemContainer;
 
 /**
- * Simple string filter for matching items whith item caption generator.
+ * Simple string filter for matching items whith item caption generator
  *
  */
 public final class ItemCaptionGeneratorFilter<BEANTYPE> implements Filter {
